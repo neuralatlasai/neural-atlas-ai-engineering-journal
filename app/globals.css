@@ -95,10 +95,22 @@
      right of the axis the header, footer, home page and section lists all
      align to — the article looked indented from the rest of the site, which is
      what read as a large empty margin on the left. */
-  --shell-max: 68rem;
+  /* The composition, not the reading measure, is what fills a wide screen.
+     `--measure` is fixed by typography (plan §7.5) and must not grow, so at
+     68rem the page used barely half a 1920px display — 464px of nothing on each
+     side, 48% of the viewport — and read as a narrow strip adrift rather than a
+     publication. Widening the shell alone only relocates that emptiness into
+     the gap between the text and the rail, so the rail grows with it and
+     `--wide-extra` puts the remaining gap to work (see `.table-scroll`). */
+  --shell-max: 74rem;
   --reader-max: var(--measure);
   --wide-content-max: 72rem;
-  --side-rail: 15rem;
+  --side-rail: 16rem;
+  /* How far a wide element may reach past the reading column, into the gap
+     before the outline rail. Zero by default: below the width where the shell
+     reaches `--shell-max` the gap is only tens of pixels, so there is nothing
+     to reach into. Each band below raises it to leave the rail ~64px clear. */
+  --wide-extra: 0px;
   --page-gutter: clamp(1.15rem, 3vw, 3rem);
   --header-h: 64px;
 
@@ -678,6 +690,8 @@ video {
 .article-layout:not(:has(.article-rail)) {
   grid-template-columns: minmax(0, var(--measure));
   justify-content: center;
+  /* Centred single column: reaching right would push past the shell. */
+  --wide-extra: 0px;
 }
 
 /* Large displays. The reading measure is fixed by typography and must not grow
@@ -687,12 +701,33 @@ video {
    two columns grow a little — the outline gets room for longer headings, and
    the page reads as a deliberate spread rather than a narrow strip adrift in
    whitespace. */
+/* Once the shell has reached its maximum the gap between the reading column and
+   the rail stops changing, so wide content can safely claim most of it. */
+@media (min-width: 80rem) {
+  :root {
+    --wide-extra: 176px;
+  }
+}
+
 @media (min-width: 100rem) {
   :root {
-    --side-rail: 17rem;
+    --shell-max: 82rem;
+    --side-rail: 20rem;
+    --wide-extra: 224px;
   }
   .article-layout {
-    column-gap: 6rem;
+    column-gap: 5rem;
+  }
+}
+
+/* Very large displays. Without a step here a 2560px monitor left 61% of the
+   viewport empty — the composition stopped growing while the screen kept
+   going. */
+@media (min-width: 140rem) {
+  :root {
+    --shell-max: 88rem;
+    --side-rail: 23rem;
+    --wide-extra: 272px;
   }
 }
 
@@ -1025,8 +1060,16 @@ video {
 }
 
 /* Tables (plan §14) */
+/* Tables reach into the gap between the reading column and the outline rail.
+   That gap is the width freed by centring a fixed-measure column on a wide
+   screen; left alone it is simply void, while the corpus's widest tables — cells
+   of 300–400 characters — sat scrolling inside a 608px column with hundreds of
+   empty pixels beside them. `--wide-extra` is 0 wherever no rail exists, so this
+   collapses to the plain full-width form on narrow screens and on articles with
+   no outline. The viewport clamp keeps it inside the page at any width. */
 .article-body .table-scroll {
-  max-inline-size: 100%;
+  inline-size: calc(100% + var(--wide-extra, 0px));
+  max-inline-size: calc(100vw - 2 * var(--page-gutter));
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   margin-block: 2rem;

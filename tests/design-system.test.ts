@@ -110,3 +110,55 @@ describe("wide tables", () => {
     assert.match(ruleFor(".article-body table"), /inline-size:\s*max-content/);
   });
 });
+
+describe("page composition", () => {
+  const selectors = topLevelSelectors(css);
+
+  function ruleFor(selector: string): string {
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const i = stripped.indexOf(selector + " {");
+    if (i === -1) return "";
+    return stripped.slice(i, stripped.indexOf("}", i));
+  }
+
+  /** Every declared value of a custom property, in source order. */
+  function valuesOf(token: string): string[] {
+    return [...css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(new RegExp(`${token}:\\s*([^;]+);`, "g"))].map(
+      (m) => m[1].trim(),
+    );
+  }
+
+  it("keeps the reading measure fixed", () => {
+    // The measure is a typography decision (~71ch), not a layout lever. Filling
+    // a wide screen by stretching it would defeat the point.
+    const measures = valuesOf("--measure").filter((v) => v.endsWith("rem"));
+    assert.deepEqual([...new Set(measures)], ["38rem"], "--measure must not vary by viewport");
+  });
+
+  it("grows the composition on wide screens", () => {
+    // At a single 68rem shell, a 1920px display was 48% empty margin and the
+    // page read as a narrow strip rather than a publication.
+    const shells = valuesOf("--shell-max")
+      .filter((v) => v.endsWith("rem"))
+      .map((v) => Number.parseFloat(v));
+    const desktop = shells.filter((v) => v > 44); // 44rem is the narrow-screen shell
+    assert.ok(desktop.length >= 2, "the shell must have more than one desktop size");
+    assert.ok(Math.max(...desktop) >= 82, `widest shell is only ${Math.max(...desktop)}rem`);
+  });
+
+  it("starts wide content flush with the column and reaches only into the gap", () => {
+    // `--wide-extra` is how far a table may reach toward the outline rail. It
+    // must default to 0, or a layout with no rail would push content past the
+    // shell edge.
+    assert.equal(valuesOf("--wide-extra")[0], "0px", "the default must be 0");
+    const rule = ruleFor(".article-body .table-scroll");
+    assert.match(rule, /var\(--wide-extra/, "tables must use the gap");
+    assert.match(rule, /max-inline-size:\s*calc\(100vw/, "and stay inside the viewport");
+  });
+
+  it("cancels the reach where there is no rail to reach toward", () => {
+    const noRail = selectors.find((s) => s.includes(":not(:has(.article-rail))"));
+    assert.ok(noRail, "the no-rail layout must be handled");
+    assert.match(ruleFor(noRail), /--wide-extra:\s*0px/);
+  });
+});
