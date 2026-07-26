@@ -1,0 +1,2563 @@
+/* =============================================================================
+   Neural Atlas design system (plan §7). A restrained, editorial, research-grade
+   visual system. Semantic tokens; light + dark; WCAG 2.2 AA targets.
+   ========================================================================== */
+
+/* ----- Color: light mode (default) --------------------------------------- */
+:root {
+  --color-canvas: #fcfcf9;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f5f5f0;
+  --color-surface-raised: #ffffff;
+  --color-text: #16150f;
+  --color-text-secondary: #56554d;
+  --color-text-tertiary: #86857b;
+  --color-border: #e6e5dc;
+  --color-border-strong: #d0cfc4;
+  --color-border-hairline: #eeede5;
+
+  --color-accent: #2f56e6;
+  --color-accent-hover: #2242c2;
+  --color-accent-soft: #ebefff;
+  --color-accent-contrast: #ffffff;
+
+  --color-success: #18794e;
+  --color-warning: #9a6700;
+  --color-danger: #c9372c;
+  --color-code-bg: #f7f7f2;
+
+  /* Edge hint that tells a reader a wide table can still be scrolled. It has to
+     be a token: a fixed black gradient disappears against a dark surface. */
+  --scroll-hint: rgba(0, 0, 0, 0.09);
+
+  --shadow-sm: 0 1px 2px rgba(20, 20, 15, 0.04), 0 1px 3px rgba(20, 20, 15, 0.06);
+  --shadow-md: 0 4px 12px rgba(20, 20, 15, 0.06), 0 2px 4px rgba(20, 20, 15, 0.04);
+  --shadow-lg: 0 12px 40px rgba(20, 20, 15, 0.1), 0 4px 12px rgba(20, 20, 15, 0.06);
+
+  --font-ui: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-reader: var(--font-serif), ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-reader: 1.0625rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.3125rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.5rem;
+
+  /* --- Fixed modular type scale (ratio ≈ 1.16). Sizes are stepped at
+     breakpoints rather than fluid, so the rendered text size — and therefore
+     the paragraph measure — is deterministic instead of varying continuously
+     with viewport width. --- */
+  --text-body: 1.0625rem; /* 17px */
+  --text-h6: 0.9375rem; /* 15px */
+  --text-h5: 1rem; /* 16px */
+  --text-h4: 1.125rem; /* 18px */
+  --text-h3: 1.3125rem; /* 21px */
+  --text-h2: 1.5rem; /* 24px */
+  --text-h1: 1.875rem; /* 30px */
+  --text-title: 2.5rem; /* 40px — page/article title */
+
+  /* Fixed reading measure (~72 characters of Source Serif at 17px). Using a
+     length rather than `ch` keeps the column width stable. */
+  /* One measure system. Larger type needs fewer characters per line to hold the
+     same optical line length, so decks are set narrower than body copy — but
+     they are derived from the same scale rather than each surface inventing its
+     own `ch` value. Six different measures (46ch, 60ch, 62ch, 68ch …) had
+     accumulated for what is the same job: one paragraph of prose. */
+  --measure: 38rem; /* 608px — body prose, ~71ch at the reader size */
+  --measure-lead: 32rem; /* decks and page intros, set at --text-lg */
+  --measure-short: 26rem; /* footer blurb and small print */
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+
+  --radius-sm: 7px;
+  --radius-md: 11px;
+  --radius-lg: 18px;
+
+  /* The page width is derived from the content, not chosen arbitrarily.
+     The widest thing the site lays out is the article composition: reading
+     measure (38rem) + column gap (up to 6rem) + outline rail (up to 17rem) =
+     61rem, plus the page gutters. At the previous 90rem the shell was far
+     wider than anything in it, so the centred article sat 155–228px to the
+     right of the axis the header, footer, home page and section lists all
+     align to — the article looked indented from the rest of the site, which is
+     what read as a large empty margin on the left. */
+  --shell-max: 68rem;
+  --reader-max: var(--measure);
+  --wide-content-max: 72rem;
+  --side-rail: 15rem;
+  --page-gutter: clamp(1.15rem, 3vw, 3rem);
+  --header-h: 64px;
+
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.9, 0.1, 1);
+
+  color-scheme: light;
+}
+
+/* ----- Color: dark mode -------------------------------------------------- */
+:root[data-theme="dark"] {
+  --color-canvas: #0e0f0c;
+  --color-surface: #161712;
+  --color-surface-subtle: #1c1d17;
+  --color-surface-raised: #1a1b15;
+  --color-text: #f4f3ea;
+  --color-text-secondary: #b9b8ad;
+  --color-text-tertiary: #8b8a7f;
+  --color-border: #2c2d25;
+  --color-border-strong: #43443a;
+  --color-border-hairline: #232419;
+
+  --color-accent: #94aaff;
+  --color-accent-hover: #b3c1ff;
+  --color-accent-soft: #1b2545;
+  --color-accent-contrast: #0b1024;
+
+  --color-success: #4ade80;
+  --color-warning: #eab308;
+  --color-danger: #f87171;
+  --color-code-bg: #16170f;
+  --scroll-hint: rgba(0, 0, 0, 0.55);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-canvas: #0e0f0c;
+    --color-surface: #161712;
+    --color-surface-subtle: #1c1d17;
+    --color-surface-raised: #1a1b15;
+    --color-text: #f4f3ea;
+    --color-text-secondary: #b9b8ad;
+    --color-text-tertiary: #8b8a7f;
+    --color-border: #2c2d25;
+    --color-border-strong: #43443a;
+    --color-border-hairline: #232419;
+    --color-accent: #94aaff;
+    --color-accent-hover: #b3c1ff;
+    --color-accent-soft: #1b2545;
+    --color-accent-contrast: #0b1024;
+    --color-success: #4ade80;
+    --color-warning: #eab308;
+    --color-danger: #f87171;
+    --color-code-bg: #16170f;
+    --scroll-hint: rgba(0, 0, 0, 0.55);
+    color-scheme: dark;
+  }
+}
+
+/* ----- Reset & base ------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scrollbar-color: var(--color-border-strong) transparent;
+  /* Anchor targets land clear of the sticky header. `scroll-margin-top` on
+     headings covers the article body; this covers every other anchor target —
+     outline links, topic sections, the skip link — from one place. */
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+  /* Keeps the layout from shifting sideways when a short page is replaced by a
+     scrolling one during navigation. */
+  scrollbar-gutter: stable;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern", "liga", "cv05", "ss01";
+}
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+  text-decoration-skip-ink: auto;
+  transition: color var(--duration-fast) var(--ease-standard),
+    text-decoration-color var(--duration-fast) var(--ease-standard);
+}
+a:hover {
+  color: var(--color-accent-hover);
+  text-decoration-color: currentColor;
+}
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ----- Skip link & a11y helpers ------------------------------------------ */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 0 0 var(--radius-sm) 0;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+.skip-link:focus {
+  left: 0;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ----- Reading progress (plan §18.3) ------------------------------------- */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 60;
+  pointer-events: none;
+  background: transparent;
+}
+.reading-progress__bar {
+  height: 100%;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
+  transition: transform 80ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reading-progress {
+    display: none;
+  }
+}
+
+/* ----- Shell & header ----------------------------------------------------- */
+.shell {
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  /* Respect notch/rounded-display safe areas on mobile. */
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+}
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--color-canvas) 82%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  height: var(--header-h);
+}
+.wordmark {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  font-size: 1.08rem;
+  color: var(--color-text);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+  flex: none;
+}
+.wordmark:hover {
+  color: var(--color-accent);
+}
+.wordmark__mark {
+  color: var(--color-accent);
+  flex: none;
+}
+.primary-nav {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: var(--space-3);
+}
+.primary-nav a {
+  position: relative;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+.primary-nav a:hover {
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
+}
+.primary-nav a[aria-current="page"] {
+  color: var(--color-text);
+}
+.header-spacer {
+  flex: 1;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+/* ----- Footer ------------------------------------------------------------- */
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-9);
+  padding-block: var(--space-8) var(--space-7);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+.site-footer a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+.site-footer a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* ----- Home (plan §6.3) --------------------------------------------------- */
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin: 0 0 var(--space-4);
+}
+.home-hero {
+  padding-block: clamp(3rem, 7vw, 6rem) var(--space-7);
+  max-width: 46rem;
+}
+.home-hero h1 {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: var(--text-title);
+  line-height: 1.02;
+  letter-spacing: -0.033em;
+  margin: 0 0 var(--space-5);
+  text-wrap: balance;
+}
+.home-hero p {
+  font-family: var(--font-reader);
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin: 0;
+  max-width: var(--measure-lead);
+}
+
+.section-block {
+  padding-block: var(--space-7);
+  border-top: 1px solid var(--color-border);
+}
+.section-block__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+.section-block__head h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.article-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+/* The whole row is the target, not just the title (plan §6.4: editorial rows).
+   The click area comes from a stretched pseudo-element on the title anchor, so
+   the row stays a single real link — keyboard focus, middle-click, and
+   open-in-new-tab all keep working, and no JavaScript is involved. */
+.article-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+  padding-block: var(--space-5);
+  padding-inline: var(--space-3);
+  margin-inline: calc(var(--space-3) * -1);
+  border-radius: var(--radius-md);
+  transition: background var(--duration-normal) var(--ease-standard);
+}
+/* The row is pulled 12px outside the page axis so its hover background can
+   bleed past the text. The separator must not follow it there: a `border-top`
+   on the row itself drew a line 12px wider on each side than the `border-top`
+   of the enclosing `.section-block`, so list separators visibly overhung the
+   section rules above them. Insetting the rule by the same padding puts it back
+   on the axis, where every other horizontal rule on the site sits. */
+.article-row::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: var(--space-3);
+  border-top: 1px solid var(--color-border-hairline);
+}
+.article-row:first-child::before {
+  content: none;
+}
+.article-row__title a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+/* Anything else interactive in the row must sit above the stretched area. */
+.article-row__topics {
+  position: relative;
+  z-index: 1;
+}
+@media (hover: hover) {
+  .article-row:has(.article-row__title a:hover) {
+    background: var(--color-surface-subtle);
+  }
+}
+/* The row is one link, so the focus ring belongs to the row, not to the text. */
+.article-row:has(.article-row__title a:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.article-row__title a:focus-visible {
+  outline: none;
+}
+.article-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.01em;
+}
+.article-row__title {
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: -0.017em;
+  line-height: 1.22;
+  margin: 0;
+}
+.article-row__title a {
+  color: var(--color-text);
+  text-decoration: none;
+  background-image: linear-gradient(var(--color-accent), var(--color-accent));
+  background-size: 0% 1.5px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size var(--duration-normal) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+  padding-bottom: 1px;
+}
+.article-row__title a:hover {
+  color: var(--color-accent);
+  background-size: 100% 1.5px;
+}
+.article-row__desc {
+  color: var(--color-text-secondary);
+  font-family: var(--font-reader);
+  font-size: 1.02rem;
+  line-height: 1.58;
+  max-width: var(--measure);
+  margin: 0;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle);
+  text-decoration: none;
+  letter-spacing: 0.01em;
+}
+
+.featured {
+  display: grid;
+  gap: var(--space-5);
+  padding-block: var(--space-7) var(--space-8);
+}
+.featured__hero {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface-subtle);
+  box-shadow: var(--shadow-md);
+}
+.featured__hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.featured__title {
+  font-family: var(--font-ui);
+  font-size: var(--text-3xl);
+  font-weight: 680;
+  letter-spacing: -0.028em;
+  line-height: 1.06;
+  margin: 0;
+  text-wrap: balance;
+}
+.featured__title a {
+  color: var(--color-text);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+.featured__title a:hover {
+  color: var(--color-accent);
+}
+
+/* ----- Article layout (plan §8.3, §6.5) ---------------------------------- */
+.article-shell {
+  padding-block: var(--space-7) var(--space-9);
+}
+/* Symmetric three-track grid: the reading column is centred by equal flexible
+   margins, and the outline rail lives inside the right margin. Because the rail
+   never consumes the centre track, showing or hiding it does not move the text
+   — the column stays exactly `--measure` wide and centred at every viewport
+   width and zoom level. (The previous asymmetric grid left 140–230px of dead
+   space between 1024–1200px, which is where a 1366px screen at 125% OS scaling
+   lands at 100% browser zoom.) */
+/* Reading column and outline rail are laid out as one composition and centred
+   together.
+
+   The previous grid was `1fr | measure | 1fr`, which centred the *reading
+   column* in the viewport and let the rail sit inside the right margin. The
+   tracks were equal, but only one of them had anything in it: on a 1920px
+   screen that left a 320px empty track on the left while the right held the
+   rail, so the page read as heavily lopsided and the text began roughly a third
+   of the way across the screen.
+
+   Sizing the tracks to their content and centring the pair gives equal,
+   deliberate margins on both sides.
+
+   Neither centring nor start-aligning the pair works, because both leave the
+   surplus width sitting somewhere: centring put 155–228px of nothing to the
+   left of the text (and left the article visibly indented from its own site
+   header), and start-aligning moved the whole surplus to the right instead, so
+   the right-hand side read as empty.
+
+   The fix is to stop distributing surplus at all. The middle track is the gap
+   and it absorbs whatever is left, so the reading column is flush with the
+   start of the shell and the outline rail is flush with its end — the same axis
+   as the header, the footer, the home page and every section list, on both
+   sides. Nothing is left over to pool at either edge. */
+.article-layout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--measure))
+    minmax(2rem, 1fr)
+    minmax(0, var(--side-rail));
+  align-items: start;
+}
+.article-main {
+  grid-column: 1;
+  min-width: 0;
+}
+.article-rail {
+  grid-column: 3;
+  justify-self: start;
+  inline-size: min(var(--side-rail), 100%);
+  position: sticky;
+  top: calc(var(--header-h) + 24px);
+  align-self: start;
+  max-height: calc(100vh - var(--header-h) - 48px);
+  overflow-y: auto;
+  padding-block: 2px;
+}
+
+/* The three-column composition needs reading measure + minimum gap + rail =
+   38 + 2 + 15 = 55rem of content, which a 60rem viewport supplies once the page
+   gutters are taken off. Below that the rail is dropped for the collapsible
+   inline outline.
+
+   The shell narrows to the reading width at the same moment. Without that the
+   article would sit in a shell far wider than its single column and the surplus
+   would pool on one side again — the very problem the three-column grid solves
+   above. Narrowing the shell moves the header, footer, home page and section
+   lists in with it, so the whole site keeps one alignment axis and both edges
+   stay flush at every width. */
+@media (max-width: 60rem) {
+  :root {
+    --shell-max: 44rem;
+  }
+  .article-rail {
+    display: none;
+  }
+  /* One column, centred: the narrowed shell leaves at most ~50px of surplus, so
+     splitting it evenly keeps both margins equal without pushing the text
+     noticeably off the header's axis. */
+  .article-layout {
+    grid-template-columns: minmax(0, var(--measure));
+    justify-content: center;
+  }
+}
+
+/* Short articles render no rail at all (see `showOutline`). Without this the
+   grid would still reserve the rail track and push the text off centre. */
+.article-layout:not(:has(.article-rail)) {
+  grid-template-columns: minmax(0, var(--measure));
+  justify-content: center;
+}
+
+/* Large displays. The reading measure is fixed by typography and must not grow
+   with the viewport (plan §7.5), so the margins on a wide monitor are inherent:
+   text is centred, and `textStart = viewport/2 − composition/2`. The only
+   honest lever is the composition itself, so the rail and the gap between the
+   two columns grow a little — the outline gets room for longer headings, and
+   the page reads as a deliberate spread rather than a narrow strip adrift in
+   whitespace. */
+@media (min-width: 100rem) {
+  :root {
+    --side-rail: 17rem;
+  }
+  .article-layout {
+    column-gap: 6rem;
+  }
+}
+
+.breadcrumb {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-5);
+}
+.breadcrumb a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+.breadcrumb a:hover {
+  color: var(--color-accent);
+}
+.article-title {
+  font-family: var(--font-ui);
+  font-size: var(--text-title);
+  line-height: 1.03;
+  letter-spacing: -0.035em;
+  font-weight: 720;
+  margin: 0 0 var(--space-5);
+  text-wrap: balance;
+}
+.article-deck {
+  font-family: var(--font-reader);
+  font-size: var(--text-lg);
+  line-height: 1.48;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-6);
+  max-width: var(--measure-lead);
+}
+.article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: center;
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--color-border);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-6);
+}
+.article-meta__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.article-meta__item + .article-meta__item::before {
+  content: "";
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+  margin-inline-end: var(--space-2);
+}
+.article-hero {
+  margin: var(--space-6) 0 var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface-subtle);
+  box-shadow: var(--shadow-md);
+}
+.article-hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ----- Prose contract (plan §7.5) ---------------------------------------- */
+.article-body {
+  font-family: var(--font-reader);
+  font-size: var(--text-body);
+  line-height: 1.7;
+  letter-spacing: -0.003em;
+  color: var(--color-text);
+  font-feature-settings: "kern", "liga", "onum", "pnum";
+}
+/* Fixed paragraph measure — never varies with viewport above the breakpoint. */
+.article-body > * {
+  inline-size: min(100%, var(--measure));
+}
+.article-body p {
+  margin-block: 0 1.3em;
+  overflow-wrap: break-word;
+}
+.article-body > p:first-of-type {
+  margin-top: 0;
+}
+.article-body h2,
+.article-body h3,
+.article-body h4,
+.article-body h5,
+.article-body h6 {
+  position: relative;
+  font-family: var(--font-ui);
+  scroll-margin-top: calc(var(--header-h) + 20px);
+  color: var(--color-text);
+  text-wrap: balance;
+}
+.article-body h2 {
+  margin-block: 3.25rem 1rem;
+  font-size: var(--text-h2);
+  line-height: 1.2;
+  letter-spacing: -0.021em;
+  font-weight: 660;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+.article-body h3 {
+  margin-block: 2.25rem 0.7rem;
+  font-size: var(--text-h3);
+  line-height: 1.28;
+  letter-spacing: -0.016em;
+  font-weight: 630;
+}
+.article-body h4 {
+  margin-block: 1.75rem 0.45rem;
+  font-size: var(--text-h4);
+  line-height: 1.35;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+}
+.article-body h5 {
+  font-family: var(--font-ui);
+  margin-block: 1.5rem 0.4rem;
+  font-size: var(--text-h5);
+  line-height: 1.4;
+  font-weight: 620;
+  letter-spacing: -0.006em;
+}
+.article-body h6 {
+  font-family: var(--font-ui);
+  margin-block: 1.35rem 0.35rem;
+  font-size: var(--text-h6);
+  line-height: 1.45;
+  font-weight: 620;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.article-body h1 {
+  font-family: var(--font-ui);
+  font-size: var(--text-h1);
+  margin-block: 3rem 1rem;
+  line-height: 1.15;
+  letter-spacing: -0.024em;
+  font-weight: 680;
+}
+/* Heading anchor affordance (build-time autolink) */
+.article-body .heading-anchor {
+  position: absolute;
+  left: -1.25em;
+  top: 0;
+  width: 1.1em;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+  font-weight: 500;
+}
+.article-body :is(h2, h3, h4):hover .heading-anchor,
+.article-body .heading-anchor:focus-visible {
+  opacity: 1;
+}
+.article-body .heading-anchor:hover {
+  color: var(--color-accent);
+}
+.article-body .heading-anchor.is-copied::after {
+  content: "Copied";
+  position: absolute;
+  left: 1.4em;
+  top: 0.1em;
+  font-family: var(--font-ui);
+  font-size: 0.6em;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .article-body .heading-anchor {
+    display: none;
+  }
+}
+
+.article-body ul,
+.article-body ol {
+  margin-block: 0 1.3em;
+  padding-inline-start: 1.5em;
+}
+.article-body li {
+  margin-block: 0.45em;
+  padding-inline-start: 0.15em;
+}
+.article-body li::marker {
+  color: var(--color-text-tertiary);
+}
+.article-body blockquote {
+  margin: 2rem 0;
+  padding: 0.25rem 0 0.25rem 1.35rem;
+  border-inline-start: 3px solid var(--color-accent);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+.article-body blockquote p:last-child {
+  margin-bottom: 0;
+}
+.article-body strong {
+  font-weight: 640;
+  color: var(--color-text);
+}
+.article-body a {
+  font-weight: 500;
+}
+.article-body hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin-block: var(--space-8);
+}
+
+/* Body images (plan §15.3) — align to the reading column, framed like figures. */
+.article-body picture.content-image {
+  display: block;
+  margin-block: 2rem;
+}
+.article-body picture.content-image img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.article-body p > picture.content-image {
+  margin-block: 0;
+}
+
+/* Inline code + code blocks (plan §13) */
+.article-body :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-code-bg);
+  border: 1px solid var(--color-border-hairline);
+  border-radius: 5px;
+  padding: 0.12em 0.38em;
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+}
+.article-body figure.code-block {
+  margin: 2rem 0;
+  inline-size: min(100%, var(--measure));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-code-bg);
+  box-shadow: var(--shadow-sm);
+}
+.code-block__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-border-hairline);
+  background: color-mix(in srgb, var(--color-surface-subtle) 60%, transparent);
+}
+.code-block__lang {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.code-copy {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 550;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.code-copy:hover {
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+.code-copy.is-copied {
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-border));
+}
+.article-body figure.code-block pre {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  background: transparent;
+}
+.article-body pre code {
+  font-family: var(--font-mono);
+  font-size: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  white-space: pre;
+}
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+  background-color: transparent !important;
+}
+:root[data-theme="dark"] .shiki,
+:root[data-theme="dark"] .shiki span {
+  color: var(--shiki-dark) !important;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .shiki,
+  :root:not([data-theme="light"]) .shiki span {
+    color: var(--shiki-dark) !important;
+  }
+}
+
+/* Tables (plan §14) */
+.article-body .table-scroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  margin-block: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  /* The edge-fade gradients below paint `--color-surface`, so the container
+     must actually sit on that colour — otherwise the fade reads as a mismatched
+     band against the page canvas, which is obvious in dark mode. */
+  background-color: var(--color-surface);
+}
+.article-body table {
+  inline-size: max-content;
+  min-inline-size: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.article-body th,
+.article-body td {
+  padding: 0.6rem 0.95rem;
+  border-bottom: 1px solid var(--color-border-hairline);
+  text-align: left;
+  vertical-align: top;
+}
+.article-body thead th {
+  background: var(--color-surface-subtle);
+  font-weight: 620;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border-strong);
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+}
+.article-body tbody tr:last-child td {
+  border-bottom: none;
+}
+.article-body tbody tr {
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.article-body tbody tr:hover {
+  background: color-mix(in srgb, var(--color-accent-soft) 40%, transparent);
+}
+/* A single long equation must not set the width of the whole table.
+
+   The table is sized `max-content`, so its widest cell decides how wide it
+   gets — and in this corpus that cell is routinely a 300–400 character
+   `\displaystyle` expression, which KaTeX lays out on one unbreakable line.
+   One such cell stretched the table far past the reading column, so every
+   short row trailed a wide band of empty `--color-surface`; against the dark
+   theme that band reads as a large black panel, which is what the table
+   appeared to be.
+
+   Maths cannot wrap, so the equation gets its own scroller inside the cell.
+   Capping the inline-block is what actually shrinks the table: an element's
+   contribution to `max-content` is bounded by its own maximum size, so the
+   column stops being sized by the longest formula.
+
+   The cap is a length rather than a percentage because a percentage maximum
+   resolves against a cell whose width is itself still being computed, which
+   browsers treat as cyclic and ignore during intrinsic sizing. `80vw` keeps it
+   inside the viewport on phones. */
+.article-body td .katex,
+.article-body th .katex {
+  display: inline-block;
+  max-inline-size: min(26rem, 80vw);
+  overflow-x: auto;
+  /* With `overflow-x` set, a `visible` block axis computes to `auto` and would
+     add a stray vertical scrollbar next to tall constructs; the box is sized to
+     its content, so clipping the block axis removes the scrollbar without
+     cutting anything off. */
+  overflow-y: hidden;
+  vertical-align: middle;
+}
+
+.article-body td[align="right"],
+.article-body th[align="right"] {
+  text-align: right;
+}
+.article-body td[align="center"],
+.article-body th[align="center"] {
+  text-align: center;
+}
+
+/* Math (plan §11.5) */
+/* Display equations.
+   `padding-block` gives the horizontal scroller a little vertical slack so a
+   tall construct (matrices, nested fractions) is not clipped by the implied
+   `overflow-y`. */
+.article-body .katex-display {
+  margin-block: 1.4rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.4rem;
+}
+
+/* A run of consecutive equations is a single derivation and should read as one
+   unit, set closer together than the space separating maths from prose.
+   This corpus is dominated by such runs — 249 of 324 equations in the largest
+   article are immediately followed by another — and at the previous 2rem
+   margin each pair carried ~51px of gap, which stretched a derivation over
+   several screens and made the relationship between consecutive steps hard to
+   see.
+
+   Margins collapse, so both sides of the pair have to be set: giving only the
+   second element a smaller top margin would still collapse to the first
+   element's larger bottom margin. Without `:has()` support the rule degrades
+   to the reduced base spacing above, which is still correct. */
+.article-body .katex-display:has(+ .katex-display) {
+  margin-block-end: 0.7rem;
+}
+.article-body .katex-display + .katex-display {
+  margin-block-start: 0.7rem;
+}
+.article-body .katex {
+  font-size: 1.04em;
+}
+.katex-error {
+  color: var(--color-danger);
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  white-space: pre-wrap;
+}
+
+/* ----- Equation numbers --------------------------------------------------
+   KaTeX renders `\tag{A.1}` as `<span class="tag">`, absolutely positioned at
+   the right edge of the equation block.
+
+   That class name collides with a design-system class: this stylesheet used to
+   define a generic `.tag` for the article-type pill, so every equation number
+   in the corpus was painted as a bordered, padded, pill-shaped chip on top of
+   the equation it labelled. The pill is now `.pill`; see the collision guard in
+   `tests/design-system.test.ts`.
+
+   `min-inline-size: max-content` makes the block grow with a wide equation, so
+   `right: 0` lands *after* the equation instead of on top of it, and the
+   reserved end padding keeps a gap between the two. */
+.article-body .katex-display > .katex > .katex-html {
+  min-inline-size: max-content;
+  padding-inline-end: 3.5rem;
+}
+.article-body .katex-display > .katex > .katex-html > .tag {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  /* Narrow screens cannot spare 3.5rem; the equation scrolls instead. */
+  .article-body .katex-display > .katex > .katex-html {
+    padding-inline-end: 2.5rem;
+  }
+  .article-body .katex-display > .katex > .katex-html > .tag {
+    font-size: var(--text-xs);
+  }
+}
+
+/* Wide-content breakout (plan §8.4) */
+/* Wide breakout is a desktop affordance only. `100vw` includes the classic
+   scrollbar, so using it on narrow screens pushes content past the viewport;
+   below the rail threshold the element simply fills the reading column. */
+.article-body .article-wide {
+  inline-size: 100%;
+}
+@media (min-width: 60.01rem) {
+  .article-body .article-wide {
+    inline-size: min(var(--wide-content-max), calc(100dvw - 2 * var(--page-gutter)));
+    max-inline-size: 100dvw;
+    margin-inline: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* ----- Outline rail (plan §18.2) ----------------------------------------- */
+.outline__label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-3);
+}
+.outline nav ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--color-border);
+}
+.outline li a {
+  display: block;
+  padding: 5px 0 5px 14px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--color-text-tertiary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.outline li a:hover {
+  color: var(--color-text);
+}
+.outline li a[data-depth="3"] {
+  padding-left: 26px;
+  font-size: 0.78rem;
+}
+.outline li a[aria-current="true"] {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  font-weight: 550;
+}
+.only-narrow {
+  display: none;
+}
+@media (max-width: 60rem) {
+  .only-narrow {
+    display: block;
+  }
+}
+.outline--inline {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-7);
+  background: var(--color-surface-subtle);
+}
+.outline--inline > summary {
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+/* ----- References + prev/next -------------------------------------------- */
+.article-references {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+/* `.article-references h2` is styled together with `.article-related h2` in the
+   related/prev-next block below. */
+.article-references ol {
+  padding-inline-start: 1.4em;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.article-references li {
+  margin-block: 0.5rem;
+}
+.article-references a {
+  overflow-wrap: anywhere;
+}
+
+.prev-next {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-top: var(--space-7);
+}
+@media (max-width: 640px) {
+  .prev-next {
+    grid-template-columns: 1fr;
+  }
+}
+.prev-next__link {
+  display: block;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text);
+  background: var(--color-surface);
+  transition: border-color var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard),
+    transform var(--duration-normal) var(--ease-standard);
+}
+.prev-next__link:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.prev-next .dir {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.prev-next .t {
+  display: block;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: var(--space-2);
+  line-height: 1.3;
+}
+
+/* =============================================================================
+   Responsive, orientation, and rendering performance (plan §8, §21)
+   ========================================================================== */
+
+/* ----- Render performance -------------------------------------------------
+   A single article carries ~19k KaTeX nodes / ~2.8 MB of DOM. Skipping layout
+   and paint for off-screen technical blocks keeps first render and scrolling
+   smooth on mid-tier mobile. `auto` intrinsic sizing remembers the last real
+   height, so scrollbar position stays stable. */
+/* NO CSS containment on article content.
+   `content-visibility: auto` implies `contain: size layout style paint`, which
+   forces an off-screen element to a fixed placeholder height. Display maths
+   varies enormously in height (matrices, `aligned`, `\boxed{}` run 200–400px),
+   so a placeholder clips and overlaps equations and makes scrolling jump; the
+   same containment also breaks `position: sticky` table headers. Correctness
+   beats the micro-optimisation here — the pages are static HTML and browsers
+   handle them fine without it. Do not reintroduce containment on .katex*,
+   .table-scroll or code blocks. */
+
+/* Never let a wide child scroll the whole page sideways. `clip` (unlike
+   `hidden`) does not create a scroll container, so sticky positioning still
+   works for the header and outline rail. */
+body {
+  overflow-x: clip;
+}
+
+/* Momentum + contained scrolling for every horizontally scrollable region. */
+.article-body .table-scroll,
+.article-body figure.code-block pre,
+.article-body .katex-display {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+/* Scroll-shadow affordance so it is obvious a table can be scrolled. */
+.article-body .table-scroll {
+  background-image:
+    linear-gradient(to right, var(--color-surface), transparent),
+    linear-gradient(to left, var(--color-surface), transparent),
+    linear-gradient(to right, var(--scroll-hint), transparent),
+    linear-gradient(to left, var(--scroll-hint), transparent);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 32px 100%, 32px 100%, 12px 100%, 12px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/* ----- Pointer capability -------------------------------------------------
+   Hover effects are applied only where hover truly exists, so touch devices
+   don't get "stuck" hover states after a tap. */
+@media (hover: none) {
+  .prev-next__link:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--color-border);
+  }
+  .article-body tbody tr:hover {
+    background: transparent;
+  }
+  .article-row__title a:hover {
+    background-size: 0% 1.5px;
+  }
+  /* Anchors are hover-revealed on desktop; keep them hidden on touch. */
+  .article-body .heading-anchor {
+    display: none;
+  }
+}
+
+/* Comfortable touch targets (plan §20: 44×44 where feasible). */
+@media (pointer: coarse) {
+  .primary-nav a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+  /* Height only: the trigger still carries its label on wide touch screens, and
+     a fixed width would clip it. */
+  .search-trigger {
+    height: 44px;
+  }
+  .button {
+    min-height: 44px;
+  }
+  .outline li a {
+    padding-block: 9px;
+  }
+  .code-copy {
+    padding: 8px 14px;
+  }
+  .nav-sheet li a {
+    min-height: 44px;
+  }
+  .search-results > li > a {
+    padding-block: var(--space-4);
+  }
+  .site-footer__nav ul {
+    gap: var(--space-3);
+  }
+  .topic-chip {
+    min-height: 44px;
+  }
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ----- Orientation (plan §8.5) --------------------------------------------
+   Short landscape viewports (phones/tablets rotated) have very little vertical
+   room: release the sticky header and drop the outline rail rather than
+   squeezing the reading measure below a usable width. */
+@media (orientation: landscape) and (max-height: 560px) {
+  /* Narrow the shell alongside dropping the rail, for the same reason as the
+     60rem rule: a single column in a wide shell leaves surplus pooling on one
+     side. */
+  :root {
+    --shell-max: 44rem;
+  }
+  .site-header {
+    position: static;
+  }
+  .article-rail {
+    display: none;
+  }
+  .article-layout {
+    grid-template-columns: minmax(0, var(--measure));
+    justify-content: center;
+  }
+  .home-hero {
+    padding-block: var(--space-6) var(--space-5);
+  }
+  .article-shell {
+    padding-block: var(--space-5) var(--space-7);
+  }
+  .reading-progress {
+    display: none;
+  }
+}
+
+/* The old landscape-tablet rule that dropped the rail up to 1180px is gone.
+   It predated the three-column grid, where the middle track absorbs surplus and
+   the reading measure is fixed — so a 1024px landscape tablet now holds the
+   full composition comfortably. Keeping it would have hidden the rail while the
+   shell stayed wide, pooling the surplus on one side between 60rem and 1180px:
+   exactly the imbalance this layout exists to remove. */
+
+/* ----- Small screens ------------------------------------------------------ */
+/* Tablet step of the fixed scale. */
+@media (max-width: 1024px) {
+  :root {
+    --text-title: 2.125rem; /* 34px */
+    --text-h1: 1.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Step the whole scale down together so the ratio is preserved. */
+  :root {
+    --header-h: 56px;
+    --text-body: 1rem; /* 16px */
+    --text-h6: 0.875rem;
+    --text-h5: 0.9375rem;
+    --text-h4: 1.0625rem;
+    --text-h3: 1.1875rem;
+    --text-h2: 1.375rem;
+    --text-h1: 1.5625rem;
+    --text-title: 1.875rem; /* 30px */
+    --text-lg: 1.0625rem;
+    --text-xl: 1.1875rem;
+  }
+  .article-shell {
+    padding-block: var(--space-5) var(--space-8);
+  }
+  .article-body {
+    line-height: 1.68;
+  }
+  .article-body h2 {
+    margin-block: 2.5rem 0.8rem;
+  }
+  .article-body h3 {
+    margin-block: 1.85rem 0.55rem;
+  }
+  .article-meta {
+    gap: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+  }
+  /* Dot separators crowd a wrapped two-line meta row on narrow screens. */
+  .article-meta__item + .article-meta__item::before {
+    display: none;
+  }
+  .article-hero,
+  .featured__hero {
+    border-radius: var(--radius-md);
+  }
+  .article-body figure.code-block pre {
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.82rem;
+  }
+  .article-body table {
+    font-size: 0.8rem;
+  }
+  .article-body th,
+  .article-body td {
+    padding: 0.5rem 0.7rem;
+  }
+  .site-footer {
+    padding-block: var(--space-6);
+  }
+  .home-hero {
+    padding-block: var(--space-7) var(--space-6);
+  }
+}
+
+/* ----- Mobile robustness --------------------------------------------------
+   Guarantee nothing can push the page sideways, and keep dense technical
+   content legible rather than letting it dictate the layout. */
+@media (max-width: 1024px) {
+  /* Any element that can carry oversized content is clamped to the column. */
+  .article-body img,
+  .article-body svg,
+  .article-body video,
+  .article-body iframe,
+  .article-body pre,
+  .article-body table,
+  .article-body .table-scroll,
+  .article-body figure {
+    max-inline-size: 100%;
+  }
+  /* Long unbroken tokens (URLs, identifiers) must wrap instead of overflowing. */
+  .article-body p,
+  .article-body li,
+  .article-body td,
+  .article-body th,
+  .article-references li {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+  /* Display equations get their own scroller with a visible edge hint. */
+  .article-body .katex-display {
+    padding-inline: 2px;
+  }
+  .article-body .katex {
+    font-size: 0.98em;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Dense equations are the most common source of sideways scroll on phones. */
+  .article-body .katex {
+    font-size: 0.92em;
+  }
+  /* Vertical space is scarcer on a phone, so close the runs up a little more. */
+  .article-body .katex-display {
+    margin-block: 1.1rem;
+    padding-block: 0.3rem;
+  }
+  .article-body .katex-display:has(+ .katex-display) {
+    margin-block-end: 0.55rem;
+  }
+  .article-body .katex-display + .katex-display {
+    margin-block-start: 0.55rem;
+  }
+  .article-hero,
+  .featured__hero {
+    box-shadow: none;
+  }
+  /* Outline summary and copy controls need comfortable hit areas. */
+  .outline--inline > summary {
+    padding-block: 4px;
+  }
+}
+
+/* Very narrow (320px) — preserve edge space and keep everything legible. */
+@media (max-width: 380px) {
+  :root {
+    --page-gutter: 1rem;
+  }
+  .primary-nav {
+    gap: 0;
+    margin-left: 0;
+  }
+  .primary-nav a {
+    padding-inline: 7px;
+    font-size: var(--text-xs);
+  }
+  .wordmark {
+    font-size: 0.98rem;
+  }
+  .site-header__inner {
+    gap: var(--space-2);
+  }
+}
+
+/* =============================================================================
+   Route transition (plan §19.2). Opacity only — a transformed ancestor would
+   become the containing block for the fixed reading-progress bar. See
+   `app/template.tsx` for why this never runs on the first view.
+   ========================================================================== */
+.route-view--enter {
+  animation: route-in var(--duration-normal) var(--ease-standard) both;
+}
+@keyframes route-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-view--enter {
+    animation: none;
+  }
+}
+
+/* =============================================================================
+   Controls — one button system, used by the header, search, and page bodies.
+   Sized at 38px for pointer input and lifted to the 44px WCAG 2.2 target on
+   coarse pointers (see the `pointer: coarse` block below).
+   ========================================================================== */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+.icon-button:hover {
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-subtle);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-5);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 560;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.button:hover {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-text-tertiary);
+  color: var(--color-text);
+}
+.button--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+.button--primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-accent-contrast);
+}
+
+/* Press feedback. A small, fast scale confirms the tap on touch — where there
+   is no hover state to acknowledge it — without moving anything around it.
+   Applied only to controls that contain no fixed-position descendants, since a
+   transform would otherwise become their containing block. */
+@media (prefers-reduced-motion: no-preference) {
+  .button,
+  .icon-button,
+  .search-trigger,
+  .topic-chip,
+  .section-grid a,
+  .prev-next__link {
+    transition: background var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-normal) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-standard);
+  }
+  .button:active,
+  .icon-button:active,
+  .search-trigger:active,
+  .topic-chip:active,
+  .section-grid a:active,
+  .prev-next__link:active {
+    transform: scale(0.985);
+  }
+}
+
+/* A button that reads as inline text — used inside prose where the action is
+   part of a sentence and a boxed control would break the line. */
+.link-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: var(--color-accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link-button:hover {
+  color: var(--color-accent-hover);
+}
+
+/* ----- Theme control ------------------------------------------------------
+   The icon is selected by CSS from `data-theme-mode`, which the inline boot
+   script sets before first paint. That keeps the glyph correct in the
+   server-rendered HTML — there is no state for React to reconcile and no flash
+   of the wrong icon on hydration. */
+.theme-toggle__icon {
+  display: none;
+  line-height: 0;
+}
+:root:not([data-theme-mode]) .theme-toggle__icon--system,
+:root[data-theme-mode="system"] .theme-toggle__icon--system,
+:root[data-theme-mode="light"] .theme-toggle__icon--light,
+:root[data-theme-mode="dark"] .theme-toggle__icon--dark {
+  display: block;
+}
+
+/* ----- Navigation trigger (mobile) ---------------------------------------- */
+.nav-trigger {
+  display: none;
+}
+.nav-trigger__glyph {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 17px;
+}
+.nav-trigger__glyph > span {
+  display: block;
+  height: 1.6px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: transform var(--duration-normal) var(--ease-standard);
+}
+.nav-trigger__glyph[data-open] > span:first-child {
+  transform: translateY(3.3px) rotate(45deg);
+}
+.nav-trigger__glyph[data-open] > span:last-child {
+  transform: translateY(-3.3px) rotate(-45deg);
+}
+
+/* ----- Modal surfaces ----------------------------------------------------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  background: color-mix(in srgb, var(--color-canvas) 55%, rgba(0, 0, 0, 0.55));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: overlay-in var(--duration-fast) var(--ease-standard);
+}
+.overlay--top {
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(0.75rem, 6vh, 5rem) var(--page-gutter) var(--space-5);
+}
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.nav-sheet {
+  margin-left: auto;
+  inline-size: min(20rem, 100%);
+  block-size: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--color-surface);
+  border-inline-start: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-4) var(--space-5) var(--space-8);
+  /* Sheets extend under the browser chrome on mobile; keep content clear of it. */
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-8), env(safe-area-inset-bottom));
+  animation: sheet-in var(--duration-normal) var(--ease-emphasized);
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(12%);
+    opacity: 0.4;
+  }
+}
+.nav-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+.nav-sheet__title {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.nav-sheet ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.nav-sheet li + li {
+  border-top: 1px solid var(--color-border-hairline);
+}
+.nav-sheet li a {
+  display: block;
+  padding: var(--space-3) var(--space-2);
+  text-decoration: none;
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+}
+.nav-sheet li a:hover {
+  background: var(--color-surface-subtle);
+}
+.nav-sheet li a[aria-current="page"] .nav-sheet__label {
+  color: var(--color-accent);
+}
+.nav-sheet__label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.nav-sheet__desc {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* ----- Search trigger ----------------------------------------------------- */
+.search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 38px;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.search-trigger:hover {
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+.search-trigger__text {
+  padding-inline-end: var(--space-4);
+}
+.search-trigger__kbd,
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1;
+  padding: 3px 5px;
+  min-width: 1.35em;
+  text-align: center;
+  border: 1px solid var(--color-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--color-surface-subtle);
+  color: var(--color-text-tertiary);
+}
+.search-icon {
+  flex: none;
+}
+
+/* ----- Command palette ---------------------------------------------------- */
+.palette {
+  display: flex;
+  flex-direction: column;
+  inline-size: min(42rem, 100%);
+  max-block-size: min(34rem, calc(100dvh - 8vh));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: palette-in var(--duration-normal) var(--ease-emphasized);
+}
+@keyframes palette-in {
+  from {
+    transform: translateY(-6px) scale(0.99);
+    opacity: 0;
+  }
+}
+.palette__field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-tertiary);
+}
+.palette__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  /* 16px minimum: iOS Safari zooms the viewport on focus for anything smaller. */
+  font-size: 1rem;
+  padding-block: var(--space-2);
+}
+.palette__input:focus {
+  outline: none;
+}
+.palette__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+/* The field owns the focus ring; the bare input inside would draw a second one. */
+.palette__field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+.palette__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-2);
+}
+.palette__hint {
+  margin: 0;
+  padding: var(--space-5);
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+.palette__hint--error {
+  color: var(--color-danger);
+}
+.palette__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--color-border-hairline);
+  background: var(--color-surface-subtle);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.palette__foot a {
+  white-space: nowrap;
+  font-weight: 550;
+}
+
+/* ----- Search results ----------------------------------------------------- */
+.search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.search-results > li > a {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+}
+.search-results > li > a:hover,
+.search-results > li[data-active="true"] > a {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-border-hairline);
+}
+.search-results > li[data-active="true"] > a {
+  border-color: var(--color-accent);
+}
+.search-result__crumb {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.01em;
+}
+.search-result__title {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+}
+.search-result__snippet {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-reader);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+mark {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+  /* Colour alone must not carry the distinction (plan §7.2). */
+  font-weight: 620;
+}
+
+/* ----- Search page -------------------------------------------------------- */
+.search-form {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.search-form__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+.search-status {
+  min-height: 1.5em;
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+.search-empty {
+  padding-block: var(--space-6) var(--space-8);
+  color: var(--color-text-secondary);
+  font-family: var(--font-reader);
+}
+
+/* ----- Page intros and prose pages ---------------------------------------- */
+.page-intro {
+  padding-block: clamp(2rem, 5vw, 3.5rem) var(--space-6);
+  max-width: 46rem;
+}
+.page-intro h1 {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: var(--text-title);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin: 0 0 var(--space-4);
+  text-wrap: balance;
+}
+.page-intro > p:last-child {
+  font-family: var(--font-reader);
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin: 0;
+  max-width: var(--measure-lead);
+}
+.page-intro .breadcrumb {
+  margin-bottom: var(--space-4);
+}
+
+/* Editorial pages written as JSX rather than compiled from Markdown reuse the
+   article reading contract, so /about reads exactly like an article. */
+.prose-page {
+  font-family: var(--font-reader);
+  font-size: var(--text-body);
+  line-height: 1.7;
+  color: var(--color-text);
+  padding-bottom: var(--space-8);
+}
+.prose-page > * {
+  inline-size: min(100%, var(--measure));
+}
+.prose-page h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-h2);
+  font-weight: 660;
+  letter-spacing: -0.021em;
+  line-height: 1.2;
+  margin-block: 3rem 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--color-border-hairline);
+}
+.prose-page p {
+  margin-block: 0 1.3em;
+}
+.prose-page ul {
+  margin-block: 0 1.3em;
+  padding-inline-start: 1.5em;
+}
+.prose-page li {
+  margin-block: 0.5em;
+}
+.prose-page li::marker {
+  color: var(--color-text-tertiary);
+}
+
+.section-heading {
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-2);
+}
+.section-block__more {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.section-block__count {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+.home-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6) !important;
+  max-width: none !important;
+}
+
+/* ----- Section grid ------------------------------------------------------- */
+.section-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+}
+.section-grid a {
+  display: block;
+  height: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-decoration: none;
+  transition: border-color var(--duration-normal) var(--ease-standard),
+    background var(--duration-normal) var(--ease-standard);
+}
+.section-grid a:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-subtle);
+}
+.section-grid__label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 620;
+  letter-spacing: -0.017em;
+  color: var(--color-text);
+}
+.section-grid__count {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* ----- Topics ------------------------------------------------------------- */
+.topic-cloud {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-4) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.topic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  text-decoration: none;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+.topic-chip:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.topic-chip__label {
+  font-weight: 550;
+  color: var(--color-text);
+}
+.topic-chip__count {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+}
+
+/* ----- Tags as links ------------------------------------------------------ */
+.pill--link {
+  text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.pill--link:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.article-row__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+.article-meta__topics {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ----- Featured ----------------------------------------------------------- */
+.featured__body {
+  display: grid;
+  gap: var(--space-3);
+}
+.featured__desc {
+  font-family: var(--font-reader);
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: var(--measure-lead);
+}
+
+/* ----- Related + prev/next ------------------------------------------------ */
+.article-related {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+.article-related h2,
+.article-references h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-xl);
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-4);
+}
+.prev-next .ctx {
+  display: block;
+  margin-top: var(--space-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+.prev-next__link--next {
+  text-align: right;
+}
+
+/* ----- Footer layout ------------------------------------------------------ */
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  gap: var(--space-6) var(--space-7);
+  padding-bottom: var(--space-6);
+}
+.site-footer__wordmark {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  margin: 0 0 var(--space-2);
+}
+.site-footer__about p {
+  margin: 0;
+  max-width: var(--measure-short);
+}
+.site-footer__nav h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-3);
+}
+.site-footer__nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.site-footer__legal {
+  margin: 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border-hairline);
+  font-size: var(--text-xs);
+}
+
+/* =============================================================================
+   Responsive behaviour for the components above
+   ========================================================================== */
+
+/* Below this the inline nav can no longer hold its items at a legible size or a
+   44px touch target, so the same destinations move into the sheet. */
+@media (max-width: 56rem) {
+  .primary-nav {
+    display: none;
+  }
+  .nav-trigger {
+    display: inline-flex;
+  }
+  .site-footer__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .site-footer__about {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 40rem) {
+  /* The magnifier alone is unambiguous once the label costs more than it earns. */
+  .search-trigger__text,
+  .search-trigger__kbd {
+    display: none;
+  }
+  .search-trigger {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+  @media (pointer: coarse) {
+    .search-trigger {
+      width: 44px;
+    }
+  }
+  .palette {
+    max-block-size: calc(100dvh - 6vh);
+  }
+  .overlay--top {
+    padding: var(--space-3) var(--space-3) var(--space-5);
+  }
+  .home-hero__actions .button {
+    flex: 1 1 12rem;
+  }
+  .search-form {
+    flex-wrap: wrap;
+  }
+  .search-form__input {
+    flex-basis: 100%;
+  }
+  .search-form .button {
+    flex: 1;
+  }
+  .prev-next__link--next {
+    text-align: left;
+  }
+}
+
+@media (max-width: 30rem) {
+  .site-footer__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+  .nav-sheet {
+    inline-size: 100%;
+  }
+  /* At 320px the wordmark, search, theme, and menu controls no longer fit
+     together. The mark alone keeps the home link at full size; the accessible
+     name comes from the link's own text, which is only visually hidden. */
+  .wordmark__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .wordmark__mark {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* ----- Reduced motion ----------------------------------------------------
+   The global reduced-motion block neutralizes durations, but a keyframe that
+   starts at `opacity: 0` would still flash. Remove the animations outright. */
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .nav-sheet,
+  .palette {
+    animation: none;
+  }
+}
+
+/* ----- Forced colours / high contrast -------------------------------------
+   In forced-colors mode the browser replaces the palette, so borders drawn with
+   `color-mix` or theme tokens can vanish. Re-assert structure with system
+   colours (plan §20). */
+@media (forced-colors: active) {
+  .icon-button,
+  .button,
+  .search-trigger,
+  .palette,
+  .nav-sheet,
+  .section-grid a,
+  .topic-chip,
+  .article-body .table-scroll,
+  .article-body figure.code-block {
+    border: 1px solid CanvasText;
+  }
+  .search-results > li[data-active="true"] > a,
+  .outline li a[aria-current="true"] {
+    outline: 2px solid Highlight;
+  }
+  mark {
+    background: Highlight;
+    color: HighlightText;
+  }
+  .reading-progress__bar {
+    background: Highlight;
+  }
+}
+
+/* ----- Print (plan §24) --------------------------------------------------- */
+@media print {
+  .site-header,
+  .site-footer,
+  .article-rail,
+  .theme-toggle,
+  .icon-button,
+  .search-trigger,
+  .overlay,
+  .prev-next,
+  .article-related,
+  .skip-link,
+  .breadcrumb,
+  .reading-progress,
+  .code-copy,
+  .only-narrow {
+    display: none !important;
+  }
+  .article-layout {
+    display: block;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  /* Print the full measure rather than the on-screen reading column. */
+  .article-main,
+  .article-body > *,
+  .prose-page > * {
+    inline-size: auto;
+    max-inline-size: 100%;
+  }
+  .article-body figure.code-block,
+  .article-body .table-scroll,
+  .article-body figure,
+  .article-body .katex-display {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+  /* Never leave a heading stranded at the foot of a page (plan §24). */
+  .article-body :is(h1, h2, h3, h4, h5, h6) {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+  .article-body img {
+    max-height: 60vh;
+    object-fit: contain;
+  }
+  .article-body .heading-anchor {
+    display: none;
+  }
+  /* Expand every disclosure so no article content is hidden on paper. */
+  details {
+    display: block;
+  }
+  details > summary {
+    display: none;
+  }
+  /* Resolve external references, which a printed page cannot follow. */
+  .article-body a[href^="http"]::after,
+  .article-references a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.75em;
+    color: #444;
+    word-break: break-all;
+  }
+}

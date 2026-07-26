@@ -1,0 +1,104 @@
+import type { Metadata, Viewport } from "next";
+import { Inter, Source_Serif_4, IBM_Plex_Mono } from "next/font/google";
+import "katex/dist/katex.min.css";
+import "./globals.css";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
+import { site } from "@/lib/site";
+
+// Subset, swap-loaded, and exposed as CSS variables (plan §7.3).
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
+const serif = Source_Serif_4({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-serif",
+  style: ["normal", "italic"],
+});
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  variable: "--font-plex-mono",
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL(site.origin),
+  title: {
+    default: `${site.name} — ${site.tagline}`,
+    template: `%s · ${site.name}`,
+  },
+  description: site.shortDescription,
+  applicationName: site.name,
+  authors: [{ name: site.publisher }],
+  openGraph: {
+    type: "website",
+    siteName: site.name,
+    locale: "en_US",
+    title: `${site.name} — ${site.tagline}`,
+    description: site.shortDescription,
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${site.name} — ${site.tagline}`,
+    description: site.shortDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
+  alternates: {
+    canonical: "/",
+    types: { "application/rss+xml": [{ url: "/feed.xml", title: `${site.name} — all articles` }] },
+  },
+  formatDetection: { telephone: false, address: false, email: false },
+};
+
+/**
+ * `viewport-fit=cover` lets the shell's `env(safe-area-inset-*)` padding do its
+ * job on notched displays. `themeColor` is declared per scheme so the browser
+ * chrome matches the canvas in both themes.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fcfcf9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0f0c" },
+  ],
+};
+
+/**
+ * Applies the stored theme before first paint, so the page never flashes the
+ * wrong scheme. It also records the *mode* (`system` | `light` | `dark`) so the
+ * theme control can paint the right icon server-side (see `ThemeToggle`).
+ */
+const themeScript = `(function(){var r=document.documentElement;var m="system";try{var s=localStorage.getItem("na-theme");if(s==="dark"||s==="light")m=s;}catch(e){}r.setAttribute("data-theme-mode",m);if(m!=="system")r.setAttribute("data-theme",m);})();`;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html
+      lang={site.locale}
+      suppressHydrationWarning
+      className={`${inter.variable} ${serif.variable} ${mono.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body>
+        <a className="skip-link" href="#main">
+          Skip to content
+        </a>
+        <SiteHeader />
+        <main id="main">{children}</main>
+        <SiteFooter />
+      </body>
+    </html>
+  );
+}

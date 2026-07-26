@@ -76,7 +76,14 @@ web_modules/
 
 # Next.js build output
 .next
+.next-build
 out
+
+# Generated at build time by the content compiler from docs/**/assets
+/public/content-assets/
+
+# Generated image manifest + encode cache (rebuilt by the prebuild step)
+/build/
 
 # Nuxt.js build / generate output
 .nuxt
@@ -141,3 +148,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Claude Code per-machine permissions (local, not shared)
+.claude/settings.local.json
