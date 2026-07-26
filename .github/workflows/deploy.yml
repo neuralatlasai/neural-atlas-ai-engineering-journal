@@ -27,12 +27,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      # A project repository is served from https://<owner>.github.io/<repo>/.
-      # Both variables are derived from the repository so a rename or a fork
-      # cannot leave a stale URL baked into the canonical links and sitemap.
-      NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
-      NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io
     steps:
       - uses: actions/checkout@v4
 
@@ -55,8 +49,19 @@ jobs:
       # Runs prebuild (image optimization) and postbuild (verify-math,
       # audit-html). Any equation that fails to render, is published as raw TeX,
       # or any HTML audit error fails the job here.
+      # The deployment URL is scoped to this step deliberately, not set for the
+      # whole job. `lib/site.ts` reads the prefix at module load, so a job-level
+      # variable would also reach the unit tests and change the URLs they assert
+      # on — the suite would fail here while passing everywhere else. Tests cover
+      # the prefixed behaviour explicitly instead; see tests/site-basepath.test.ts.
+      #
+      # Both values derive from the repository so a rename or a fork cannot bake
+      # a stale URL into the canonical links and the sitemap.
       - name: Build and verify
         run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io
 
       - uses: actions/configure-pages@v5
 
