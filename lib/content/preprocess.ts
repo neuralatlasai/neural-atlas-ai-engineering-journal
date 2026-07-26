@@ -90,23 +90,47 @@ function braceDelta(line: string): number {
  * corpus breaks equations one token per line and an interval's `[` and `)` can
  * land on either side of a newline.
  */
-function literalBracketDelta(line: string, open: number): number {
-  let depth = open;
+export interface DelimiterState {
+  /** Literal `[` still awaiting a `]` or an interval-closing `)`. */
+  brackets: number;
+  /** Ordinary `(` still awaiting its `)`. */
+  parens: number;
+}
+
+/**
+ * Parentheses have to be tracked as well, not just counted as bracket closers.
+ *
+ * Treating every `)` as closing a literal bracket made ordinary function calls
+ * cancel real brackets: in a vector written
+ *
+ *     [
+ *     \cos(t\omega_0),\ldots
+ *     ]
+ *
+ * the `)` of `\cos(...)` closed the vector's `[`, so the block's terminator was
+ * found at the vector's `]` instead of its own — and everything after it,
+ * including the `\tag`, was published as raw TeX.
+ *
+ * A `)` closes a bracket only when no parenthesis is open. That keeps the
+ * mixed-delimiter interval form `[a,b)` working while leaving `f(x)` alone.
+ */
+function scanDelimiters(line: string, state: DelimiterState): DelimiterState {
+  let { brackets, parens } = state;
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
     if (char === "\\") {
       i++; // skip the escaped character
       continue;
     }
-    if (char !== "[" && char !== "]" && char !== ")") continue;
+    if (char !== "[" && char !== "]" && char !== "(" && char !== ")") continue;
     if (DELIMITER_COMMAND.test(line.slice(0, i))) continue; // a sized delimiter
-    if (char === "[") depth++;
-    else if (char === "]") depth = Math.max(0, depth - 1);
-    // A `)` is only a bracket closer while a literal bracket is open; anywhere
-    // else it is an ordinary parenthesis and says nothing about the terminator.
-    else if (depth > 0) depth--;
+    if (char === "[") brackets++;
+    else if (char === "]") brackets = Math.max(0, brackets - 1);
+    else if (char === "(") parens++;
+    else if (parens > 0) parens--;
+    else if (brackets > 0) brackets--; // interval: `[a,b)`
   }
-  return depth;
+  return { brackets, parens };
 }
 const SETEXT_SCAR = /^\s*[=]{3,}\s*$/; // a lone `=======` line inside math
 const HR_SCAR = /^\s*[-]{3,}\s*$/;
@@ -184,8 +208,16 @@ function repairMathFragment(s: string): string {
       // (e.g. `\operatorname{TopK}*{1024}` should be `…_{1024}`).
       .replace(/\*\{/g, "_{")
       // …and single-character subscripts into `*x` (e.g. `\mathcal B}*e` →
-      // `\mathcal B}_e`). Only between word characters, so `a * b` is safe.
-      .replace(/([}\w)])\*([A-Za-z0-9])/g, "$1_$2")
+      // `\mathcal B}_e`). The `*` must sit between a closing delimiter and an
+      // identifier, so a genuine `a * b` product is untouched.
+      //
+      // `|` and `]` are closers too: a norm writes its order as a subscript on
+      // the closing bar — `|E|_F`, `|a_k|_2` — and those were left as `|E|*F`
+      // because the character class only listed `}`, `)` and word characters.
+      // The subscript itself may be a control sequence rather than a plain
+      // character — `\operatorname{SwiGLU}*\ell` means `…_\ell`. Longer literal
+      // runs are left alone: those are the braced `*{…}` form handled above.
+      .replace(/([}\w)\]|])\*(\\[a-zA-Z]+|[A-Za-z0-9])/g, "$1_$2")
       // KaTeX has no `\textsc` / `\textsl`; unsupported control sequences render
       // as red error text inside an otherwise-fine equation.
       .replace(/\\textsc\b/g, "\\text")
@@ -200,11 +232,17 @@ function repairMathFragment(s: string): string {
       // KaTeX requires escaped braces after \left / \right.
       .replace(/\\left\s*\{/g, "\\left\\{")
       .replace(/\\right\s*\}/g, "\\right\\}")
-      // `\texttt{…}` string literals (chat-template tokens) carry `_ ^ % &`
-      // that KaTeX treats as operators; escape them inside the literal only, so
-      // alignment `&` outside stays intact.
-      // The lookbehind prevents double-escaping anything already escaped above.
-      .replace(/\\texttt\{([^{}]*)\}/g, (_m, inner: string) => `\\texttt{${inner.replace(/(?<!\\)([_^%&])/g, "\\$1")}}`)
+      // Text-mode groups hold prose and identifiers, not notation, yet KaTeX
+      // still reads `_ ^ % &` inside them as operators. A snake_case name in a
+      // comment — `\text{// fallback when n_decoding_steps absent}` — parses as
+      // a double subscript and fails the whole equation, so the reader gets raw
+      // TeX. Escaping applies only inside the group, leaving alignment `&`
+      // outside it intact; the lookbehind avoids double-escaping.
+      .replace(
+        /\\(text|textrm|textbf|textit|textsf|texttt)\{([^{}]*)\}/g,
+        (_m, command: string, inner: string) =>
+          `\\${command}{${inner.replace(/(?<!\\)([_^%&])/g, "\\$1")}}`,
+      )
       // A bare `#` is a macro-parameter token (e.g. `\texttt{<|system|># Tools}`).
       .replace(/(?<!\\)#/g, "\\#")
   );
@@ -534,15 +572,15 @@ export function preprocess(source: string): PreprocessResult {
       const body: string[] = [];
       let matched = false;
       let openGroups = 0;
-      let openBrackets = 0;
+      let delimiters: DelimiterState = { brackets: 0, parens: 0 };
       if (opened.head !== "") {
         body.push(opened.head);
         openGroups = Math.max(0, braceDelta(opened.head));
-        openBrackets = literalBracketDelta(opened.head, 0);
+        delimiters = scanDelimiters(opened.head, delimiters);
       }
       while (j < lines.length) {
         const current = lines[j];
-        if (DISPLAY_CLOSE.test(current) && openGroups === 0 && openBrackets === 0) {
+        if (DISPLAY_CLOSE.test(current) && openGroups === 0 && delimiters.brackets === 0) {
           matched = true;
           break;
         }
@@ -550,8 +588,12 @@ export function preprocess(source: string): PreprocessResult {
         // the ambiguous form at those keeps a stray `[` in prose from swallowing
         // the rest of the document up to some later block's `]`.
         if (trailing && (current.trim() === "" || /^\s*(#{1,6}\s|```|~~~)/.test(current))) break;
-        if (DISPLAY_CLOSE.test(current) && openBrackets > 0) openBrackets--;
-        else openBrackets = literalBracketDelta(current, openBrackets);
+        if (DISPLAY_CLOSE.test(current) && delimiters.brackets > 0) {
+          // Closes an inner literal bracket, not the block.
+          delimiters = { ...delimiters, brackets: delimiters.brackets - 1 };
+        } else {
+          delimiters = scanDelimiters(current, delimiters);
+        }
         openGroups = Math.max(0, openGroups + braceDelta(current));
         body.push(current);
         j++;

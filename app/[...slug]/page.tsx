@@ -36,6 +36,18 @@ import { ReadingProgress } from "@/components/ReadingProgress";
  * simply miss (`/apple-touch-icon.png`, `/site.webmanifest`, HMR probes) all
  * land on this route, and each one produced a server error.
  */
+/**
+ * Only the routes `generateStaticParams` produced are served; anything else is
+ * a 404. `resolve()` also calls `notFound()` for a path that matches no
+ * document, so an unknown slug is a 404 by both routes.
+ *
+ * This must be a literal. Next parses these exports statically and rejects any
+ * expression — `process.env.NODE_ENV !== "production"` fails the build with
+ * `Unsupported node type "BinaryExpression" at "dynamicParams"` — so it cannot
+ * be relaxed for development only. Newly added Markdown appears in listings
+ * immediately (the corpus cache is mtime-keyed), but its own page needs the dev
+ * server to re-evaluate this route.
+ */
 export const dynamicParams = false;
 
 export function generateStaticParams(): { slug: string[] }[] {

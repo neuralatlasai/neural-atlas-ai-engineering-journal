@@ -295,12 +295,45 @@ function createAssetResolver(sourcePath: string) {
 }
 
 let cache: ArticleMeta[] | null = null;
+let cacheSignature = "";
+
+/**
+ * Identity of the corpus on disk: every discovered path and its modification
+ * time. Cheap — a directory walk and a `stat` per file.
+ */
+function signatureOf(files: string[]): string {
+  return files
+    .map((file) => {
+      try {
+        return `${file}:${fs.statSync(file).mtimeMs}`;
+      } catch {
+        return `${file}:missing`;
+      }
+    })
+    .join("|");
+}
 
 export function getAllArticles(): ArticleMeta[] {
-  if (cache) return cache;
-
   const files: string[] = [];
   for (const root of CONTENT_ROOTS) walk(root, files);
+
+  /**
+   * A build reads a corpus that cannot change underneath it, so one constant
+   * signature is enough and discovery runs once.
+   *
+   * A dev server is different: the corpus is edited while it runs. Caching for
+   * the lifetime of the process meant a file added to a folder that already
+   * contained one stayed invisible — the existing article kept serving from the
+   * cached list while the new sibling 404'd — until the server was restarted.
+   * Keying the cache on modification times makes an edit, addition, or deletion
+   * take effect on the next request.
+   */
+  const signature =
+    process.env.NODE_ENV === "production" ? "immutable" : signatureOf(files);
+  if (cache && signature === cacheSignature) return cache;
+
+  // Rebuilding from scratch: diagnostics describe this pass only.
+  diagnostics.length = 0;
 
   const usedRoutes = new Set<string>();
   const articles: ArticleMeta[] = [];
@@ -440,6 +473,7 @@ export function getAllArticles(): ArticleMeta[] {
   );
 
   cache = articles;
+  cacheSignature = signature;
   return articles;
 }
 

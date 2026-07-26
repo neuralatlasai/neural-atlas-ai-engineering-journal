@@ -52,14 +52,25 @@
      breakpoints rather than fluid, so the rendered text size — and therefore
      the paragraph measure — is deterministic instead of varying continuously
      with viewport width. --- */
-  --text-body: 1.0625rem; /* 17px */
-  --text-h6: 0.9375rem; /* 15px */
-  --text-h5: 1rem; /* 16px */
-  --text-h4: 1.125rem; /* 18px */
-  --text-h3: 1.3125rem; /* 21px */
-  --text-h2: 1.5rem; /* 24px */
-  --text-h1: 1.875rem; /* 30px */
-  --text-title: 2.5rem; /* 40px — page/article title */
+  --text-body: 1rem; /* 16px */
+  --text-h6: 0.8125rem; /* 13px */
+  --text-h5: 0.875rem; /* 14px */
+  --text-h4: 1rem; /* 16px */
+  --text-h3: 1.125rem; /* 18px */
+  --text-h2: 1.25rem; /* 20px */
+  --text-h1: 1.5rem; /* 24px */
+  --text-title: 1.875rem; /* 30px — page/article title */
+
+  /* One leading value for every reading surface. It was 1.7 on desktop and 1.62
+     on mobile; two values meant the rhythm changed as the window resized, and
+     1.7 is tuned for wide unconstrained columns — against a fixed measure in a
+     large-x-height serif it separates lines enough that a paragraph reads as a
+     stack of separate lines. 1.52 keeps them grouped and stays above the 1.5
+     minimum WCAG asks for body text. */
+  --leading-reader: 1.52;
+  /* Decks and intros are set larger, where the same optical rhythm needs less
+     leading. Two tokens, not a value invented per surface. */
+  --leading-lead: 1.45;
 
   /* Fixed reading measure (~72 characters of Source Serif at 17px). Using a
      length rather than `ch` keeps the column width stable. */
@@ -68,9 +79,12 @@
      they are derived from the same scale rather than each surface inventing its
      own `ch` value. Six different measures (46ch, 60ch, 62ch, 68ch …) had
      accumulated for what is the same job: one paragraph of prose. */
-  --measure: 38rem; /* 608px — body prose, ~71ch at the reader size */
-  --measure-lead: 32rem; /* decks and page intros, set at --text-lg */
-  --measure-short: 26rem; /* footer blurb and small print */
+  /* Held at ~72 characters. It tracks the body size: at the previous 17px body
+     a 38rem column was ~71ch, and keeping 38rem after reducing the body to 16px
+     would have stretched the line to ~76ch, past the comfortable range. */
+  --measure: 36rem; /* 576px — body prose, ~72ch at the reader size */
+  --measure-lead: 30rem; /* decks and page intros, set at --text-lg */
+  --measure-short: 25rem; /* footer blurb and small print */
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -386,7 +400,7 @@ video {
   padding-block: var(--space-8) var(--space-7);
   color: var(--color-text-tertiary);
   font-size: var(--text-sm);
-  line-height: 1.7;
+  line-height: var(--leading-reader);
 }
 .site-footer a {
   color: var(--color-text-secondary);
@@ -425,7 +439,7 @@ video {
   font-family: var(--font-reader);
   font-size: var(--text-lg);
   color: var(--color-text-secondary);
-  line-height: 1.55;
+  line-height: var(--leading-lead);
   margin: 0;
   max-width: var(--measure-lead);
 }
@@ -546,7 +560,7 @@ video {
   color: var(--color-text-secondary);
   font-family: var(--font-reader);
   font-size: 1.02rem;
-  line-height: 1.58;
+  line-height: var(--leading-reader);
   max-width: var(--measure);
   margin: 0;
 }
@@ -756,7 +770,7 @@ video {
 .article-deck {
   font-family: var(--font-reader);
   font-size: var(--text-lg);
-  line-height: 1.48;
+  line-height: var(--leading-lead);
   color: var(--color-text-secondary);
   margin: 0 0 var(--space-6);
   max-width: var(--measure-lead);
@@ -804,8 +818,15 @@ video {
 .article-body {
   font-family: var(--font-reader);
   font-size: var(--text-body);
-  line-height: 1.7;
+  line-height: var(--leading-reader);
   letter-spacing: -0.003em;
+  /* Pin the column here rather than relying on the grid track resolving to
+     exactly `--measure`. The track is `minmax(0, var(--measure))`, so whenever
+     the shell could not afford the full composition the track shrank and every
+     paragraph shrank with it — the line length changed with the window instead
+     of staying fixed. Capping the body itself makes the measure the single
+     source of truth for line length at every width. */
+  max-inline-size: var(--measure);
   color: var(--color-text);
   font-feature-settings: "kern", "liga", "onum", "pnum";
 }
@@ -814,7 +835,7 @@ video {
   inline-size: min(100%, var(--measure));
 }
 .article-body p {
-  margin-block: 0 1.3em;
+  margin-block: 0 0.9em;
   overflow-wrap: break-word;
 }
 .article-body > p:first-of-type {
@@ -832,7 +853,7 @@ video {
   text-wrap: balance;
 }
 .article-body h2 {
-  margin-block: 3.25rem 1rem;
+  margin-block: 2rem 0.6rem;
   font-size: var(--text-h2);
   line-height: 1.2;
   letter-spacing: -0.021em;
@@ -841,14 +862,14 @@ video {
   border-bottom: 1px solid var(--color-border-hairline);
 }
 .article-body h3 {
-  margin-block: 2.25rem 0.7rem;
+  margin-block: 1.5rem 0.4rem;
   font-size: var(--text-h3);
   line-height: 1.28;
   letter-spacing: -0.016em;
   font-weight: 630;
 }
 .article-body h4 {
-  margin-block: 1.75rem 0.45rem;
+  margin-block: 1.15rem 0.3rem;
   font-size: var(--text-h4);
   line-height: 1.35;
   font-weight: 620;
@@ -856,7 +877,7 @@ video {
 }
 .article-body h5 {
   font-family: var(--font-ui);
-  margin-block: 1.5rem 0.4rem;
+  margin-block: 1rem 0.25rem;
   font-size: var(--text-h5);
   line-height: 1.4;
   font-weight: 620;
@@ -864,7 +885,7 @@ video {
 }
 .article-body h6 {
   font-family: var(--font-ui);
-  margin-block: 1.35rem 0.35rem;
+  margin-block: 0.9rem 0.25rem;
   font-size: var(--text-h6);
   line-height: 1.45;
   font-weight: 620;
@@ -875,7 +896,7 @@ video {
 .article-body h1 {
   font-family: var(--font-ui);
   font-size: var(--text-h1);
-  margin-block: 3rem 1rem;
+  margin-block: 2rem 0.6rem;
   line-height: 1.15;
   letter-spacing: -0.024em;
   font-weight: 680;
@@ -919,11 +940,11 @@ video {
 
 .article-body ul,
 .article-body ol {
-  margin-block: 0 1.3em;
+  margin-block: 0 0.9em;
   padding-inline-start: 1.5em;
 }
 .article-body li {
-  margin-block: 0.45em;
+  margin-block: 0.25em;
   padding-inline-start: 0.15em;
 }
 .article-body li::marker {
@@ -1556,11 +1577,8 @@ html {
   .article-shell {
     padding-block: var(--space-5) var(--space-8);
   }
-  .article-body {
-    line-height: 1.68;
-  }
   .article-body h2 {
-    margin-block: 2.5rem 0.8rem;
+    margin-block: 2rem 0.7rem;
   }
   .article-body h3 {
     margin-block: 1.85rem 0.55rem;
@@ -2162,7 +2180,7 @@ mark {
   font-family: var(--font-reader);
   font-size: var(--text-lg);
   color: var(--color-text-secondary);
-  line-height: 1.55;
+  line-height: var(--leading-lead);
   margin: 0;
   max-width: var(--measure-lead);
 }
@@ -2175,7 +2193,9 @@ mark {
 .prose-page {
   font-family: var(--font-reader);
   font-size: var(--text-body);
-  line-height: 1.7;
+  /* Matches `.article-body` — /about must read exactly like an article. */
+  line-height: var(--leading-reader);
+  max-inline-size: var(--measure);
   color: var(--color-text);
   padding-bottom: var(--space-8);
 }
@@ -2188,12 +2208,12 @@ mark {
   font-weight: 660;
   letter-spacing: -0.021em;
   line-height: 1.2;
-  margin-block: 3rem 1rem;
+  margin-block: 2rem 0.6rem;
   padding-bottom: 0.35rem;
   border-bottom: 1px solid var(--color-border-hairline);
 }
 .prose-page p {
-  margin-block: 0 1.3em;
+  margin-block: 0 0.9em;
 }
 .prose-page ul {
   margin-block: 0 1.3em;
@@ -2339,7 +2359,7 @@ mark {
 .featured__desc {
   font-family: var(--font-reader);
   font-size: var(--text-lg);
-  line-height: 1.5;
+  line-height: var(--leading-lead);
   color: var(--color-text-secondary);
   margin: 0;
   max-width: var(--measure-lead);

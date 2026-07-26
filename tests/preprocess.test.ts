@@ -143,6 +143,28 @@ describe("display-math normalization", () => {
     assert.ok(!markdown.includes("$$"));
   });
 
+  it("escapes underscores inside text-mode groups", () => {
+    // Regression: `\text{… n_decoding_steps …}` is a snake_case identifier in a
+    // comment, but KaTeX reads `_` as a subscript even in text mode, so the
+    // second one is a double subscript and the whole equation fails to render.
+    const { markdown } = preprocess("[\n\\text{fallback when n_decoding_steps absent}\n]\n");
+    assert.ok(markdown.includes("n\\_decoding\\_steps"), markdown);
+  });
+
+  it("escapes text-mode specials for every text command", () => {
+    for (const command of ["text", "textrm", "textbf", "textit", "textsf", "texttt"]) {
+      const { markdown } = preprocess(`[\n\\${command}{a_b}\n]\n`);
+      assert.ok(markdown.includes("a\\_b"), `${command}: ${markdown}`);
+    }
+  });
+
+  it("leaves subscripts outside a text group alone", () => {
+    // Only the inside of the group is escaped — real notation must still work.
+    const { markdown } = preprocess("[\nx_{i} + \\text{step_count}\n]\n");
+    assert.ok(markdown.includes("x_{i}"), `real subscript preserved: ${markdown}`);
+    assert.ok(markdown.includes("step\\_count"), markdown);
+  });
+
   it("repairs a setext-underline scar inside an equation", () => {
     const { markdown } = preprocess("[\na\n=====\nb\n]\n");
     assert.ok(markdown.includes("$$"));

@@ -129,10 +129,47 @@ describe("page composition", () => {
   }
 
   it("keeps the reading measure fixed", () => {
-    // The measure is a typography decision (~71ch), not a layout lever. Filling
-    // a wide screen by stretching it would defeat the point.
-    const measures = valuesOf("--measure").filter((v) => v.endsWith("rem"));
-    assert.deepEqual([...new Set(measures)], ["38rem"], "--measure must not vary by viewport");
+    // The measure is a typography decision (~72ch), not a layout lever. Filling
+    // a wide screen by stretching it would defeat the point. The assertion is
+    // that exactly one value is declared — not which one — so the measure can
+    // be retuned against the body size without rewriting the test.
+    const measures = [...new Set(valuesOf("--measure").filter((v) => v.endsWith("rem")))];
+    assert.equal(measures.length, 1, `--measure must not vary by viewport: ${measures.join(", ")}`);
+  });
+
+  it("uses one leading value per reading role", () => {
+    // Leading was 1.7 on desktop and 1.62 on mobile, so the vertical rhythm
+    // changed as the window resized. Body prose and leads each get exactly one
+    // token, and no reading surface hard-codes its own number.
+    for (const token of ["--leading-reader", "--leading-lead"]) {
+      assert.equal(valuesOf(token).length, 1, `${token} must be declared once`);
+    }
+    const readingSurfaces = [
+      ".article-body",
+      ".prose-page",
+      ".article-deck",
+      ".article-row__desc",
+      ".featured__desc",
+    ];
+    for (const selector of readingSurfaces) {
+      assert.match(
+        ruleFor(selector),
+        /line-height:\s*var\(--leading-/,
+        `${selector} must use a leading token`,
+      );
+    }
+  });
+
+  it("pins the reading column to the measure", () => {
+    // Relying on the grid track alone let the column — and every paragraph in
+    // it — shrink whenever the shell could not afford the full composition.
+    for (const selector of [".article-body", ".prose-page"]) {
+      assert.match(
+        ruleFor(selector),
+        /max-inline-size:\s*var\(--measure\)/,
+        `${selector} must cap its own width`,
+      );
+    }
   });
 
   it("grows the composition on wide screens", () => {
