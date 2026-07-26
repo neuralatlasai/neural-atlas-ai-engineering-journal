@@ -12,6 +12,7 @@ import crypto from "node:crypto";
 import matter from "gray-matter";
 import { countProseWords, estimateReadingMinutes } from "./reading";
 import { extractLede } from "./lede";
+import { basePath, withBasePath } from "../site";
 
 const REPO_ROOT = process.cwd();
 
@@ -186,13 +187,42 @@ let imageManifest: Record<string, ImageVariants> | null = null;
 function getImageManifest(): Record<string, ImageVariants> {
   if (imageManifest) return imageManifest;
   try {
-    imageManifest = JSON.parse(
+    const raw = JSON.parse(
       fs.readFileSync(path.join(REPO_ROOT, "build", "image-manifest.json"), "utf8"),
     ) as Record<string, ImageVariants>;
+    imageManifest = withDeploymentBasePath(raw);
   } catch {
     imageManifest = {};
   }
   return imageManifest;
+}
+
+/**
+ * Rewrite manifest URLs onto the deployment's base path.
+ *
+ * These URLs end up in raw `<img src>` and `<source srcset>` attributes emitted
+ * by the content compiler, not in a `next/image` or `next/link`, so Next's
+ * `basePath` never touches them. Served from a project-repository GitHub Pages
+ * URL, an unprefixed `/content-assets/…` resolves against the domain root and
+ * every figure in the corpus 404s.
+ *
+ * Applied here, at the single point the manifest is read, so body images and
+ * the hero — and anything added later — are covered by construction rather
+ * than by each consumer remembering to do it. A no-op when the site is served
+ * from a domain root.
+ */
+function withDeploymentBasePath(
+  manifest: Record<string, ImageVariants>,
+): Record<string, ImageVariants> {
+  if (!basePath) return manifest;
+  const mapVariants = (list: { w: number; src: string }[]) =>
+    list.map((v) => ({ ...v, src: withBasePath(v.src) }));
+  return Object.fromEntries(
+    Object.entries(manifest).map(([key, v]) => [
+      key,
+      { ...v, fallback: withBasePath(v.fallback), avif: mapVariants(v.avif), webp: mapVariants(v.webp) },
+    ]),
+  );
 }
 
 function resolveHero(sourcePath: string, title: string): HeroImage | null {

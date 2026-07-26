@@ -14,7 +14,7 @@ import {
   type ArticleMeta,
 } from "@/lib/content/corpus";
 import { compileArticle } from "@/lib/content/compile";
-import { absoluteUrl, site } from "@/lib/site";
+import { absoluteAssetUrl, absoluteUrl, site } from "@/lib/site";
 import { articleJsonLd, breadcrumbJsonLd } from "@/lib/structured-data";
 import { ArticleList } from "@/components/ArticleList";
 import { ArticleLink } from "@/components/ArticleLink";
@@ -71,17 +71,18 @@ export async function generateMetadata({
   if (resolved.kind === "article") {
     const { article } = resolved;
     const description = article.description || site.shortDescription;
-    const images = article.hero ? [absoluteUrl(article.hero.src)] : undefined;
+    // `hero.src` already carries the base path, so it must not be re-prefixed.
+    const images = article.hero ? [absoluteAssetUrl(article.hero.src)] : undefined;
     return {
       title: article.title,
       description,
-      alternates: { canonical: article.route },
+      alternates: { canonical: absoluteUrl(article.route) },
       keywords: article.topics.length > 0 ? article.topics : undefined,
       openGraph: {
         type: "article",
         title: article.title,
         description,
-        url: article.route,
+        url: absoluteUrl(article.route),
         siteName: site.name,
         section: article.sectionLabel,
         tags: article.topics,
@@ -101,8 +102,8 @@ export async function generateMetadata({
     return {
       title: resolved.label,
       description,
-      alternates: { canonical: `/${resolved.section}` },
-      openGraph: { title: resolved.label, description, url: `/${resolved.section}` },
+      alternates: { canonical: absoluteUrl(`/${resolved.section}`) },
+      openGraph: { title: resolved.label, description, url: absoluteUrl(`/${resolved.section}`) },
     };
   }
 

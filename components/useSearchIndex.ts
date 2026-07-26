@@ -6,6 +6,7 @@ import {
   SEARCH_INDEX_VERSION,
   type SearchIndex,
 } from "@/lib/search/types";
+import { withBasePath } from "@/lib/site";
 
 export type SearchIndexStatus = "idle" | "loading" | "ready" | "error";
 
@@ -30,7 +31,9 @@ export function loadSearchIndex(): Promise<SearchIndex> {
   if (resolved) return Promise.resolve(resolved);
   if (inFlight) return inFlight;
 
-  inFlight = fetch(SEARCH_INDEX_PATH, { credentials: "same-origin" })
+  // `fetch` resolves against the domain root, not the deployment's base path,
+  // so the prefix has to be applied here — Next only rewrites what it owns.
+  inFlight = fetch(withBasePath(SEARCH_INDEX_PATH), { credentials: "same-origin" })
     .then(async (response) => {
       if (!response.ok) throw new Error(`Search index request failed: ${response.status}`);
       const payload: unknown = await response.json();

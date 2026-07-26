@@ -32,6 +32,24 @@ function exportedFiles(dir = OUT, acc = new Set()) {
   return acc;
 }
 
+/**
+ * Path prefix the export is deployed under (a GitHub Pages project site).
+ *
+ * Every root-relative URL in the HTML carries this prefix, but the files sit at
+ * the root of `out/`, so it has to come off before a URL can be resolved to a
+ * file. Without it a sub-path build reports every internal link and asset in
+ * the site as broken — the audit would be checking the deployment URL against
+ * the wrong tree.
+ */
+const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+
+/** A root-relative URL with the deployment prefix removed. */
+function stripBasePath(url) {
+  if (!BASE_PATH) return url;
+  if (url === BASE_PATH) return "/";
+  return url.startsWith(`${BASE_PATH}/`) ? url.slice(BASE_PATH.length) : url;
+}
+
 const files = pages();
 /** Non-HTML artifacts (feed.xml, robots.txt, search-index.json, …) are valid
  *  link targets too, so link integrity is checked against the whole export
@@ -95,7 +113,10 @@ for (const f of files) {
     }
     let decoded = ref;
     try { decoded = decodeURIComponent(ref); } catch { /* keep raw */ }
-    if (!fs.existsSync(path.join(OUT, decoded))) {
+    // The URL is what the browser requests, including the deployment prefix;
+    // the file lives at the root of the export. Resolving one against the other
+    // is what proves the prefix was applied correctly.
+    if (!fs.existsSync(path.join(OUT, stripBasePath(decoded)))) {
       errors.push(`${name}: asset not found in export → ${ref}`);
     }
     if (/[ ()]/.test(ref)) {
@@ -173,12 +194,44 @@ for (const f of files) {
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * Base-path integrity.
+ *
+ * Next applies `basePath` to `next/link`, the router, and its own asset URLs.
+ * It does not touch a raw `<a href>`, a form `action`, a `fetch`, or any URL
+ * the content compiler writes into HTML — each of those has to be prefixed
+ * deliberately, and one that is missed resolves against the domain root and
+ * 404s in production while looking perfectly fine in a root-served local build.
+ *
+ * That is invisible to every other check here: the link-integrity pass strips
+ * the prefix before resolving, so an unprefixed URL still finds its file. This
+ * asserts the property directly instead — under a sub-path deployment, every
+ * root-relative URL in the export must carry the prefix.
+ * ------------------------------------------------------------------------ */
+if (BASE_PATH) {
+  const unprefixed = new Map();
+  for (const f of files) {
+    const html = fs
+      .readFileSync(f, "utf8")
+      .replace(/<script[\s\S]*?<\/script>/g, " "); // RSC payload restates the page
+    for (const m of html.matchAll(/(?:href|src|action)="(\/[^"]*)"/g)) {
+      const url = m[1];
+      if (url === BASE_PATH || url.startsWith(`${BASE_PATH}/`)) continue;
+      unprefixed.set(url, (unprefixed.get(url) ?? 0) + 1);
+    }
+  }
+  for (const [url, count] of [...unprefixed].sort((a, b) => b[1] - a[1]).slice(0, 10)) {
+    errors.push(`URL missing the deployment base path (${count}×) → ${url}`);
+  }
+}
+
 // Internal link integrity against actually-exported paths.
-for (const href of allHrefs) {
+for (const raw of allHrefs) {
+  const href = stripBasePath(raw);
   if (href.startsWith("/_next") || href.startsWith("/content-assets")) continue;
   const norm = href.endsWith("/") ? href : href + "/";
   if (!allPaths.has(norm) && !allPaths.has(href) && !exported.has(href)) {
-    errors.push(`broken internal link: ${href}`);
+    errors.push(`broken internal link: ${raw}`);
   }
 }
 

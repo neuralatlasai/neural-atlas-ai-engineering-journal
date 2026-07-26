@@ -4,7 +4,7 @@ import "katex/dist/katex.min.css";
 import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { site } from "@/lib/site";
+import { absoluteUrl, site } from "@/lib/site";
 
 // Subset, swap-loaded, and exposed as CSS variables (plan §7.3).
 const inter = Inter({
@@ -26,7 +26,9 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(site.origin),
+  // Includes the deployment base path, so any relative metadata URL resolves
+  // under the sub-path the site is actually served from.
+  metadataBase: new URL(absoluteUrl("/")),
   title: {
     default: `${site.name} — ${site.tagline}`,
     template: `%s · ${site.name}`,
@@ -40,7 +42,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     title: `${site.name} — ${site.tagline}`,
     description: site.shortDescription,
-    url: "/",
+    url: absoluteUrl("/"),
   },
   twitter: {
     card: "summary_large_image",
@@ -53,8 +55,8 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
   },
   alternates: {
-    canonical: "/",
-    types: { "application/rss+xml": [{ url: "/feed.xml", title: `${site.name} — all articles` }] },
+    canonical: absoluteUrl("/"),
+    types: { "application/rss+xml": [{ url: absoluteUrl("/feed.xml"), title: `${site.name} — all articles` }] },
   },
   formatDetection: { telephone: false, address: false, email: false },
 };

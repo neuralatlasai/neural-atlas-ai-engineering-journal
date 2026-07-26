@@ -10,6 +10,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  */
 export default function config(phase) {
   const isDevServer = phase === PHASE_DEVELOPMENT_SERVER;
+  // Normalized to `/prefix` (no trailing slash), matching `lib/site.ts`.
+  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
 
   return {
     // Pin the workspace root to this project (a stray lockfile lives higher up).
@@ -42,6 +44,24 @@ export default function config(phase) {
      * the workflow note in the README).
      */
     ...(isDevServer ? {} : { output: "export" }),
+
+    /**
+     * Sub-path deployments (plan §2.3 — GitHub Pages project sites).
+     *
+     * Pages serves a project repository from `https://<org>.github.io/<repo>/`,
+     * so the site has to know it lives under a prefix or every `_next/*` asset
+     * and every router link resolves against the domain root.
+     *
+     * This covers only what Next owns — `next/link`, the router, and its own
+     * asset URLs. URLs the content compiler bakes into raw HTML, and any
+     * `fetch`/`<a href>`/form `action`, are invisible to it; those go through
+     * `withBasePath` in `lib/site.ts`, which reads the same variable.
+     *
+     * Left unset for local development and for root deployments (a custom
+     * domain or a `<user>.github.io` repository), where the prefix must be
+     * empty.
+     */
+    ...(basePath ? { basePath, assetPrefix: basePath } : {}),
 
     images: {
       // Static export cannot use the on-demand optimizer; assets are

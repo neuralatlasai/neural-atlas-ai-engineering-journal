@@ -6,7 +6,7 @@
  */
 import type { ArticleMeta, ArticleType } from "./content/corpus";
 import { toIsoDate } from "./content/dates";
-import { absoluteUrl, site } from "./site";
+import { absoluteAssetUrl, absoluteUrl, site } from "./site";
 
 /**
  * Article type governs the schema type — the plan explicitly forbids marking
@@ -47,7 +47,7 @@ export function articleJsonLd(article: ArticleMeta): Record<string, unknown> {
     publisher,
     ...(datePublished ? { datePublished } : {}),
     ...(article.topics.length > 0 ? { keywords: article.topics.join(", ") } : {}),
-    ...(article.hero ? { image: [absoluteUrl(article.hero.src)] } : {}),
+    ...(article.hero ? { image: [absoluteAssetUrl(article.hero.src)] } : {}),
     articleSection: article.sectionLabel,
     wordCount: article.wordCountEstimate,
   };

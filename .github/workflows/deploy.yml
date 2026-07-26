@@ -1,0 +1,75 @@
+name: Deploy to GitHub Pages
+
+# Only a build that passes every gate is publishable, so the same checks that
+# guard local work run here: types, unit tests, and the postbuild math and HTML
+# audits that `npm run build` invokes. Deployment is a separate job that depends
+# on the build succeeding, so a failed gate leaves the live site untouched
+# rather than replacing it with a broken export.
+
+on:
+  push:
+    branches: [main]
+  # Allows a redeploy from the Actions tab without pushing a commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deployments race. `cancel-in-progress: false` so a run that is
+# already publishing is allowed to finish — cancelling mid-upload can leave the
+# Pages site serving a partial export.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # A project repository is served from https://<owner>.github.io/<repo>/.
+      # Both variables are derived from the repository so a rename or a fork
+      # cannot leave a stale URL baked into the canonical links and sitemap.
+      NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+      NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` installs exactly the lockfile, which is what makes a deploy
+      # reproducible. It fails outright if package.json and the lock disagree.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # Runs prebuild (image optimization) and postbuild (verify-math,
+      # audit-html). Any equation that fails to render, is published as raw TeX,
+      # or any HTML audit error fails the job here.
+      - name: Build and verify
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

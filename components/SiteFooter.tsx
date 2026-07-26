@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSections } from "@/lib/content/corpus";
-import { site, staticNav } from "@/lib/site";
+import { site, staticNav, withBasePath } from "@/lib/site";
 
 /**
  * Site footer (plan §6.3).
@@ -48,7 +48,8 @@ export function SiteFooter() {
                 <Link href="/search">Search</Link>
               </li>
               <li>
-                <a href="/feed.xml">RSS feed</a>
+                {/* A raw anchor, so the base path is not applied for us. */}
+                <a href={withBasePath("/feed.xml")}>RSS feed</a>
               </li>
             </ul>
           </nav>

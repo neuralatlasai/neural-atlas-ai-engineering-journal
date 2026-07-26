@@ -42,6 +42,31 @@ function resolveOrigin(): string {
   }
 }
 
+/**
+ * Path prefix the site is served under, without a trailing slash.
+ *
+ * GitHub Pages serves a project repository from `/<repo>/`, so every
+ * root-relative URL has to carry that prefix or it resolves against the domain
+ * root and 404s.
+ *
+ * Next.js applies `basePath` to what it controls — `next/link`, the router, and
+ * the `_next/*` asset URLs — and nothing else. A raw `<a href>`, a form
+ * `action`, `location.assign`, `fetch`, and any URL baked into HTML by the
+ * content compiler are invisible to it. Those are what this helper exists for,
+ * and the rule for using it is exactly that: apply it wherever the browser gets
+ * the URL from something other than `next/link`, and nowhere else, or the
+ * prefix lands twice.
+ *
+ * It is empty when the site is served from a domain root, so every call site
+ * is safe to wrap unconditionally.
+ */
+export const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+
+/** Prefix a site-relative path with {@link basePath}. */
+export function withBasePath(path: string): string {
+  return `${basePath}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export const site = {
   name: "Neural Atlas",
   tagline: "AI Engineering Journal",
@@ -70,7 +95,19 @@ export const staticNav: readonly NavItem[] = [
  */
 export function absoluteUrl(pathname: string): string {
   const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
-  return `${site.origin}${withTrailingSlash(path)}`;
+  return `${site.origin}${withBasePath(withTrailingSlash(path))}`;
+}
+
+/**
+ * Absolute URL for a path that already carries the base path.
+ *
+ * Image URLs reach the renderer from the content manifest with the prefix
+ * applied, so they must not go through {@link absoluteUrl} — that applies the
+ * prefix itself, and the result would carry it twice. Kept as a separate
+ * function rather than a flag so the distinction is visible at the call site.
+ */
+export function absoluteAssetUrl(rootedUrl: string): string {
+  return `${site.origin}${rootedUrl}`;
 }
 
 /**
@@ -82,7 +119,7 @@ export function absoluteUrl(pathname: string): string {
  * `/search/index.html`. Every non-`Link` reference goes through this helper so
  * the two cannot drift apart.
  */
-export const SEARCH_PATH = "/search/";
+export const SEARCH_PATH = withBasePath("/search/");
 
 export function searchUrl(query?: string): string {
   const trimmed = query?.trim();
@@ -98,7 +135,7 @@ export function searchUrl(query?: string): string {
  */
 export function internalHref(href: string): string {
   const [, path, suffix] = /^([^?#]*)(.*)$/.exec(href) ?? [, href, ""];
-  return `${withTrailingSlash(path ?? href)}${suffix ?? ""}`;
+  return `${withBasePath(withTrailingSlash(path ?? href))}${suffix ?? ""}`;
 }
 
 /** Normalize a site-relative path to the trailing-slash form the export emits. */
