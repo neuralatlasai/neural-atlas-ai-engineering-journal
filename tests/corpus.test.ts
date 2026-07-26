@@ -8,9 +8,18 @@ import {
   getSections,
   getTopics,
   topicSlug,
+  readSource,
   type ArticleMeta,
 } from "../lib/content/corpus";
 import { estimateReadingMinutes } from "../lib/content/reading";
+
+/** Mirrors how the image pipeline slugifies a source filename. */
+function slugLike(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 /**
  * These run against the real corpus under `docs/`, so they assert invariants
@@ -44,6 +53,40 @@ describe("corpus discovery", () => {
       for (const segment of article.routeSegments) {
         assert.match(segment, /^[a-z0-9]+(?:-[a-z0-9]+)*$/, `unsafe segment: ${segment}`);
       }
+    }
+  });
+
+  it("never shows one article's figure as another's hero", () => {
+    // Regression: the hero was chosen by scanning the article's *folder*, so
+    // two documents sharing a directory were given the same image — and a
+    // document with no figures of its own was given a sibling's. `Vortral.md`
+    // references no images at all yet displayed `Voxtral_Realtime1.png`.
+    const heroes = articles
+      .filter((a) => a.hero)
+      .map((a) => ({ route: a.route, src: a.hero!.src }));
+    const bySrc = new Map<string, string[]>();
+    for (const { route, src } of heroes) {
+      bySrc.set(src, [...(bySrc.get(src) ?? []), route]);
+    }
+    for (const [src, routes] of bySrc) {
+      assert.equal(routes.length, 1, `${src} is the hero of ${routes.join(" and ")}`);
+    }
+  });
+
+  it("takes each hero from a figure the document itself references", () => {
+    const IMAGE = /!\[[^\]]*\]\(\s*([^)\s]+)/g;
+    for (const article of articles) {
+      if (!article.hero) continue;
+      const source = readSource(article.sourcePath);
+      const referenced = [...source.matchAll(IMAGE)].map((m) =>
+        m[1].split("/").pop()!.replace(/\.[a-z0-9]+$/i, "").toLowerCase(),
+      );
+      if (referenced.length === 0) continue; // alone in its folder; fallback allowed
+      const heroName = article.hero.src.split("/").pop()!.toLowerCase();
+      assert.ok(
+        referenced.some((name) => heroName.includes(slugLike(name))),
+        `${article.documentId}: hero ${heroName} is not among its own figures (${referenced.join(", ")})`,
+      );
     }
   });
 

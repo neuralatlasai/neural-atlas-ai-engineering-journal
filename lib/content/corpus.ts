@@ -225,25 +225,11 @@ function withDeploymentBasePath(
   );
 }
 
-function resolveHero(sourcePath: string, title: string): HeroImage | null {
-  const assetsDir = path.join(path.dirname(sourcePath), "assets");
-  if (!fs.existsSync(assetsDir)) return null;
-  const candidates = fs
-    .readdirSync(assetsDir)
-    .filter((f) => /\.(png|jpe?g|avif|webp|svg)$/i.test(f))
-    .sort((a, b) => a.localeCompare(b));
-  // Prefer an overview/architecture image if present.
-  const preferred =
-    candidates.find((f) => /(overview|architecture|hero|diagram)/i.test(f)) || candidates[0];
-  if (!preferred) return null;
+/** Names that mark an image as the document's lead figure. */
+const LEAD_FIGURE = /(overview|architecture|hero|diagram)/i;
 
-  const key = path
-    .relative(REPO_ROOT, path.join(assetsDir, preferred))
-    .split(path.sep)
-    .join("/");
-  const variants = getImageManifest()[key];
+function toHero(variants: ImageVariants | undefined, title: string): HeroImage | null {
   if (!variants) return null;
-
   return {
     src: variants.fallback,
     alt: `Overview figure for ${title}`,
@@ -252,6 +238,55 @@ function resolveHero(sourcePath: string, title: string): HeroImage | null {
     avif: variants.avif,
     webp: variants.webp,
   };
+}
+
+/**
+ * The article's lead image.
+ *
+ * Taken from the figures the document itself references. The previous rule
+ * scanned the *folder* and picked one image for everything in it, so two
+ * articles sharing a directory were given the same hero — and an article with
+ * no figures of its own was given a sibling's. Four of the ten articles were
+ * showing another document's diagram: `Vortral.md` references no images at all
+ * yet displayed `Voxtral_Realtime1.png`, which belongs to the article beside it.
+ *
+ * Folder-wide selection survives only where it cannot borrow: a document alone
+ * in its directory, where an unreferenced `assets/model_overview.png` is
+ * unambiguously that article's own figure.
+ */
+function resolveHero(
+  sourcePath: string,
+  title: string,
+  content: string,
+  articlesInFolder: number,
+): HeroImage | null {
+  const referenced = [...content.matchAll(/!\[[^\]]*\]\(\s*([^)\s]+)/g)].map((m) => m[1]);
+  if (referenced.length > 0) {
+    const resolve = assetResolverFor(sourcePath);
+    const lead = referenced.find((src) => LEAD_FIGURE.test(src)) ?? referenced[0];
+    // The body resolver already yields hero-shaped variants; it only leaves the
+    // alt text empty, because a body figure carries its own caption.
+    const resolved = resolve(lead);
+    if (resolved) return { ...resolved, alt: `Overview figure for ${title}` };
+  }
+
+  // Nothing referenced. Only safe to fall back when no sibling could own it.
+  if (articlesInFolder > 1) return null;
+
+  const assetsDir = path.join(path.dirname(sourcePath), "assets");
+  if (!fs.existsSync(assetsDir)) return null;
+  const candidates = fs
+    .readdirSync(assetsDir)
+    .filter((f) => /\.(png|jpe?g|avif|webp|svg)$/i.test(f))
+    .sort((a, b) => a.localeCompare(b));
+  const preferred = candidates.find((f) => LEAD_FIGURE.test(f)) || candidates[0];
+  if (!preferred) return null;
+
+  const key = path
+    .relative(REPO_ROOT, path.join(assetsDir, preferred))
+    .split(path.sep)
+    .join("/");
+  return toHero(getImageManifest()[key], title);
 }
 
 /**
@@ -334,6 +369,17 @@ export function getAllArticles(): ArticleMeta[] {
 
   // Rebuilding from scratch: diagnostics describe this pass only.
   diagnostics.length = 0;
+
+  /**
+   * How many documents share each directory. A folder with more than one
+   * article cannot supply a hero to a document that references no figures of
+   * its own — the image would belong to whichever sibling happens to own it.
+   */
+  const articlesPerFolder = new Map<string, number>();
+  for (const file of files) {
+    const dir = path.dirname(file);
+    articlesPerFolder.set(dir, (articlesPerFolder.get(dir) ?? 0) + 1);
+  }
 
   const usedRoutes = new Set<string>();
   const articles: ArticleMeta[] = [];
@@ -444,7 +490,7 @@ export function getAllArticles(): ArticleMeta[] {
     const articleType: ArticleType =
       (typeof data.articleType === "string" && (data.articleType as ArticleType)) ||
       inferType(section);
-    const hero = resolveHero(abs, title);
+    const hero = resolveHero(abs, title, content, articlesPerFolder.get(path.dirname(abs)) ?? 1);
     const wordCountEstimate = countProseWords(content);
 
     articles.push({

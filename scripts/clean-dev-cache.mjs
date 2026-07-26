@@ -25,7 +25,14 @@ import path from "node:path";
 
 const NEXT_DIR = path.join(process.cwd(), ".next");
 const HOT_UPDATE_DIR = path.join(NEXT_DIR, "static", "webpack");
-const LOCK_FILE = path.join(NEXT_DIR, ".dev-server.lock");
+/**
+ * The lock lives OUTSIDE .next on purpose. Kept inside, a production build
+ * deletes it along with the directory, so the next dev server sees no owner and
+ * clears .next underneath the one that is still running — which is exactly the
+ * failure it exists to prevent ("missing required error components").
+ * build/ is gitignored and nothing else removes it.
+ */
+const LOCK_FILE = path.join(process.cwd(), "build", ".dev-server.lock");
 const WEBPACK_CACHE = path.join(process.cwd(), "node_modules", ".cache");
 
 /** True when a process with this id is alive. Signal 0 only tests existence. */
@@ -99,5 +106,5 @@ if (leftFromBuild) {
 
 // Claim ownership for the dev server about to start. `npm run dev` runs this
 // script as a child, so record the parent — the shell that will host `next dev`.
-fs.mkdirSync(NEXT_DIR, { recursive: true });
+fs.mkdirSync(path.dirname(LOCK_FILE), { recursive: true });
 fs.writeFileSync(LOCK_FILE, String(process.ppid), "utf8");

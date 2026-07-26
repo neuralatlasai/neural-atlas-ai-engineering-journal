@@ -218,6 +218,44 @@ describe("inline-math normalization", () => {
     assert.ok(!markdown.includes("\\middle\\mid"), "must not emit invalid TeX");
   });
 
+  it("never merges cells of a row that already fits the table", () => {
+    // Regression: the bar-restoring repair ran on every row, so a row whose
+    // cells were always separate got merged. The row then fell short of the
+    // header and GFM padded it with blanks — tables rendered with empty
+    // columns and their content apparently missing.
+    const table = [
+      "| Step | Expression | Status |",
+      "|---|---|---|",
+      "| 1 | (\\alpha) | ok |",
+      "| 2 | plain text | ok |",
+    ].join("\n");
+    const cells = (l: string) =>
+      l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").length;
+    const out = preprocess(`${table}\n`).markdown.split("\n");
+    const rows = out.filter((l) => /^\s{0,3}\|.*\|\s*$/.test(l));
+    assert.equal(rows.length, 4, "no row added or dropped");
+    for (const [i, row] of rows.entries()) {
+      assert.equal(cells(row), 3, `row ${i} kept its 3 cells: ${row}`);
+    }
+  });
+
+  it("still repairs a row that its own maths split", () => {
+    // Here the `|` really did come from inside the equation, so the row has
+    // more cells than the table declares and merging restores it.
+    const table = [
+      "| Step | Expression | Status |",
+      "|---|---|---|",
+      "| 1 | (\\log p(y_t|x_t)) | ok |",
+    ].join("\n");
+    const cells = (l: string) =>
+      l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").length;
+    const rows = preprocess(`${table}\n`)
+      .markdown.split("\n")
+      .filter((l) => /^\s{0,3}\|.*\|\s*$/.test(l));
+    assert.equal(cells(rows[2]), 3, `over-wide row restored to 3 cells: ${rows[2]}`);
+    assert.ok(rows[2].includes("\\mid"), rows[2]);
+  });
+
   it("leaves ordinary table pipes alone", () => {
     const source = "| a | b | c |\n";
     assert.equal(preprocess(source).markdown.trim(), source.trim());

@@ -10,7 +10,7 @@ I will use four evidence classes:
 * **[U] Undisclosed** — cannot be established from the supplied primary sources.
 
 ---
-
+![](./assets/Voxtral_Realtime1.png)
 ## 0. First correct the model abstraction
 
 Voxtral Realtime is **not three independent models coupled as an ASR pipeline**. It is one end-to-end conditional sequence model with three architectural macro-blocks:
@@ -257,7 +257,7 @@ with (T_m) advancing at (100,\mathrm{Hz}).
 Nothing in the report indicates codec tokens, residual vector quantization, semantic tokens, HuBERT units, EnCodec codes, or a learned acoustic codebook. The model starts from continuous log-Mel features. Therefore asking for its “audio vocabulary size” as though this were a speech-token LLM would impose the wrong abstraction. Its acoustic input dimensionality is **128 Mel channels**; its discrete vocabulary is the **131072-entry text vocabulary**. ([arXiv][1])
 
 The paper does **not** provide an ablation establishing why 128 rather than 80, 64, or another Mel dimensionality is optimal. Any stronger rationale would be invented.
-
+![](./assets/Voxtral_Realtime2.png)
 ---
 
 # 4. Causal convolutional stem
@@ -439,7 +439,7 @@ rather than
 ]
 
 The paper defines (\tau) as a minimum offset between acoustic evidence and earliest text production and samples it during training from 80–2400 ms. ([arXiv][1])
-
+![](./assets/Voxtral_Realtime3.png)
 ---
 
 # 7. Acoustic Transformer: tensor-level block
@@ -569,7 +569,7 @@ z=
 The paper specifically contrasts this encoder with Whisper: Voxtral uses **causal attention, RMSNorm, SwiGLU, RoPE and a sliding window**, versus Whisper's bidirectional encoder, LayerNorm, GELU and sinusoidal positional encoding. ([arXiv][1])
 
 No source-supplied ablation decomposes how much WER improvement comes individually from RMSNorm, SwiGLU, RoPE, encoder scale, or causality. They should therefore not be individually credited with measured gains.
-
+![](./assets/Voxtral_Realtime4.png)
 ---
 
 # 8. Where acoustics become decoder-compatible semantics
@@ -1122,7 +1122,7 @@ k_i=\left\lceil\frac{e_i+\tau}{80\text{ms}}\right\rceil
 ]
 
 is a reasonable mathematical formalization but should be marked **[D]**, not reported implementation truth.
-
+![](./assets/Voxtral_Realtime5.png)
 ---
 
 # 16. Why ([P]) is not ordinary padding

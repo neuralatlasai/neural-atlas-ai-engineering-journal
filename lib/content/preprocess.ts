@@ -438,7 +438,85 @@ const DELIMITER_COMMAND = /\\(?:left|right|middle|bigg?[lr]?|Bigg?[lr]?)\s*$/;
  * repairs the equation and gives the row back its intended column count.
  * Pipes outside such a group are untouched, so ordinary rows are unaffected.
  */
-function restorePipesInTableMath(line: string): string {
+/** Cells in a GFM row, ignoring the leading and trailing pipes. */
+function cellCount(line: string): number {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").length;
+}
+
+/** `|---|:--:|---|` — the row that fixes a table's column count. */
+const TABLE_DELIMITER = /^\s{0,3}\|[\s:|-]+\|\s*$/;
+
+/** Net unescaped parenthesis balance of a fragment. */
+function parenDelta(text: string): number {
+  let depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "\\") {
+      i++;
+      continue;
+    }
+    if (text[i] === "(") depth++;
+    else if (text[i] === ")") depth--;
+  }
+  return depth;
+}
+
+/**
+ * Rejoin table cells that a `|` inside mathematics split apart.
+ *
+ * The signal is structural, not statistical: a cell that leaves a parenthesis
+ * open cannot be a complete cell, so the equation continues into the next one
+ * and the `|` between them was a maths bar. Cells that balance are left exactly
+ * as written.
+ *
+ * Counting cells against the header does not work. In `deepseek-v4-pro` a row
+ * whose equation carries two cardinality bars splits into three fragments,
+ * which — with its leading step number — lands on exactly the header's four
+ * columns. A count test sees a well-formed row and skips it, leaving raw TeX in
+ * the cell; a laxer count test merges rows that were always separate and the
+ * table renders with blank columns. Parenthesis balance distinguishes them.
+ */
+function restorePipesInTableMath(line: string, _columns: number | null = null): string {
+  if (!TABLE_ROW.test(line) || !line.includes("(")) return line;
+
+  const trimmed = line.trimEnd();
+  const indent = trimmed.slice(0, trimmed.length - trimmed.trimStart().length);
+  const body = trimmed.trimStart().replace(/^\|/, "").replace(/\|$/, "");
+  const parts = body.split("|");
+  if (parts.length < 2) return line;
+
+  const out: string[] = [];
+  let pending: string | null = null;
+  let depth = 0;
+
+  for (const part of parts) {
+    if (pending === null) {
+      const delta = parenDelta(part);
+      if (delta > 0 && TEX_METACHARACTER.test(part)) {
+        pending = part;
+        depth = delta;
+      } else {
+        out.push(part);
+      }
+      continue;
+    }
+    // Inside a split equation: the boundary we crossed was a maths bar. After a
+    // sizing command the bar is a *delimiter* and must be `\vert` — `\middle\mid`
+    // is not valid TeX and fails to render.
+    pending += `${DELIMITER_COMMAND.test(pending) ? "\\vert " : "\\mid "}${part}`;
+    depth += parenDelta(part);
+    if (depth <= 0) {
+      out.push(pending);
+      pending = null;
+      depth = 0;
+    }
+  }
+  if (pending !== null) out.push(pending); // never closed; leave what we have
+
+  if (out.length === parts.length) return line; // nothing was joined
+  return `${indent}|${out.join("|")}|`;
+}
+
+function restorePipesInTableMathUnchecked(line: string): string {
   if (!TABLE_ROW.test(line) || !line.includes("(")) return line;
 
   /**
@@ -536,6 +614,8 @@ export function preprocess(source: string): PreprocessResult {
   let inlineSpans = 0;
   let inFence = false;
   let fenceMarker = "";
+  /** Column count of the table currently being scanned, if any. */
+  let tableColumns: number | null = null;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -556,6 +636,11 @@ export function preprocess(source: string): PreprocessResult {
       out.push(line);
       continue;
     }
+
+    // Track the shape of the table being scanned, so the pipe repair can tell a
+    // row split by its own mathematics from one whose cells were always separate.
+    if (TABLE_DELIMITER.test(line)) tableColumns = cellCount(line);
+    else if (line.trim() === "") tableColumns = null;
 
     // Display-math block, opened either by a lone `[` or by a `[` that trails
     // prose.
@@ -601,11 +686,11 @@ export function preprocess(source: string): PreprocessResult {
       if (trailing && !(matched && body.some((l) => TEX_METACHARACTER.test(l)))) {
         // Not a display block after all — an ordinary line that happens to end
         // in a bracket. Process it as prose.
-        out.push(convertInlineMath(restorePipesInTableMath(line)));
+        out.push(convertInlineMath(restorePipesInTableMath(line, tableColumns)));
         continue;
       }
       if (matched && body.length > 0) {
-        if (trailing) out.push(convertInlineMath(restorePipesInTableMath(opened.prefix)));
+        if (trailing) out.push(convertInlineMath(restorePipesInTableMath(opened.prefix, tableColumns)));
         const repaired = body
           .map(repairMathLine)
           .filter((l): l is string => l !== null);
@@ -637,7 +722,7 @@ export function preprocess(source: string): PreprocessResult {
     }
 
     const before = line;
-    const converted = convertInlineMath(restorePipesInTableMath(line));
+    const converted = convertInlineMath(restorePipesInTableMath(line, tableColumns));
     if (converted !== before) {
       inlineSpans += (converted.match(/\$[^$]+\$/g) || []).length;
     }
