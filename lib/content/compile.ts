@@ -308,6 +308,7 @@ function wrapTables() {
 }
 
 const LANGUAGE_CLASS_PREFIX = "language-";
+const BOX_DRAWING_CHARACTER = /[┌┐└┘├┤┬┴┼─│]/;
 
 /**
  * Read the fence language from a highlighted `<code>` element.
@@ -331,6 +332,20 @@ function languageOf(code: Element | undefined): string {
   return match ? match.slice(LANGUAGE_CLASS_PREFIX.length) : "text";
 }
 
+/**
+ * Plain-text diagrams need compact leading so adjacent box-drawing rows remain
+ * visually connected. Classification belongs to the renderer rather than the
+ * Markdown: the source remains byte-for-byte intact and ordinary code retains
+ * the more readable source-code leading.
+ */
+function isTextDiagram(code: Element | undefined, language: string): boolean {
+  return (
+    language === "text" &&
+    code !== undefined &&
+    BOX_DRAWING_CHARACTER.test(hastToString(code))
+  );
+}
+
 /** rehype plugin: wrap each highlighted code block in a figure carrying its
  *  language, so the UI can render a header bar and copy affordance (plan §13.3). */
 function frameCodeBlocks() {
@@ -341,10 +356,15 @@ function frameCodeBlocks() {
         (c): c is Element => c.type === "element" && c.tagName === "code",
       );
       const lang = languageOf(code);
+      const layout = isTextDiagram(code, lang) ? "diagram" : "code";
       const figure: Element = {
         type: "element",
         tagName: "figure",
-        properties: { className: ["code-block"], "data-lang": lang },
+        properties: {
+          className: ["code-block"],
+          "data-lang": lang,
+          "data-layout": layout,
+        },
         children: [
           {
             type: "element",

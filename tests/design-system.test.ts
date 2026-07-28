@@ -199,3 +199,25 @@ describe("page composition", () => {
     assert.match(ruleFor(noRail), /--wide-extra:\s*0px/);
   });
 });
+
+describe("code block presentation", () => {
+  function ruleFor(selector: string): string {
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const i = stripped.indexOf(selector + " {");
+    if (i === -1) return "";
+    return stripped.slice(i, stripped.indexOf("}", i));
+  }
+
+  it("uses compact leading only for classified text diagrams", () => {
+    const codeRule = ruleFor(".article-body figure.code-block pre");
+    const diagramRule = ruleFor('.article-body figure.code-block[data-layout="diagram"] pre');
+
+    assert.match(codeRule, /line-height:\s*1\.65/);
+    assert.match(diagramRule, /line-height:\s*1\.15/);
+  });
+
+  it("keeps code selectable while excluding the component chrome", () => {
+    assert.doesNotMatch(ruleFor(".article-body pre code"), /user-select:\s*none/);
+    assert.match(ruleFor(".code-block__bar"), /user-select:\s*none/);
+  });
+});

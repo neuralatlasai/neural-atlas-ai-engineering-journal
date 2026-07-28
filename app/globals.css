@@ -1018,6 +1018,8 @@ video {
   padding: 0.5rem 0.75rem 0.5rem 1rem;
   border-bottom: 1px solid var(--color-border-hairline);
   background: color-mix(in srgb, var(--color-surface-subtle) 60%, transparent);
+  /* UI chrome must not enter a drag selection intended for the code payload. */
+  user-select: none;
 }
 .code-block__lang {
   font-family: var(--font-ui);
@@ -1055,6 +1057,10 @@ video {
   font-size: 0.875rem;
   line-height: 1.65;
   background: transparent;
+}
+.article-body figure.code-block[data-layout="diagram"] pre {
+  /* Box-drawing glyphs span the em square; tight leading closes connector gaps. */
+  line-height: 1.15;
 }
 .article-body pre code {
   font-family: var(--font-mono);

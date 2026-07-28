@@ -144,7 +144,21 @@ describe("rendering contract", () => {
   it("frames code blocks with their language label", async () => {
     const { html } = await compileArticle("```python\nx = 1\n```\n", "Title");
     assert.ok(html.includes('data-lang="python"'));
+    assert.ok(html.includes('data-layout="code"'));
     assert.ok(html.includes("code-block__lang"));
+  });
+
+  it("classifies box-drawing text as a diagram without changing its source", async () => {
+    const source = "```text\nSOURCE\n  │\n  ▼\nTARGET\n```\n";
+    const { html } = await compileArticle(source, "Title");
+
+    assert.ok(html.includes('data-layout="diagram"'));
+    assert.match(html, /SOURCE\n  │\n  ▼\nTARGET/);
+  });
+
+  it("keeps ordinary text blocks on standard code leading", async () => {
+    const { html } = await compileArticle("```text\nrequest completed\n```\n", "Title");
+    assert.ok(html.includes('data-layout="code"'));
   });
 
   it("hardens external links and leaves internal ones alone", async () => {
