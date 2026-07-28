@@ -96,6 +96,19 @@ describe("display-math normalization", () => {
     assert.ok(markdown.startsWith("per KV-cache group."), markdown);
   });
 
+  it("reconstructs an orphaned trailing boxed display without changing the source", () => {
+    const source =
+      "Context remains finite. xed{\nCorpus\\ storage\n\\neq\nModel\\ context.\n}\n]\n";
+    const { markdown, displayBlocks } = preprocess(source);
+
+    assert.equal(displayBlocks, 1);
+    assert.ok(markdown.startsWith("Context remains finite."), markdown);
+    const block = /\$\$([\s\S]*?)\$\$/.exec(markdown)?.[1] ?? "";
+    assert.ok(block.includes("\\boxed{"), markdown);
+    assert.ok(block.includes("Corpus\\ storage"), markdown);
+    assert.ok(!markdown.includes(" xed{"), markdown);
+  });
+
   it("does not mistake a trailing bracket in prose for display math", () => {
     // A trailing `[` also begins Markdown links and references; without a real
     // terminator and actual maths ahead, the line must be left alone.

@@ -574,6 +574,15 @@ interface DisplayOpen {
 }
 
 /**
+ * A lossy conversion removed the opening `[\bo` from one trailing
+ * `[\boxed{...}]` block, leaving only `xed{` at the end of its prose line.
+ * Reconstruct only that exact line-ending token; requiring non-empty prose
+ * before it and the normal balanced body/closing `]` checks in the caller keeps
+ * ordinary words ending in "xed" out of the math path.
+ */
+const ORPHANED_BOXED_OPEN = /^(.*\S)\s+xed\{\s*$/;
+
+/**
  * Match a line that opens a display block.
  *
  * The authored convention puts the opening `[` alone on its own line, and that
@@ -595,6 +604,8 @@ function matchDisplayOpen(line: string): DisplayOpen | null {
   // A table row is a single structural unit; splitting one around a `[` would
   // destroy the row.
   if (TABLE_ROW.test(line)) return null;
+  const orphanedBox = line.match(ORPHANED_BOXED_OPEN);
+  if (orphanedBox) return { prefix: orphanedBox[1], head: "\\boxed{" };
   const idx = line.lastIndexOf("[");
   if (idx === -1) return null;
   const prefix = line.slice(0, idx);
