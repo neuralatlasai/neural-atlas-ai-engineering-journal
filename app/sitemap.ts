@@ -1,5 +1,9 @@
 import type { MetadataRoute } from "next";
-import { getAllArticles, getSections } from "@/lib/content/corpus";
+import {
+  getAllArticles,
+  getContentFolders,
+  getSections,
+} from "@/lib/content/corpus";
 import { absoluteUrl, staticNav } from "@/lib/site";
 
 /**
@@ -29,6 +33,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: absoluteUrl(`/${section.section}`),
       changeFrequency: "weekly",
       priority: 0.7,
+    });
+  }
+  for (const folder of getContentFolders()) {
+    if (folder.depth === 1) continue;
+    entries.push({
+      url: absoluteUrl(folder.route),
+      changeFrequency: "weekly",
+      priority: 0.6,
     });
   }
   // Topics are anchored sections of `/topics`, not separate documents, so they

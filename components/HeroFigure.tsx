@@ -1,7 +1,9 @@
 import type { HeroImage } from "@/lib/content/corpus";
 
 function srcset(list: { w: number; src: string }[]): string | undefined {
-  return list.length ? list.map((v) => `${v.src} ${v.w}w`).join(", ") : undefined;
+  return list.length
+    ? list.map((v) => `${v.src} ${v.w}w`).join(", ")
+    : undefined;
 }
 
 /**
@@ -13,20 +15,25 @@ function srcset(list: { w: number; src: string }[]): string | undefined {
 export function HeroFigure({
   hero,
   className,
-  // Matches the fixed reading measure (--measure: 38rem = 608px).
-  sizes = "(max-width: 1024px) 100vw, 608px",
+  sizes = "(max-width: 60rem) calc(100vw - 32px), (min-width: 140rem) 880px, (min-width: 100rem) 832px, (min-width: 80rem) 784px, 608px",
   priority = false,
+  caption,
 }: {
   hero: HeroImage;
   className?: string;
   sizes?: string;
   priority?: boolean;
+  caption?: string;
 }) {
   return (
     <figure className={className}>
       <picture>
-        {hero.avif.length > 0 && <source type="image/avif" srcSet={srcset(hero.avif)} sizes={sizes} />}
-        {hero.webp.length > 0 && <source type="image/webp" srcSet={srcset(hero.webp)} sizes={sizes} />}
+        {hero.avif.length > 0 && (
+          <source type="image/avif" srcSet={srcset(hero.avif)} sizes={sizes} />
+        )}
+        {hero.webp.length > 0 && (
+          <source type="image/webp" srcSet={srcset(hero.webp)} sizes={sizes} />
+        )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={hero.src}
@@ -38,6 +45,9 @@ export function HeroFigure({
           fetchPriority={priority ? "high" : "auto"}
         />
       </picture>
+      {caption && (
+        <figcaption className="hero-figure__caption">{caption}</figcaption>
+      )}
     </figure>
   );
 }

@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   formatArticleType,
   getAllArticles,
+  getContentFolders,
+  getFolderContents,
   getPrevNext,
   getRelatedArticles,
   getSections,
@@ -154,6 +156,83 @@ describe("sections", () => {
   it("is sorted by label for a stable navigation order", () => {
     const labels = sections.map((s) => s.label);
     assert.deepEqual(labels, [...labels].sort((a, b) => a.localeCompare(b, "en")));
+  });
+});
+
+describe("recursive folders", () => {
+  const folders = getContentFolders();
+
+  it("assigns every article to one published source folder", () => {
+    for (const article of articles) {
+      const contents = getFolderContents(article.folderSegments);
+      assert.ok(contents, `missing folder for ${article.documentId}`);
+      assert.ok(
+        contents.articles.some((candidate) => candidate.documentId === article.documentId),
+        `${article.documentId} is not a direct member of ${article.folderSegments.join("/")}`,
+      );
+    }
+  });
+
+  it("emits unique, URL-safe library routes", () => {
+    const routes = folders.map((folder) => folder.route);
+    assert.equal(new Set(routes).size, routes.length);
+    for (const folder of folders) {
+      assert.equal(folder.route, `/library/${folder.routeSegments.join("/")}`);
+      for (const segment of folder.routeSegments) {
+        assert.match(segment, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+      }
+    }
+  });
+
+  it("forms a gap-free parent chain for every nested folder", () => {
+    const routes = new Set(folders.map((folder) => folder.route));
+    for (const folder of folders) {
+      if (folder.depth === 1) {
+        assert.equal(folder.parentRoute, "/library");
+      } else {
+        assert.ok(routes.has(folder.parentRoute), `missing parent ${folder.parentRoute}`);
+      }
+    }
+  });
+
+  it("aggregates recursive counts and reading time exactly", () => {
+    for (const folder of folders) {
+      const descendants = articles.filter((article) =>
+        folder.routeSegments.every(
+          (segment, index) => article.folderSegments[index] === segment,
+        ),
+      );
+      assert.equal(folder.articleCount, descendants.length, folder.route);
+      assert.equal(
+        folder.readingMinutes,
+        descendants.reduce((total, article) => total + article.readingMinutes, 0),
+        folder.route,
+      );
+    }
+  });
+
+  it("returns only direct children and direct articles from a folder", () => {
+    for (const folder of folders) {
+      const contents = getFolderContents(folder.routeSegments);
+      assert.ok(contents);
+      assert.ok(
+        contents.childFolders.every((child) => child.depth === folder.depth + 1),
+        folder.route,
+      );
+      assert.ok(
+        contents.articles.every(
+          (article) => article.folderSegments.length === folder.depth,
+        ),
+        folder.route,
+      );
+    }
+  });
+
+  it("is deterministic across repeated index reads", () => {
+    assert.deepEqual(
+      folders.map((folder) => folder.route),
+      getContentFolders().map((folder) => folder.route),
+    );
   });
 });
 

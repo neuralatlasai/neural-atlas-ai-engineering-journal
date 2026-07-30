@@ -109,6 +109,53 @@ describe("display-math normalization", () => {
     assert.ok(!markdown.includes(" xed{"), markdown);
   });
 
+  it("reconstructs boxed displays truncated after prose or at the delimiter", () => {
+    for (const source of [
+      "Evidence. ([Docs][1])oxed{\n\\text{A}\\neq\\text{B}\n}\n]\n",
+      "Evidence. ([Docs][1]){\n\\text{A}\\neq\\text{B}\n}\n]\n",
+      "\\boxed{\n\\text{A}\\neq\\text{B}\n}\n]\n",
+    ]) {
+      const { markdown, displayBlocks } = preprocess(source);
+      assert.equal(displayBlocks, 1, source);
+      assert.match(markdown, /\$\$\n\\boxed\{/);
+      assert.match(markdown, /\\text\{A\}\\neq\\text\{B\}/);
+      assert.ok(!markdown.includes(")oxed{"), markdown);
+    }
+  });
+
+  it("reconstructs a truncated PyTorch comparison after a citation", () => {
+    const source =
+      "Execution is backend-specific. ([OpenXLA][5])orch}\n" +
+      "\\neq\n" +
+      "\\text{CUDA}\n" +
+      "]\n";
+    const { markdown, displayBlocks } = preprocess(source);
+
+    assert.equal(displayBlocks, 1);
+    assert.ok(markdown.startsWith("Execution is backend-specific. ([OpenXLA][5])"));
+    assert.match(
+      markdown,
+      /\$\$\n\\text\{PyTorch\}\n\\neq\n\\text\{CUDA\}\n\$\$/,
+    );
+    assert.ok(!markdown.includes("[5])orch}"), markdown);
+  });
+
+  it("reconstructs a complete text label whose command opener was lost", () => {
+    const source =
+      "Architecture. ([Source][1])model}\n" +
+      "<\n" +
+      "\\text{agent loop}\n" +
+      "]\n";
+    const { markdown, displayBlocks } = preprocess(source);
+
+    assert.equal(displayBlocks, 1);
+    assert.match(
+      markdown,
+      /\$\$\n\\text\{model\}\n<\n\\text\{agent loop\}\n\$\$/,
+    );
+    assert.ok(!markdown.includes("[1])model}"), markdown);
+  });
+
   it("does not mistake a trailing bracket in prose for display math", () => {
     // A trailing `[` also begins Markdown links and references; without a real
     // terminator and actual maths ahead, the line must be left alone.
@@ -182,6 +229,40 @@ describe("display-math normalization", () => {
     const { markdown } = preprocess("[\na\n=====\nb\n]\n");
     assert.ok(markdown.includes("$$"));
     assert.ok(!markdown.includes("====="), "the scar becomes a single '='");
+  });
+
+  it("recovers a display closer carried into a mathematical blockquote", () => {
+    const source = String.raw`[
+\begin{array}{c|c}
+\text{full vocabulary} &
+\text{sampled student token}\
+> 10\text{ teachers}&
+> 9\text{ teachers}
+> \end{array}
+> ]`;
+    const { markdown, displayBlocks } = preprocess(source);
+
+    assert.equal(displayBlocks, 1);
+    assert.equal((markdown.match(/\$\$/g) ?? []).length, 2);
+    assert.ok(markdown.includes("\\end{array}"), markdown);
+    assert.ok(!markdown.includes("> \\end{array}"), markdown);
+    assert.ok(!markdown.includes("> ]"), markdown);
+    assert.ok(markdown.includes("> 10"), "mathematical comparisons are preserved");
+  });
+
+  it("makes a comma-separated text set's outer braces visible", () => {
+    const { markdown } = preprocess(
+      String.raw`[
+e\in
+{\text{math, code, agent, instruction, ...}}.
+]`,
+    );
+
+    assert.ok(
+      markdown.includes(String.raw`e\in
+\{\text{math, code, agent, instruction, ...}\}`),
+      markdown,
+    );
   });
 });
 

@@ -136,7 +136,8 @@ function collectHeadings(sink: HeadingRecord[]) {
   return (tree: Root) => {
     visit(tree, "element", (node: Element) => {
       if (node.tagName !== "h2" && node.tagName !== "h3") return;
-      const id = typeof node.properties?.id === "string" ? node.properties.id : "";
+      const id =
+        typeof node.properties?.id === "string" ? node.properties.id : "";
       if (!id) return;
       sink.push({
         id,
@@ -172,7 +173,10 @@ function readableText(node: Element): string {
       } else if (child.type === "element") {
         if (NON_TEXT_TAGS.has(child.tagName)) continue;
         const classes = child.properties?.className;
-        if (Array.isArray(classes) && classes.some((c) => String(c).startsWith("math"))) {
+        if (
+          Array.isArray(classes) &&
+          classes.some((c) => String(c).startsWith("math"))
+        ) {
           continue;
         }
         walk(child);
@@ -208,13 +212,20 @@ function collectSearchText(sink: SearchSegment[]) {
 
     visit(tree, "element", (node: Element) => {
       if (/^h[1-6]$/.test(node.tagName)) {
-        const id = typeof node.properties?.id === "string" ? node.properties.id : null;
+        const id =
+          typeof node.properties?.id === "string" ? node.properties.id : null;
         // `readableText` drops math, which would leave an all-TeX heading with
         // no label at all; the plain-text reduction keeps it findable.
         const text = headingLabel(hastToString(node));
         headingId = id;
         headingText = text || null;
-        if (text) sink.push({ kind: "heading", headingId: id, headingText: text, text });
+        if (text)
+          sink.push({
+            kind: "heading",
+            headingId: id,
+            headingText: text,
+            text,
+          });
         return;
       }
       const kind = SEGMENT_TAGS.get(node.tagName);
@@ -279,7 +290,10 @@ function fitHeadingLevels(options: { title: string }) {
         return [SKIP, index];
       }
 
-      while (openLevels.length > 0 && openLevels[openLevels.length - 1] >= authoredLevel) {
+      while (
+        openLevels.length > 0 &&
+        openLevels[openLevels.length - 1] >= authoredLevel
+      ) {
         openLevels.pop();
       }
       openLevels.push(authoredLevel);
@@ -298,7 +312,12 @@ function wrapTables() {
       const wrapper: Element = {
         type: "element",
         tagName: "div",
-        properties: { className: ["table-scroll"], role: "region", "aria-label": "Table", tabIndex: 0 },
+        properties: {
+          className: ["table-scroll"],
+          role: "region",
+          "aria-label": "Table",
+          tabIndex: 0,
+        },
         children: [node],
       };
       (parent.children as unknown[])[index] = wrapper;
@@ -346,6 +365,32 @@ function isTextDiagram(code: Element | undefined, language: string): boolean {
   );
 }
 
+type DiagramDensity = "standard" | "wide" | "ultrawide";
+
+/**
+ * Classify a diagram by its longest visual row.
+ *
+ * Monospace diagrams cannot wrap without corrupting their topology. The
+ * renderer therefore compacts only diagrams whose intrinsic row length needs
+ * it and retains local scrolling as the final fallback. This scan is O(n) in
+ * the code payload and counts Unicode code points rather than UTF-16 units, so
+ * box-drawing glyphs count as one column.
+ */
+function diagramMetrics(code: Element | undefined): {
+  columns: number;
+  density: DiagramDensity;
+} {
+  const text = code ? hastToString(code) : "";
+  let columns = 0;
+  for (const line of text.split(/\r?\n/)) {
+    columns = Math.max(columns, Array.from(line).length);
+  }
+  return {
+    columns,
+    density: columns > 112 ? "ultrawide" : columns > 88 ? "wide" : "standard",
+  };
+}
+
 /** rehype plugin: wrap each highlighted code block in a figure carrying its
  *  language, so the UI can render a header bar and copy affordance (plan §13.3). */
 function frameCodeBlocks() {
@@ -357,6 +402,14 @@ function frameCodeBlocks() {
       );
       const lang = languageOf(code);
       const layout = isTextDiagram(code, lang) ? "diagram" : "code";
+      const metrics = layout === "diagram" ? diagramMetrics(code) : null;
+      if (metrics) {
+        node.properties = {
+          ...node.properties,
+          tabIndex: 0,
+          "aria-label": "Scrollable architecture diagram",
+        };
+      }
       const figure: Element = {
         type: "element",
         tagName: "figure",
@@ -364,6 +417,12 @@ function frameCodeBlocks() {
           className: ["code-block"],
           "data-lang": lang,
           "data-layout": layout,
+          ...(metrics
+            ? {
+                "data-columns": metrics.columns,
+                "data-density": metrics.density,
+              }
+            : {}),
         },
         children: [
           {
@@ -371,7 +430,17 @@ function frameCodeBlocks() {
             tagName: "figcaption",
             properties: { className: ["code-block__bar"] },
             children: [
-              { type: "element", tagName: "span", properties: { className: ["code-block__lang"] }, children: [{ type: "text", value: lang }] },
+              {
+                type: "element",
+                tagName: "span",
+                properties: { className: ["code-block__lang"] },
+                children: [
+                  {
+                    type: "text",
+                    value: layout === "diagram" ? "diagram" : lang,
+                  },
+                ],
+              },
             ],
           },
           node,
@@ -402,21 +471,51 @@ export type AssetResolver = (relativeSrc: string) => AssetVariants | null;
  * emits `<picture>` with AVIF/WebP sources, a fallback, and intrinsic
  * width/height so the image box is reserved before decode.
  */
-function resolveBodyImages(resolve: AssetResolver | undefined, rendered: string[]) {
+const EDITORIAL_IMAGE_SIZES =
+  "(max-width: 60rem) calc(100vw - 32px), (min-width: 140rem) 880px, " +
+  "(min-width: 100rem) 832px, (min-width: 80rem) 784px, 608px";
+
+function resolveBodyImages(
+  resolve: AssetResolver | undefined,
+  rendered: string[],
+  title: string,
+) {
   return (tree: Root) => {
     if (!resolve) return;
+    let currentSection = title;
+    let hasSectionContext = false;
+    let figureNumber = 0;
+
     visit(tree, "element", (node: Element, index, parent) => {
+      if (/^h[2-6]$/.test(node.tagName)) {
+        currentSection = headingLabel(hastToString(node)) || title;
+        hasSectionContext = true;
+        return;
+      }
       if (node.tagName !== "img" || !parent || index === undefined) return;
       const src = node.properties?.src;
       if (typeof src !== "string") return;
-      if (/^(?:[a-z]+:)?\/\//i.test(src) || src.startsWith("/") || src.startsWith("data:")) return;
+      if (
+        /^(?:[a-z]+:)?\/\//i.test(src) ||
+        src.startsWith("/") ||
+        src.startsWith("data:")
+      )
+        return;
 
       const v = resolve(src);
       if (!v) return;
       rendered.push(v.src);
+      figureNumber += 1;
 
-      const alt = typeof node.properties.alt === "string" ? node.properties.alt : "";
-      const sizes = "(max-width: 1024px) 100vw, 608px";
+      const alt =
+        typeof node.properties.alt === "string" ? node.properties.alt : "";
+      const caption =
+        alt.trim() ||
+        (hasSectionContext
+          ? currentSection
+          : title
+            ? `Overview of ${title}`
+            : "Technical figure");
       const srcset = (list: { w: number; src: string }[]) =>
         list.map((x) => `${x.src} ${x.w}w`).join(", ");
 
@@ -425,7 +524,11 @@ function resolveBodyImages(resolve: AssetResolver | undefined, rendered: string[
         sources.push({
           type: "element",
           tagName: "source",
-          properties: { type: "image/avif", srcSet: srcset(v.avif), sizes },
+          properties: {
+            type: "image/avif",
+            srcSet: srcset(v.avif),
+            sizes: EDITORIAL_IMAGE_SIZES,
+          },
           children: [],
         });
       }
@@ -433,7 +536,11 @@ function resolveBodyImages(resolve: AssetResolver | undefined, rendered: string[
         sources.push({
           type: "element",
           tagName: "source",
-          properties: { type: "image/webp", srcSet: srcset(v.webp), sizes },
+          properties: {
+            type: "image/webp",
+            srcSet: srcset(v.webp),
+            sizes: EDITORIAL_IMAGE_SIZES,
+          },
           children: [],
         });
       }
@@ -455,9 +562,89 @@ function resolveBodyImages(resolve: AssetResolver | undefined, rendered: string[
       (parent.children as unknown[])[index] = {
         type: "element",
         tagName: "picture",
-        properties: { className: ["content-image"] },
+        properties: {
+          className: [
+            "content-image",
+            ...(figureNumber === 1 ? ["content-image--lead"] : []),
+          ],
+          dataCaption: caption,
+          dataFigureNumber: figureNumber,
+        },
         children: [...sources, img],
       } as Element;
+      return [SKIP, index + 1];
+    });
+  };
+}
+
+/**
+ * Convert standalone Markdown images into semantic editorial figures.
+ *
+ * Source-authored alt text becomes the visible caption. Legacy documents with
+ * empty alt text receive only a conservative section label; the renderer never
+ * invents a description of technical content it cannot verify.
+ */
+function frameBodyImages() {
+  return (tree: Root) => {
+    visit(tree, "element", (node: Element, index, parent) => {
+      if (node.tagName !== "p" || !parent || index === undefined) return;
+
+      const visibleChildren = node.children.filter(
+        (child) => child.type !== "text" || child.value.trim().length > 0,
+      );
+      if (visibleChildren.length !== 1) return;
+
+      const picture = visibleChildren[0];
+      if (picture.type !== "element" || picture.tagName !== "picture") return;
+      const classes = Array.isArray(picture.properties?.className)
+        ? picture.properties.className.map(String)
+        : [];
+      if (!classes.includes("content-image")) return;
+
+      const properties = picture.properties ?? {};
+      const caption =
+        typeof properties.dataCaption === "string"
+          ? properties.dataCaption.trim()
+          : "";
+      const figureNumber =
+        typeof properties.dataFigureNumber === "number"
+          ? properties.dataFigureNumber
+          : Number(properties.dataFigureNumber);
+      delete properties.dataCaption;
+      delete properties.dataFigureNumber;
+
+      const captionNode: Element | null =
+        caption && Number.isFinite(figureNumber)
+          ? {
+              type: "element",
+              tagName: "figcaption",
+              properties: { className: ["content-figure__caption"] },
+              children: [
+                {
+                  type: "element",
+                  tagName: "span",
+                  properties: { className: ["content-figure__label"] },
+                  children: [{ type: "text", value: `Figure ${figureNumber}` }],
+                },
+                { type: "text", value: ` · ${caption}` },
+              ],
+            }
+          : null;
+
+      const figure: Element = {
+        type: "element",
+        tagName: "figure",
+        properties: {
+          className: [
+            "content-figure",
+            ...(classes.includes("content-image--lead")
+              ? ["content-figure--lead"]
+              : []),
+          ],
+        },
+        children: captionNode ? [picture, captionNode] : [picture],
+      };
+      (parent.children as unknown[])[index] = figure;
       return [SKIP, index + 1];
     });
   };
@@ -475,6 +662,99 @@ function resolveBodyImages(resolve: AssetResolver | undefined, rendered: string[
 const SUSPECT_CONTROL_SEQUENCE = /(?<!\\)\\(?!\\)[a-zA-Z](?![a-zA-Z])/;
 
 const UNDEFINED_SEQUENCE = /Undefined control sequence: \\(\w+)/;
+
+/**
+ * Net grouping-brace balance, excluding visible escaped braces.
+ */
+function bareBraceDelta(tex: string): number {
+  let delta = 0;
+  for (let i = 0; i < tex.length; i++) {
+    if (tex[i] === "\\") {
+      i++;
+      continue;
+    }
+    if (tex[i] === "{") delta++;
+    else if (tex[i] === "}") delta--;
+  }
+  return delta;
+}
+
+/**
+ * Repair a literal opening brace whose closing slash was lost.
+ *
+ * A converted expression can contain `\{...\}` for a visible set. One corpus
+ * scar preserves the opening slash but loses the closing one:
+ *
+ *     \substack{y\sim\pi_\theta\{\pi_{E_i}}}
+ *
+ * The first `}` at the literal brace's nesting depth belongs to that visible
+ * pair, but TeX treats it as a grouping delimiter and eventually reports an
+ * extra closing brace. Pairing the escaped opener with that same-depth closer
+ * restores `\{...\}` without changing the mathematical notation.
+ *
+ * The O(n) repair is allowed only when the source has excess bare closers,
+ * changes exactly that many same-depth pairs, and makes the complete expression
+ * parse in KaTeX. Ambiguous or still-invalid input is returned unchanged.
+ */
+function repairUnescapedLiteralClosers(
+  tex: string,
+  displayMode: boolean,
+): string {
+  const imbalance = bareBraceDelta(tex);
+  if (imbalance >= 0 || !tex.includes("\\{")) return tex;
+
+  const requiredRepairs = -imbalance;
+  const pendingDepths: number[] = [];
+  const repairedCloserIndices = new Set<number>();
+  let depth = 0;
+
+  for (let i = 0; i < tex.length; i++) {
+    const char = tex[i];
+    if (char === "\\") {
+      const escaped = tex[i + 1];
+      if (escaped === "{") {
+        pendingDepths.push(depth);
+      } else if (
+        escaped === "}" &&
+        pendingDepths.at(-1) === depth
+      ) {
+        pendingDepths.pop();
+      }
+      i++;
+      continue;
+    }
+    if (char === "{") {
+      depth++;
+      continue;
+    }
+    if (char !== "}") continue;
+
+    if (
+      repairedCloserIndices.size < requiredRepairs &&
+      pendingDepths.at(-1) === depth
+    ) {
+      repairedCloserIndices.add(i);
+      pendingDepths.pop();
+      continue;
+    }
+    depth--;
+  }
+
+  if (repairedCloserIndices.size !== requiredRepairs) return tex;
+
+  let candidate = "";
+  for (let i = 0; i < tex.length; i++) {
+    if (repairedCloserIndices.has(i)) candidate += "\\";
+    candidate += tex[i];
+  }
+
+  try {
+    katex.renderToString(candidate, { displayMode, throwOnError: true });
+    return candidate;
+  } catch {
+    return tex;
+  }
+}
 
 /**
  * Repair row separators that a Markdown conversion collapsed from `\\` to `\`.
@@ -506,7 +786,10 @@ function repairCollapsedRowBreaks(tex: string, displayMode: boolean): string {
       const sequence = named[1];
       // Match a single (not already doubled) backslash before the named
       // sequence, and replace it with two — `\q` becomes `\\q`, a row break.
-      const single = new RegExp(String.raw`(?<!\\)\\${sequence}(?![a-zA-Z])`, "g");
+      const single = new RegExp(
+        String.raw`(?<!\\)\\${sequence}(?![a-zA-Z])`,
+        "g",
+      );
       const next = candidate.replace(single, String.raw`\\${sequence}`);
       if (next === candidate) return tex; // nothing to repair
       candidate = next;
@@ -521,7 +804,9 @@ function repairCollapsedRowBreaks(tex: string, displayMode: boolean): string {
  * `remark-math` contributes `math` and `inlineMath` node types that are not in
  * the base mdast type definitions, so they are narrowed structurally.
  */
-function isMathNode(node: unknown): node is { type: "math" | "inlineMath"; value: string } {
+function isMathNode(
+  node: unknown,
+): node is { type: "math" | "inlineMath"; value: string } {
   if (typeof node !== "object" || node === null) return false;
   const candidate = node as { type?: unknown; value?: unknown };
   return (
@@ -539,7 +824,10 @@ function isMathNode(node: unknown): node is { type: "math" | "inlineMath"; value
  * repaired equation was silently discarded and the broken TeX still reached
  * KaTeX. Both representations have to be kept in step.
  */
-function setMathValue(node: { value: string; data?: unknown }, tex: string): void {
+function setMathValue(
+  node: { value: string; data?: unknown },
+  tex: string,
+): void {
   node.value = tex;
 
   const data = node.data as { hChildren?: unknown } | undefined;
@@ -548,7 +836,11 @@ function setMathValue(node: { value: string; data?: unknown }, tex: string): voi
   const rewrite = (nodes: unknown[]): void => {
     for (const child of nodes) {
       if (typeof child !== "object" || child === null) continue;
-      const candidate = child as { type?: unknown; value?: unknown; children?: unknown };
+      const candidate = child as {
+        type?: unknown;
+        value?: unknown;
+        children?: unknown;
+      };
       if (candidate.type === "text" && typeof candidate.value === "string") {
         candidate.value = tex;
       } else if (Array.isArray(candidate.children)) {
@@ -563,7 +855,12 @@ function repairMathNodes() {
   return (tree: MdastRoot) => {
     visit(tree, (node) => {
       if (!isMathNode(node)) return;
-      const repaired = repairCollapsedRowBreaks(node.value, node.type === "math");
+      const displayMode = node.type === "math";
+      const repairedBraces = repairUnescapedLiteralClosers(
+        node.value,
+        displayMode,
+      );
+      const repaired = repairCollapsedRowBreaks(repairedBraces, displayMode);
       if (repaired !== node.value) setMathValue(node, repaired);
     });
   };
@@ -626,6 +923,37 @@ function hardenLinks() {
 }
 
 /**
+ * Remove source-leading thematic breaks from the rendered body.
+ *
+ * The page masthead already owns the opening boundary. Rendering an authored
+ * `---` immediately below it creates a second divider whose normal margins
+ * stack with the first section heading and produce a large empty band. Only
+ * root-leading breaks are removed; every thematic break inside the article is
+ * preserved.
+ */
+function removeLeadingThematicBreaks() {
+  return (tree: Root) => {
+    const isWhitespace = (node: Root["children"][number]) =>
+      node.type === "text" && node.value.trim().length === 0;
+    const firstContent = tree.children.findIndex((node) => !isWhitespace(node));
+    if (firstContent < 0) return;
+
+    const first = tree.children[firstContent];
+    if (first.type !== "element" || first.tagName !== "hr") return;
+
+    tree.children.splice(0, firstContent + 1);
+    while (tree.children.length > 0) {
+      while (tree.children[0] && isWhitespace(tree.children[0])) {
+        tree.children.shift();
+      }
+      const next = tree.children[0];
+      if (next?.type !== "element" || next.tagName !== "hr") break;
+      tree.children.shift();
+    }
+  };
+}
+
+/**
  * Compilation is pure in its inputs, so identical sources yield identical
  * artifacts (plan §3.2) and can be memoized. During a build the same article is
  * compiled by both the page renderer and the search-index builder; without this
@@ -638,7 +966,11 @@ const compileCache = new Map<string, Promise<CompiledArticle>>();
 const resolverIds = new WeakMap<AssetResolver, number>();
 let nextResolverId = 0;
 
-function cacheKey(source: string, title: string, resolveAsset?: AssetResolver): string {
+function cacheKey(
+  source: string,
+  title: string,
+  resolveAsset?: AssetResolver,
+): string {
   let resolverId = 0;
   if (resolveAsset) {
     resolverId = resolverIds.get(resolveAsset) ?? ++nextResolverId;
@@ -683,21 +1015,28 @@ function structuralStages(
 ) {
   const processor = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
   if (repairMath) processor.use(repairMathNodes);
-  return processor
-    .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeRaw)
-    .use(fitHeadingLevels, { title })
-    .use(slugHeadings)
-    .use(collectHeadings, headings) // capture clean outline text before anchors
-    // Index before anchors/KaTeX/Shiki rewrite the tree into presentation markup.
-    .use(collectSearchText, searchSegments);
+  return (
+    processor
+      .use(remarkRehype, { allowDangerousHtml: true })
+      .use(rehypeRaw)
+      .use(fitHeadingLevels, { title })
+      .use(slugHeadings)
+      .use(collectHeadings, headings) // capture clean outline text before anchors
+      // Index before anchors/KaTeX/Shiki rewrite the tree into presentation markup.
+      .use(collectSearchText, searchSegments)
+  );
 }
 
 /** Prose words in the collected segments; code, tables, and maths excluded. */
 function countSegmentWords(segments: SearchSegment[]): number {
   return segments
-    .filter((s) => s.kind === "heading" || s.kind === "body" || s.kind === "caption")
-    .reduce((total, s) => total + s.text.split(/\s+/).filter(Boolean).length, 0);
+    .filter(
+      (s) => s.kind === "heading" || s.kind === "body" || s.kind === "caption",
+    )
+    .reduce(
+      (total, s) => total + s.text.split(/\s+/).filter(Boolean).length,
+      0,
+    );
 }
 
 export interface ArticleIndexData {
@@ -719,7 +1058,10 @@ const indexCache = new Map<string, Promise<ArticleIndexData>>();
  * Running the structural stages alone, and stopping before the compiler, keeps
  * heading ids identical while skipping all of that work.
  */
-export function extractArticleIndex(source: string, title = ""): Promise<ArticleIndexData> {
+export function extractArticleIndex(
+  source: string,
+  title = "",
+): Promise<ArticleIndexData> {
   const key = `${title}\u0000${source}`;
   const cached = indexCache.get(key);
   if (cached) return cached;
@@ -742,7 +1084,11 @@ async function extractArticleIndexUncached(
   // ever produced.
   await processor.run(processor.parse(markdown));
 
-  return { headings, searchSegments, wordCount: countSegmentWords(searchSegments) };
+  return {
+    headings,
+    searchSegments,
+    wordCount: countSegmentWords(searchSegments),
+  };
 }
 
 async function compileArticleUncached(
@@ -756,19 +1102,30 @@ async function compileArticleUncached(
   const images: string[] = [];
   const languages = codeLanguages(markdown);
 
-  const processor = structuralStages(title, headings, searchSegments, { repairMath: true })
+  const processor = structuralStages(title, headings, searchSegments, {
+    repairMath: true,
+  })
     .use(rehypeAutolinkHeadings, {
       behavior: "append",
-      properties: { className: ["heading-anchor"], "aria-label": "Link to this section", tabIndex: -1 },
+      properties: {
+        className: ["heading-anchor"],
+        "aria-label": "Link to this section",
+        tabIndex: -1,
+      },
       content: { type: "text", value: "#" },
     })
     .use(hardenLinks)
-    .use(resolveBodyImages, resolveAsset, images)
+    .use(removeLeadingThematicBreaks)
+    .use(resolveBodyImages, resolveAsset, images, title)
+    .use(frameBodyImages)
     .use(wrapTables)
     // Build-time render; on malformed TeX, emit the source in a styled span
     // rather than throwing (plan §11.4). rehype-katex defaults output to
     // htmlAndMathml for accessibility.
-    .use(rehypeKatex, { throwOnError: false, errorColor: "var(--color-danger)" });
+    .use(rehypeKatex, {
+      throwOnError: false,
+      errorColor: "var(--color-danger)",
+    });
 
   // Only pay for the highlighter when the document has code to highlight, and
   // load only the grammars it actually uses. A block with no info-string is

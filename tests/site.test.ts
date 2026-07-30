@@ -17,6 +17,8 @@ function article(overrides: Partial<ArticleMeta> = {}): ArticleMeta {
     sourcePath: "/abs/docs/models/example.md",
     route: "/models/example",
     routeSegments: ["models", "example"],
+    folderSegments: ["models"],
+    folderLabels: ["Models"],
     section: "models",
     sectionLabel: "Models",
     title: "Example Report",

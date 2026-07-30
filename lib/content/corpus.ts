@@ -75,6 +75,10 @@ export interface ArticleMeta {
   sourcePath: string; // absolute path on disk
   route: string; // e.g. /models/glm-5-2
   routeSegments: string[]; // e.g. ["models", "glm-5-2"]
+  /** URL-safe source-directory path used by the recursive library browser. */
+  folderSegments: string[]; // e.g. ["models", "glm-5-2"]
+  /** Human-readable counterpart of `folderSegments`, preserving authored names. */
+  folderLabels: string[]; // e.g. ["Models", "GLM 5.2"]
   section: string; // slug, e.g. "models"
   sectionLabel: string; // e.g. "Models"
   title: string;
@@ -119,6 +123,31 @@ function slugify(input: string): string {
 
 function titleCase(slug: string): string {
   return slug.replace(/(^|-)([a-z])/g, (_, sep, ch) => (sep ? " " : "") + ch.toUpperCase()).trim();
+}
+
+function folderLabel(name: string): string {
+  const words = name
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ");
+
+  return words
+    .map((word) => {
+      const normalized = word.toLowerCase();
+      if (normalized === "deepseek") return "DeepSeek";
+      if (normalized === "ffn") return "FFN";
+      if (normalized === "gml") return "GLM";
+      if (normalized === "moe") return "MoE";
+      if (normalized === "train") return "Model training";
+
+      const glmVersion = /^glm(\d+(?:\.\d+)*)$/i.exec(word);
+      if (glmVersion) return `GLM-${glmVersion[1]}`;
+      if (/^[A-Z0-9.]+$/.test(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
 }
 
 function walk(dir: string, acc: string[]): void {
@@ -348,7 +377,81 @@ function signatureOf(files: string[]): string {
     .join("|");
 }
 
+function owningContentRoot(sourcePath: string): string {
+  return (
+    CONTENT_ROOTS.find((root) => {
+      const relative = path.relative(root, sourcePath);
+      return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+    }) ?? CONTENT_ROOTS[0]
+  );
+}
+
+function sourceFolderParts(sourcePath: string): string[] {
+  const relative = path.relative(owningContentRoot(sourcePath), sourcePath);
+  const directories = relative.split(path.sep).slice(0, -1).filter(Boolean);
+  return directories.length > 0 ? directories : ["Articles"];
+}
+
+function sourceFolderKey(parts: readonly string[]): string {
+  return parts.join("\u0000");
+}
+
+/**
+ * Resolve every authored directory to one stable URL path.
+ *
+ * Slugs are allocated parent-first and in lexical order. Most directories keep
+ * their readable name. Only siblings whose names normalize to the same slug get
+ * a path-derived suffix, so arbitrary Unicode and punctuation cannot merge two
+ * distinct folders or make a build nondeterministic.
+ */
+function buildFolderSegmentMap(files: readonly string[]): Map<string, string[]> {
+  const sourcePaths = new Map<string, string[]>();
+  for (const file of files) {
+    const parts = sourceFolderParts(file);
+    for (let depth = 1; depth <= parts.length; depth++) {
+      const prefix = parts.slice(0, depth);
+      sourcePaths.set(sourceFolderKey(prefix), prefix);
+    }
+  }
+
+  const ordered = [...sourcePaths.values()].sort(
+    (a, b) =>
+      a.length - b.length ||
+      sourceFolderKey(a).localeCompare(sourceFolderKey(b), "en"),
+  );
+  const resolved = new Map<string, string[]>();
+  const claimed = new Map<string, string>();
+
+  for (const sourceParts of ordered) {
+    const sourceKey = sourceFolderKey(sourceParts);
+    const parentSourceKey = sourceFolderKey(sourceParts.slice(0, -1));
+    const parentSegments = resolved.get(parentSourceKey) ?? [];
+    const base = slugify(sourceParts.at(-1) ?? "") || "collection";
+    let segment = base;
+    let attempt = 0;
+    let candidateKey = [...parentSegments, segment].join("/");
+
+    while (claimed.has(candidateKey) && claimed.get(candidateKey) !== sourceKey) {
+      segment = `${base}-${contentHash(`${sourceKey}:${attempt}`)}`;
+      candidateKey = [...parentSegments, segment].join("/");
+      attempt++;
+    }
+
+    const routeSegments = [...parentSegments, segment];
+    claimed.set(candidateKey, sourceKey);
+    resolved.set(sourceKey, routeSegments);
+  }
+
+  return resolved;
+}
+
 export function getAllArticles(): ArticleMeta[] {
+  // A production corpus is immutable for the lifetime of the build process.
+  // Return before even walking the tree: static generation calls this from
+  // every route, and repeating directory I/O would turn O(A) discovery into
+  // O(P · A), where P is the number of generated pages.
+  if (cache && process.env.NODE_ENV === "production") return cache;
+
   const files: string[] = [];
   for (const root of CONTENT_ROOTS) walk(root, files);
 
@@ -383,6 +486,7 @@ export function getAllArticles(): ArticleMeta[] {
 
   const usedRoutes = new Set<string>();
   const articles: ArticleMeta[] = [];
+  const folderSegmentMap = buildFolderSegmentMap(files);
 
   for (const abs of files) {
     const relFromRoot = path.relative(REPO_ROOT, abs).split(path.sep).join("/");
@@ -429,14 +533,15 @@ export function getAllArticles(): ArticleMeta[] {
 
     // Which root this file came from, so multiple roots produce correct
     // section names rather than paths relative to the first root.
-    const owningRoot =
-      CONTENT_ROOTS.find((root) => !path.relative(root, abs).startsWith("..")) ??
-      CONTENT_ROOTS[0];
+    const owningRoot = owningContentRoot(abs);
     const relFromDocs = path.relative(owningRoot, abs).split(path.sep).join("/");
     const parts = relFromDocs.split("/");
-    // A file sitting directly in a content root has no section directory.
-    const section = slugify(parts.length > 1 ? parts[0] : "") || "articles";
-    const sectionLabel = titleCase(section);
+    const rawFolderParts = sourceFolderParts(abs);
+    const folderSegments =
+      folderSegmentMap.get(sourceFolderKey(rawFolderParts)) ?? ["articles"];
+    const folderLabels = rawFolderParts.map(folderLabel);
+    const section = folderSegments[0];
+    const sectionLabel = folderLabels[0] || titleCase(section);
 
     const baseName = path.basename(abs, path.extname(abs));
     let slugTail = slugify(baseName);
@@ -498,6 +603,8 @@ export function getAllArticles(): ArticleMeta[] {
       sourcePath: abs,
       route,
       routeSegments,
+      folderSegments,
+      folderLabels,
       section,
       sectionLabel,
       title,
@@ -528,14 +635,147 @@ export function getArticleByRoute(routeSegments: string[]): ArticleMeta | null {
   return getAllArticles().find((a) => a.route === route) ?? null;
 }
 
-export function getSections(): { section: string; label: string; count: number }[] {
-  const map = new Map<string, { section: string; label: string; count: number }>();
-  for (const a of getAllArticles()) {
-    const cur = map.get(a.section);
-    if (cur) cur.count++;
-    else map.set(a.section, { section: a.section, label: a.sectionLabel, count: 1 });
+export interface ContentFolder {
+  /** Stable key for maps and React lists; never exposed as a URL. */
+  key: string;
+  route: string;
+  routeSegments: string[];
+  labels: string[];
+  label: string;
+  depth: number;
+  parentRoute: string;
+  directArticleCount: number;
+  articleCount: number;
+  readingMinutes: number;
+  childFolderCount: number;
+}
+
+export interface FolderContents {
+  folder: ContentFolder;
+  childFolders: readonly ContentFolder[];
+  articles: readonly ArticleMeta[];
+}
+
+interface MutableFolder extends Omit<ContentFolder, "childFolderCount"> {
+  childFolderCount: number;
+}
+
+interface FolderIndex {
+  source: ArticleMeta[];
+  folders: ContentFolder[];
+  byKey: Map<string, ContentFolder>;
+  childrenByKey: Map<string, ContentFolder[]>;
+  articlesByKey: Map<string, ArticleMeta[]>;
+}
+
+let folderIndexCache: FolderIndex | null = null;
+
+function folderKey(routeSegments: readonly string[]): string {
+  return routeSegments.join("/");
+}
+
+function getFolderIndex(): FolderIndex {
+  const articles = getAllArticles();
+  if (folderIndexCache?.source === articles) return folderIndexCache;
+
+  const mutableByKey = new Map<string, MutableFolder>();
+  const articlesByKey = new Map<string, ArticleMeta[]>();
+
+  for (const article of articles) {
+    for (let depth = 1; depth <= article.folderSegments.length; depth++) {
+      const routeSegments = article.folderSegments.slice(0, depth);
+      const labels = article.folderLabels.slice(0, depth);
+      const key = folderKey(routeSegments);
+      const existing = mutableByKey.get(key);
+
+      if (existing) {
+        existing.articleCount++;
+        existing.readingMinutes += article.readingMinutes;
+      } else {
+        mutableByKey.set(key, {
+          key,
+          route: `/library/${key}`,
+          routeSegments,
+          labels,
+          label: labels.at(-1) ?? titleCase(routeSegments.at(-1) ?? ""),
+          depth,
+          parentRoute:
+            depth === 1
+              ? "/library"
+              : `/library/${folderKey(routeSegments.slice(0, -1))}`,
+          directArticleCount: 0,
+          articleCount: 1,
+          readingMinutes: article.readingMinutes,
+          childFolderCount: 0,
+        });
+      }
+    }
+
+    const directKey = folderKey(article.folderSegments);
+    const directFolder = mutableByKey.get(directKey);
+    if (directFolder) directFolder.directArticleCount++;
+    const directArticles = articlesByKey.get(directKey);
+    if (directArticles) directArticles.push(article);
+    else articlesByKey.set(directKey, [article]);
   }
-  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label, "en"));
+
+  const orderedMutable = [...mutableByKey.values()].sort(
+    (a, b) =>
+      a.depth - b.depth ||
+      a.key.localeCompare(b.key, "en"),
+  );
+  for (const folder of orderedMutable) {
+    if (folder.depth === 1) continue;
+    const parentKey = folderKey(folder.routeSegments.slice(0, -1));
+    const parent = mutableByKey.get(parentKey);
+    if (parent) parent.childFolderCount++;
+  }
+
+  const folders: ContentFolder[] = orderedMutable.map((folder) => ({ ...folder }));
+  const byKey = new Map(folders.map((folder) => [folder.key, folder]));
+  const childrenByKey = new Map<string, ContentFolder[]>();
+  for (const folder of folders) {
+    const parentKey =
+      folder.depth === 1 ? "" : folderKey(folder.routeSegments.slice(0, -1));
+    const siblings = childrenByKey.get(parentKey);
+    if (siblings) siblings.push(folder);
+    else childrenByKey.set(parentKey, [folder]);
+  }
+  for (const children of childrenByKey.values()) {
+    children.sort((a, b) => a.label.localeCompare(b.label, "en"));
+  }
+
+  folderIndexCache = { source: articles, folders, byKey, childrenByKey, articlesByKey };
+  return folderIndexCache;
+}
+
+export function getContentFolders(): readonly ContentFolder[] {
+  return getFolderIndex().folders;
+}
+
+export function getRootFolders(): readonly ContentFolder[] {
+  return getFolderIndex().childrenByKey.get("") ?? [];
+}
+
+export function getFolderContents(routeSegments: readonly string[]): FolderContents | null {
+  const normalized = routeSegments.map((segment) => segment.toLowerCase());
+  const key = folderKey(normalized);
+  const index = getFolderIndex();
+  const folder = index.byKey.get(key);
+  if (!folder) return null;
+  return {
+    folder,
+    childFolders: index.childrenByKey.get(key) ?? [],
+    articles: index.articlesByKey.get(key) ?? [],
+  };
+}
+
+export function getSections(): { section: string; label: string; count: number }[] {
+  return getRootFolders().map((folder) => ({
+    section: folder.routeSegments[0],
+    label: folder.label,
+    count: folder.articleCount,
+  }));
 }
 
 export function getPrevNext(route: string): { prev: ArticleMeta | null; next: ArticleMeta | null } {

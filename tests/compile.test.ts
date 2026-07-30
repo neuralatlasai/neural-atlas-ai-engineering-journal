@@ -9,7 +9,10 @@ function headingLevels(html: string): number[] {
 
 function assertNoHeadingJumps(html: string): void {
   const levels = headingLevels(html);
-  assert.ok(levels.every((level) => level >= 2), "body headings must not use <h1>");
+  assert.ok(
+    levels.every((level) => level >= 2),
+    "body headings must not use <h1>",
+  );
   for (let i = 1; i < levels.length; i++) {
     assert.ok(
       levels[i] - levels[i - 1] <= 1,
@@ -22,19 +25,31 @@ describe("heading normalization", () => {
   it("starts a document whose shallowest heading is ## at h2, not h3", async () => {
     // The page renders the title as <h1>; starting the body at <h3> would leave
     // an h1 → h3 jump, which fails WCAG 2.2 and the build's HTML audit.
-    const { html } = await compileArticle("## First\n\ntext\n\n### Nested\n\ntext\n", "Title");
+    const { html } = await compileArticle(
+      "## First\n\ntext\n\n### Nested\n\ntext\n",
+      "Title",
+    );
     assert.deepEqual(headingLevels(html), [2, 3]);
     assertNoHeadingJumps(html);
   });
 
   it("drops a leading # that merely repeats the page title", async () => {
-    const { html } = await compileArticle("# My Title\n\n## Section\n\ntext\n", "My Title");
-    assert.ok(!html.includes("My Title"), "the duplicated title heading is removed");
+    const { html } = await compileArticle(
+      "# My Title\n\n## Section\n\ntext\n",
+      "My Title",
+    );
+    assert.ok(
+      !html.includes("My Title"),
+      "the duplicated title heading is removed",
+    );
     assert.deepEqual(headingLevels(html), [2]);
   });
 
   it("keeps a leading # that is not the title, renumbered into the outline", async () => {
-    const { html } = await compileArticle("# Something Else\n\ntext\n", "My Title");
+    const { html } = await compileArticle(
+      "# Something Else\n\ntext\n",
+      "My Title",
+    );
     assert.ok(html.includes("Something Else"));
     assert.deepEqual(headingLevels(html), [2]);
   });
@@ -73,7 +88,10 @@ describe("outline records", () => {
     );
     // A heading id that is not in the document would produce a dead outline link.
     for (const heading of headings) {
-      assert.ok(html.includes(`id="${heading.id}"`), `missing anchor #${heading.id}`);
+      assert.ok(
+        html.includes(`id="${heading.id}"`),
+        `missing anchor #${heading.id}`,
+      );
     }
   });
 
@@ -100,7 +118,10 @@ describe("search segments", () => {
   });
 
   it("marks text before the first heading as having no heading", async () => {
-    const { searchSegments } = await compileArticle("lead text\n\n## Alpha\n\nbody\n", "Title");
+    const { searchSegments } = await compileArticle(
+      "lead text\n\n## Alpha\n\nbody\n",
+      "Title",
+    );
     assert.equal(searchSegments[0].headingId, null);
     assert.equal(searchSegments[0].text, "lead text");
   });
@@ -112,7 +133,10 @@ describe("search segments", () => {
     );
     const body = searchSegments.find((s) => s.kind === "body");
     assert.ok(body);
-    assert.ok(!body.text.includes("mathcal"), `TeX leaked into the index: ${body.text}`);
+    assert.ok(
+      !body.text.includes("mathcal"),
+      `TeX leaked into the index: ${body.text}`,
+    );
     assert.ok(body.text.includes("is minimized"));
   });
 
@@ -124,19 +148,40 @@ describe("search segments", () => {
     const code = searchSegments.find((s) => s.kind === "code");
     assert.ok(code, "code blocks must be indexed");
     assert.ok(code.text.includes("head_dim"));
-    assert.ok(!searchSegments.some((s) => s.kind === "body" && s.text.includes("head_dim")));
+    assert.ok(
+      !searchSegments.some(
+        (s) => s.kind === "body" && s.text.includes("head_dim"),
+      ),
+    );
   });
 
   it("does not double-count nested blocks", async () => {
-    const { searchSegments } = await compileArticle("- item one\n- item two\n", "Title");
-    const texts = searchSegments.filter((s) => s.kind === "body").map((s) => s.text);
+    const { searchSegments } = await compileArticle(
+      "- item one\n- item two\n",
+      "Title",
+    );
+    const texts = searchSegments
+      .filter((s) => s.kind === "body")
+      .map((s) => s.text);
     assert.deepEqual(texts, ["item one", "item two"]);
   });
 });
 
 describe("rendering contract", () => {
+  it("removes only source-leading thematic breaks below the page masthead", async () => {
+    const { html } = await compileArticle(
+      "---\n\n## Abstract\n\nOpening.\n\n---\n\nContinuation.",
+      "Title",
+    );
+    assert.match(html, /^<h2\b/);
+    assert.equal((html.match(/<hr>/g) ?? []).length, 1);
+  });
+
   it("wraps tables in a scroll container so they cannot break page layout", async () => {
-    const { html } = await compileArticle("| A | B |\n|---|---|\n| 1 | 2 |\n", "Title");
+    const { html } = await compileArticle(
+      "| A | B |\n|---|---|\n| 1 | 2 |\n",
+      "Title",
+    );
     assert.ok(html.includes('class="table-scroll"'));
     assert.match(html, /<div class="table-scroll"[^>]*>\s*<table>/);
   });
@@ -153,11 +198,31 @@ describe("rendering contract", () => {
     const { html } = await compileArticle(source, "Title");
 
     assert.ok(html.includes('data-layout="diagram"'));
+    assert.ok(html.includes('data-density="standard"'));
+    assert.ok(html.includes('data-columns="6"'));
+    assert.ok(html.includes(">diagram</span>"));
+    assert.match(html, /<pre[^>]*tabindex="0"/);
+    assert.match(html, /aria-label="Scrollable architecture diagram"/);
     assert.match(html, /SOURCE\n  │\n  ▼\nTARGET/);
   });
 
+  it("classifies a long architecture row as a wide diagram", async () => {
+    const row = `SOURCE ──► ${"PIPELINE ".repeat(10)}TARGET`;
+    const { html } = await compileArticle(
+      `\`\`\`text\n${row}\n\`\`\`\n`,
+      "Title",
+    );
+
+    assert.ok(html.includes('data-layout="diagram"'));
+    assert.ok(html.includes('data-density="wide"'));
+    assert.ok(html.includes(`data-columns="${Array.from(row).length}"`));
+  });
+
   it("keeps ordinary text blocks on standard code leading", async () => {
-    const { html } = await compileArticle("```text\nrequest completed\n```\n", "Title");
+    const { html } = await compileArticle(
+      "```text\nrequest completed\n```\n",
+      "Title",
+    );
     assert.ok(html.includes('data-layout="code"'));
   });
 
@@ -166,15 +231,91 @@ describe("rendering contract", () => {
       "[out](https://example.com) and [in](/models/x)\n",
       "Title",
     );
-    assert.match(html, /href="https:\/\/example\.com"[^>]*rel="noopener noreferrer"/);
+    assert.match(
+      html,
+      /href="https:\/\/example\.com"[^>]*rel="noopener noreferrer"/,
+    );
     const internal = html.match(/<a[^>]*href="\/models\/x"[^>]*>/)?.[0] ?? "";
-    assert.ok(!internal.includes("target"), "internal links must not open a new tab");
+    assert.ok(
+      !internal.includes("target"),
+      "internal links must not open a new tab",
+    );
   });
 
   it("renders mathematics at build time with an accessible MathML branch", async () => {
     const { html } = await compileArticle("$$\nx^2\n$$\n", "Title");
     assert.ok(html.includes("katex"), "math must be rendered, not left as TeX");
-    assert.ok(html.includes("<math"), "MathML is required for assistive technology");
+    assert.ok(
+      html.includes("<math"),
+      "MathML is required for assistive technology",
+    );
+  });
+
+  it("repairs a lost closing slash in a literal brace pair", async () => {
+    const source = String.raw`[
+\boxed{
+\theta_0
+\xrightarrow[\mathcal D_{\rm pre}]{\mathcal L_{\rm LM}+
+\mathcal L_{\rm MTP}+\mathcal L_{\rm Bal}}
+\theta_{\rm base}
+\xrightarrow[\mathcal D_e]{\mathcal L_{\rm SFT}^{(e)}}
+\theta_e^{(0)}
+\xrightarrow[\pi_e,\mathcal E_e]{\mathrm{GRPO}*e}
+\theta_e
+\xrightarrow[\substack{y\sim\pi*\theta\{\pi_{E_i}}}]
+{\mathcal L_{\rm OPD}}
+\theta_{\rm final}
+}
+]`;
+    const { html } = await compileArticle(source, "Training program");
+
+    assert.ok(html.includes("katex-display"), "the display equation renders");
+    assert.ok(!html.includes("katex-error"), "raw TeX fallback is forbidden");
+    assert.match(
+      html,
+      /\\pi_\\theta\\\{\\pi_\{E_i\}\\\}/,
+      "the visible literal brace pair is preserved",
+    );
+  });
+
+  it("renders an array whose closer inherited a blockquote marker", async () => {
+    const source = String.raw`[
+\begin{array}{c|c}
+\text{DeepSeek V4} & \text{Kimi K3}\
+\hline
+\text{full vocabulary} &
+\text{sampled student token}\
+> 10\text{ teachers}&
+> 9\text{ teachers}
+> \end{array}
+> ]`;
+    const { html } = await compileArticle(source, "Distillation comparison");
+    const visibleHtml = html.replace(
+      /<annotation[\s\S]*?<\/annotation>/g,
+      "",
+    );
+
+    assert.ok(html.includes("katex-display"), "the array renders as mathematics");
+    assert.ok(!html.includes("katex-error"), "raw TeX fallback is forbidden");
+    assert.ok(
+      !visibleHtml.includes("\\begin{array}"),
+      "TeX does not leak into prose",
+    );
+  });
+
+  it("renders a truncated comparison recovered after prose", async () => {
+    const source =
+      "Execution is backend-specific. ([OpenXLA][5])orch}\n" +
+      "\\neq\n" +
+      "\\text{CUDA}\n" +
+      "]\n\n" +
+      "[5]: https://openxla.org\n";
+    const { html } = await compileArticle(source, "Execution boundary");
+
+    assert.ok(html.includes("katex-display"));
+    assert.ok(!html.includes("katex-error"));
+    assert.ok(!html.includes("[5])orch}"));
+    assert.match(html, /\\text\{PyTorch\}\n\\neq\n\\text\{CUDA\}/);
   });
 
   it("surfaces reference definitions, which Markdown would otherwise hide", async () => {
@@ -271,7 +412,11 @@ second
   it("still disambiguates repeated heading text", async () => {
     const indexed = await extractArticleIndex(SOURCE, "Title");
     const ids = indexed.headings.map((h) => h.id);
-    assert.equal(new Set(ids).size, ids.length, `duplicate ids: ${ids.join(", ")}`);
+    assert.equal(
+      new Set(ids).size,
+      ids.length,
+      `duplicate ids: ${ids.join(", ")}`,
+    );
   });
 
   it("does not render HTML while extracting", async () => {
@@ -297,7 +442,10 @@ describe("determinism and caching", () => {
     const source = "# Shared\n\nbody\n";
     const asTitle = await compileArticle(source, "Shared");
     const notTitle = await compileArticle(source, "Different");
-    assert.ok(!asTitle.html.includes("Shared"), "matching title heading is dropped");
+    assert.ok(
+      !asTitle.html.includes("Shared"),
+      "matching title heading is dropped",
+    );
     assert.ok(notTitle.html.includes("Shared"), "non-matching heading is kept");
   });
 });
@@ -319,8 +467,33 @@ describe("body images", () => {
     // The hero is picked from the same `assets/` folder the body draws on, so
     // the page needs to know what the body already shows or it publishes the
     // same figure twice — once stripped of its context.
-    const { images } = await compileArticle("![](./assets/overview.png)\n", "T", resolve);
+    const { images } = await compileArticle(
+      "![](./assets/overview.png)\n",
+      "T",
+      resolve,
+    );
     assert.deepEqual(images, ["/content-assets/x/overview-1600.png"]);
+  });
+
+  it("turns a standalone image into a numbered editorial figure", async () => {
+    const { html } = await compileArticle(
+      "![Execution path](./assets/overview.png)\n",
+      "Runtime",
+      resolve,
+    );
+    assert.match(html, /<figure class="content-figure content-figure--lead">/);
+    assert.match(html, /<figcaption class="content-figure__caption">/);
+    assert.match(html, /Figure 1<\/span> · Execution path/);
+  });
+
+  it("uses the nearest verified section as the fallback caption", async () => {
+    const { html } = await compileArticle(
+      "## Memory management\n\n![](./assets/overview.png)\n",
+      "Runtime",
+      resolve,
+    );
+    assert.match(html, /Figure 1<\/span> · Memory management/);
+    assert.doesNotMatch(html, /architecture|pipeline|flow/i);
   });
 
   it("reports nothing for a document with no resolvable images", async () => {

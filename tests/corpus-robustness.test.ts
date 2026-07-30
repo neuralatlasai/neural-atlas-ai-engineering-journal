@@ -88,6 +88,30 @@ describe("discovery survives hostile input", () => {
     }
   });
 
+  it("preserves every level of deeply nested source folders", () => {
+    const deep = corpus
+      .getAllArticles()
+      .find((article) => article.documentId.endsWith("Beta/Nested/Deep/deep.md"));
+    assert.ok(deep);
+    assert.deepEqual(deep.folderSegments, ["beta", "nested", "deep"]);
+
+    for (let depth = 1; depth <= deep.folderSegments.length; depth++) {
+      assert.ok(
+        corpus.getFolderContents(deep.folderSegments.slice(0, depth)),
+        `missing depth ${depth}`,
+      );
+    }
+  });
+
+  it("publishes one collision-free route per recursive folder", () => {
+    const folders = corpus.getContentFolders();
+    const routes = folders.map((folder) => folder.route);
+    assert.equal(new Set(routes).size, routes.length);
+    for (const folder of folders) {
+      assert.match(folder.route, /^\/library(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)+$/);
+    }
+  });
+
   it("gives every published document a non-empty title", () => {
     for (const article of corpus.getAllArticles()) {
       assert.ok(article.title.trim().length > 0, article.documentId);

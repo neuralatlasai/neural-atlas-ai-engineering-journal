@@ -22,7 +22,9 @@ export function ArticleEnhancements() {
       btn.type = "button";
       btn.className = "code-copy";
       btn.textContent = "Copy";
-      btn.setAttribute("aria-label", "Copy code to clipboard");
+      const payloadLabel =
+        figure.dataset.layout === "diagram" ? "diagram" : "code";
+      btn.setAttribute("aria-label", `Copy ${payloadLabel} to clipboard`);
       const onClick = async () => {
         try {
           await navigator.clipboard.writeText(code.textContent ?? "");

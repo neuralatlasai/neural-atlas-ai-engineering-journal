@@ -33,7 +33,10 @@
  * matched strictly — loosening it could swallow a genuine heading.
  */
 const DISPLAY_OPEN = /^\s*(?:#{1,6}\s*)?\[\s*$/;
-const DISPLAY_CLOSE = /^\s*\]\s*$/;
+// A lossy Markdown pass can carry a blockquote marker from a preceding
+// greater-than row onto the structural closer (`> ]`). This form is accepted
+// only after a display block has opened, so ordinary blockquotes are unaffected.
+const DISPLAY_CLOSE = /^\s*(?:>\s*)?\]\s*$/;
 
 /**
  * Net brace balance contributed by a line of TeX, ignoring escaped braces.
@@ -190,8 +193,14 @@ function escapeSetBraces(s: string): string {
       if (depth === 0) break;
       j++;
     }
-    if (depth !== 0 || !topLevelComma) continue;
     const inner = s.slice(braceIdx + 1, j);
+    // A set can be authored as one text-mode group:
+    // `e\in{\text{math, code, agent}}`. Its commas are one level below the
+    // outer set, but still separate set members rather than function arguments.
+    const commaSeparatedText = /\\(?:text|textrm|textbf|textit|textsf|texttt)\{[^{}]*,[^{}]*\}/.test(
+      inner,
+    );
+    if (depth !== 0 || (!topLevelComma && !commaSeparatedText)) continue;
     out += s.slice(last, braceIdx) + "\\{" + inner + "\\}";
     last = j + 1;
     opener.lastIndex = last;
@@ -254,7 +263,12 @@ function repairMathLine(line: string): string | null {
   // A lone rule scar inside math has no meaning; drop it.
   if (HR_SCAR.test(line)) return null;
   // A stray leading Markdown heading marker inside an equation.
-  let s = line.replace(/^\s*#{1,6}\s+/, "");
+  let s = line
+    .replace(/^\s*#{1,6}\s+/, "")
+    // A leading mathematical `>` can make Markdown continue the blockquote
+    // marker onto `\end{...}`. Keep genuine comparison rows (`> 10`) intact,
+    // but remove the marker from the structural environment closer.
+    .replace(/^\s*>\s+(?=\\end\{)/, "");
   s = repairMathFragment(s);
   // Row separators `\\` in aligned/cases were collapsed to a single trailing
   // backslash, so multi-line equations render as one run-on row. Restore them.
@@ -581,6 +595,20 @@ interface DisplayOpen {
  * ordinary words ending in "xed" out of the math path.
  */
 const ORPHANED_BOXED_OPEN = /^(.*\S)\s+xed\{\s*$/;
+const ORPHANED_BOXED_AFTER_PROSE = /^(.*\S\))(?:oxed|xed)\{\s*$/;
+const ORPHANED_BOXED_GROUP_AFTER_PROSE = /^(.*\S\))\{\s*$/;
+const ORPHANED_BOXED_ONLY = /^\s*\\boxed\{\s*$/;
+
+/**
+ * A second lossy conversion removed `[\text{PyT` from a comparison immediately
+ * after a citation, leaving `orch}` followed by `\neq`, `\text{CUDA}`, and the
+ * normal closing `]`. Reconstruct this exact terminal scar only. The caller
+ * still requires a balanced TeX body and a real display terminator, preventing
+ * an ordinary prose word ending in "orch}" from entering the math pipeline.
+ */
+const ORPHANED_PYTORCH_OPEN = /^(.*\S\))orch\}\s*$/;
+const ORPHANED_TEXT_OPEN =
+  /^(.*\S\))([A-Za-z][A-Za-z0-9 /+_.-]*)\}\s*$/;
 
 /**
  * Match a line that opens a display block.
@@ -601,11 +629,27 @@ const ORPHANED_BOXED_OPEN = /^(.*\S)\s+xed\{\s*$/;
  */
 function matchDisplayOpen(line: string): DisplayOpen | null {
   if (DISPLAY_OPEN.test(line)) return { prefix: "", head: "" };
+  if (ORPHANED_BOXED_ONLY.test(line)) return { prefix: "", head: "\\boxed{" };
   // A table row is a single structural unit; splitting one around a `[` would
   // destroy the row.
   if (TABLE_ROW.test(line)) return null;
   const orphanedBox = line.match(ORPHANED_BOXED_OPEN);
   if (orphanedBox) return { prefix: orphanedBox[1], head: "\\boxed{" };
+  const attachedBox = line.match(ORPHANED_BOXED_AFTER_PROSE);
+  if (attachedBox) return { prefix: attachedBox[1], head: "\\boxed{" };
+  const bareBoxGroup = line.match(ORPHANED_BOXED_GROUP_AFTER_PROSE);
+  if (bareBoxGroup) return { prefix: bareBoxGroup[1], head: "\\boxed{" };
+  const orphanedPyTorch = line.match(ORPHANED_PYTORCH_OPEN);
+  if (orphanedPyTorch) {
+    return { prefix: orphanedPyTorch[1], head: "\\text{PyTorch}" };
+  }
+  const orphanedText = line.match(ORPHANED_TEXT_OPEN);
+  if (orphanedText) {
+    return {
+      prefix: orphanedText[1],
+      head: `\\text{${orphanedText[2]}}`,
+    };
+  }
   const idx = line.lastIndexOf("[");
   if (idx === -1) return null;
   const prefix = line.slice(0, idx);

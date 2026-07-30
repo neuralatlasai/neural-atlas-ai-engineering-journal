@@ -24,7 +24,6 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="shell site-header__inner">
         <Link href="/" className="wordmark">
-          <AtlasMark />
           <span className="wordmark__text">Neural Atlas</span>
         </Link>
         <SiteNav items={navItems()} />
@@ -35,32 +34,5 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
-  );
-}
-
-/**
- * Wordmark glyph: three stacked layers with a traced path, referencing the
- * layer-by-layer architecture analysis the journal publishes. Inline SVG so it
- * costs no request and inherits the current text color in both themes.
- */
-function AtlasMark() {
-  return (
-    <svg
-      className="wordmark__mark"
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M12 3 20.5 7.5 12 12 3.5 7.5Z" />
-      <path d="M3.5 12 12 16.5 20.5 12" />
-      <path d="M3.5 16.5 12 21 20.5 16.5" opacity="0.55" />
-    </svg>
   );
 }

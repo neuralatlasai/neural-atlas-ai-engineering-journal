@@ -82,6 +82,7 @@ export const site = {
 
 /** Routes that exist independently of the discovered corpus. */
 export const staticNav: readonly NavItem[] = [
+  { href: "/library", label: "Research", description: "Browse research by subject area" },
   { href: "/topics", label: "Topics", description: "Analysis grouped by subject area" },
   { href: "/about", label: "About", description: "Method, scope, and editorial standards" },
 ] as const;

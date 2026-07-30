@@ -27,7 +27,7 @@ export function ArticleList({
           <p className="article-row__meta">
             <span className="pill">{formatArticleType(article.articleType)}</span>
             {article.displayDate && <span>{article.displayDate}</span>}
-            {showSection && <span>{article.sectionLabel}</span>}
+            {showSection && <span>{article.folderLabels.join(" / ")}</span>}
             <span>{article.readingMinutes} min read</span>
           </p>
           <Heading className="article-row__title">

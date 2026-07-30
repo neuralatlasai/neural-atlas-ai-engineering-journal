@@ -11,6 +11,7 @@ import { ArticleList } from "@/components/ArticleList";
 import { ArticleLink } from "@/components/ArticleLink";
 import { HeroFigure } from "@/components/HeroFigure";
 import { JsonLd } from "@/components/JsonLd";
+import { AtlasWorkflowFigure } from "@/components/AtlasWorkflowFigure";
 
 /**
  * Editorial home page (plan §6.3): one featured article, then the latest work,
@@ -45,19 +46,22 @@ export default function HomePage() {
       <JsonLd data={websiteJsonLd()} />
 
       <section className="home-hero">
-        <p className="eyebrow">{site.tagline}</p>
-        <h1>Evidence-grounded analysis of frontier AI systems.</h1>
-        <p>{site.longDescription}</p>
-        <p className="home-hero__actions">
-          {sections[0] && (
-            <Link className="button button--primary" href={`/${sections[0].section}`}>
-              Start reading
+        <div className="home-hero__copy">
+          <p className="eyebrow">{site.tagline}</p>
+          <h1>Evidence-grounded analysis of frontier AI systems.</h1>
+          <p>{site.longDescription}</p>
+          <p className="home-hero__actions">
+            {sections[0] && (
+              <Link className="button button--primary" href={`/${sections[0].section}`}>
+                Start reading
+              </Link>
+            )}
+            <Link className="button" href="/about">
+              How this is written
             </Link>
-          )}
-          <Link className="button" href="/about">
-            How this is written
-          </Link>
-        </p>
+          </p>
+        </div>
+        <AtlasWorkflowFigure />
       </section>
 
       {featured && (
