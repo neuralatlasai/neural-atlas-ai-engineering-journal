@@ -200,7 +200,15 @@ function escapeSetBraces(s: string): string {
     const commaSeparatedText = /\\(?:text|textrm|textbf|textit|textsf|texttt)\{[^{}]*,[^{}]*\}/.test(
       inner,
     );
-    if (depth !== 0 || (!topLevelComma && !commaSeparatedText)) continue;
+    // A singleton set can still contain a comma inside the element's index:
+    // `S={s_{e,j}}` and `R={\operatorname{expertID}_{j,k}}`. The comma is one
+    // brace level below the set, so the top-level-comma test cannot see it.
+    // Restrict this repair to a single indexed symbol/name; generic grouping
+    // such as `x={a+b}` remains untouched.
+    const indexedSingleton = /^(?:(?:\\(?:mathrm|mathbf|mathit|mathsf|mathtt|mathcal|mathbb)\s*)?(?:[A-Za-z][A-Za-z0-9]*|\\[A-Za-z]+)|\\(?:operatorname|mathrm|mathbf|mathit|mathsf|mathtt|mathcal|mathbb)\{[^{}]+\})_\{[^{}]*,[^{}]*\}$/.test(
+      inner.trim(),
+    );
+    if (depth !== 0 || (!topLevelComma && !commaSeparatedText && !indexedSingleton)) continue;
     out += s.slice(last, braceIdx) + "\\{" + inner + "\\}";
     last = j + 1;
     opener.lastIndex = last;
@@ -231,6 +239,14 @@ function repairMathFragment(s: string): string {
       // as red error text inside an otherwise-fine equation.
       .replace(/\\textsc\b/g, "\\text")
       .replace(/\\textsl\b/g, "\\textit")
+      // KaTeX strict mode rejects these Unicode characters in math mode even
+      // though both are legitimate authored text. Emit TeX-safe equivalents
+      // that preserve the visible glyph: the full-width bar is part of model
+      // control-token syntax, the lower block is SentencePiece's visible-space
+      // marker, and three hyphens typeset an em dash in text mode.
+      .replace(/｜/g, '\\text{\\char"FF5C}')
+      .replace(/▁/g, "\\rule{0.52em}{0.12em}")
+      .replace(/—/g, "\\text{---}")
       // A literal percent sign is a TeX comment and silently eats the rest of
       // the equation.
       .replace(/(?<!\\)%/g, "\\%")

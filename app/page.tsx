@@ -48,7 +48,7 @@ export default function HomePage() {
       <section className="home-hero">
         <div className="home-hero__copy">
           <p className="eyebrow">{site.tagline}</p>
-          <h1>Evidence-grounded analysis of frontier AI systems.</h1>
+          <h1>Evidence-led analysis of frontier AI systems.</h1>
           <p>{site.longDescription}</p>
           <p className="home-hero__actions">
             {sections[0] && (

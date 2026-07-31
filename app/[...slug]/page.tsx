@@ -256,7 +256,11 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
           />
         )}
 
-        <div className="article-layout">
+        <div
+          className={`article-layout article-layout--${
+            showOutline ? "with-outline" : "without-outline"
+          }`}
+        >
           <div className="article-main">
             {/* Outline lives before the body on narrow viewports, where the sticky
               rail cannot fit (plan §18.2). */}

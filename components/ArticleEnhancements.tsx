@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 /**
  * Progressive enhancement for the statically-rendered article body: adds a
- * copy button to each code block and copy-link behavior to heading anchors.
+ * copy button to each code block.
  * The content is fully usable without any of this (plan §3.3).
  */
 export function ArticleEnhancements() {
@@ -41,29 +41,6 @@ export function ArticleEnhancements() {
       btn.addEventListener("click", onClick);
       bar.appendChild(btn);
       cleanups.push(() => btn.removeEventListener("click", onClick));
-    });
-
-    // Heading anchors copy their canonical URL on click.
-    root.querySelectorAll<HTMLAnchorElement>("a.heading-anchor").forEach((a) => {
-      const onClick = (e: MouseEvent) => {
-        const id = a.getAttribute("href")?.slice(1);
-        if (!id) return;
-        const url = `${location.origin}${location.pathname}#${id}`;
-        if (navigator.clipboard) {
-          e.preventDefault();
-          history.replaceState(null, "", `#${id}`);
-          document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-          navigator.clipboard.writeText(url).then(
-            () => {
-              a.classList.add("is-copied");
-              setTimeout(() => a.classList.remove("is-copied"), 1200);
-            },
-            () => {},
-          );
-        }
-      };
-      a.addEventListener("click", onClick);
-      cleanups.push(() => a.removeEventListener("click", onClick));
     });
 
     return () => cleanups.forEach((fn) => fn());

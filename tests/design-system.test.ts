@@ -16,6 +16,7 @@ const articlePage = fs.readFileSync(
   path.join("app", "[...slug]", "page.tsx"),
   "utf8",
 );
+const rootLayout = fs.readFileSync(path.join("app", "layout.tsx"), "utf8");
 
 /**
  * Class names KaTeX puts in the document. A bare selector on any of these in
@@ -157,7 +158,7 @@ describe("page composition", () => {
     ].map((m) => m[1].trim());
   }
 
-  it("keeps the reading measure fixed", () => {
+  it("keeps the secondary prose measure stable", () => {
     // The measure is a typography decision (~72ch), not a layout lever. Filling
     // a wide screen by stretching it would defeat the point. The assertion is
     // that exactly one value is declared — not which one — so the measure can
@@ -203,13 +204,23 @@ describe("page composition", () => {
     }
   });
 
-  it("pins the reading column to the measure", () => {
+  it("lets article copy fill the bounded responsive stage", () => {
     // Relying on the grid track alone let the column — and every paragraph in
     // it — shrink whenever the shell could not afford the full composition.
     assert.match(
       ruleFor(".article-body > *"),
-      /inline-size:\s*min\(100%,\s*var\(--measure\)\)/,
-      "article children must retain the reading measure",
+      /inline-size:\s*100%/,
+      "article children must use the available stage",
+    );
+    assert.match(
+      ruleFor(".article-body > *"),
+      /max-inline-size:\s*100%/,
+      "article children must not exceed the available stage",
+    );
+    assert.doesNotMatch(
+      ruleFor(".article-body > *"),
+      /var\(--measure\)/,
+      "article paragraphs must not use a second, narrower width",
     );
     assert.match(
       ruleFor(".prose-page"),
@@ -224,7 +235,7 @@ describe("page composition", () => {
     const shells = valuesOf("--shell-max")
       .filter((v) => v.endsWith("rem"))
       .map((v) => Number.parseFloat(v));
-    const desktop = shells.filter((v) => v > 44); // 44rem is the narrow-screen shell
+    const desktop = shells.filter((v) => v > 42); // 42rem is the narrow-screen shell
     assert.ok(
       desktop.length >= 2,
       "the shell must have more than one desktop size",
@@ -237,8 +248,8 @@ describe("page composition", () => {
 
   it("bounds the evidence stage and the outline gap", () => {
     const layoutRule = ruleFor(".article-layout");
-    assert.match(layoutRule, /--article-stage:\s*44rem/);
-    assert.match(layoutRule, /--article-gap:\s*clamp\(3rem,\s*4vw,\s*4rem\)/);
+    assert.match(layoutRule, /--article-stage:\s*42rem/);
+    assert.match(layoutRule, /--article-gap:\s*clamp\(1\.25rem,\s*2vw,\s*2rem\)/);
     assert.doesNotMatch(
       layoutRule,
       /minmax\([^)]*,\s*1fr\)/,
@@ -247,7 +258,7 @@ describe("page composition", () => {
     assert.match(ruleFor(".article-rail"), /grid-column:\s*2/);
   });
 
-  it("gives evidence figures more resolution without widening prose", () => {
+  it("gives the complete article one consistent stage", () => {
     const figureRule = ruleFor(".article-body .content-figure");
     assert.match(figureRule, /inline-size:\s*100%/);
     assert.match(
@@ -262,9 +273,9 @@ describe("page composition", () => {
     );
   });
 
-  it("collapses to a measured single column without an outline", () => {
+  it("reserves the final article geometry before streamed content arrives", () => {
     const noRail = selectors.find((s) =>
-      s.includes(":not(:has(.article-rail))"),
+      s.includes(".article-layout--without-outline"),
     );
     assert.ok(noRail, "the no-rail layout must be handled");
     assert.match(ruleFor(noRail), /column-gap:\s*0/);
@@ -272,6 +283,12 @@ describe("page composition", () => {
       ruleFor(noRail),
       /grid-template-columns:\s*minmax\(0,\s*min\(100%,\s*var\(--article-stage\)\)\)/,
     );
+    assert.ok(
+      !selectors.some((selector) => selector.includes(":has(.article-rail)")),
+      "layout geometry must not depend on a trailing streamed descendant",
+    );
+    assert.match(articlePage, /article-layout article-layout--\$\{/);
+    assert.match(articlePage, /showOutline\s*\?\s*"with-outline"\s*:\s*"without-outline"/);
   });
 });
 
@@ -352,6 +369,41 @@ describe("site identity", () => {
   });
 });
 
+describe("editorial typography", () => {
+  function ruleFor(selector: string): string {
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const index = stripped.indexOf(`${selector} {`);
+    if (index === -1) return "";
+    return stripped.slice(index, stripped.indexOf("}", index));
+  }
+
+  it("self-hosts a newspaper display face and a publication UI face", () => {
+    assert.match(rootLayout, /Libre_Franklin/);
+    assert.match(rootLayout, /Newsreader/);
+    assert.doesNotMatch(rootLayout, /\bInter\b|Source_Serif_4/);
+    assert.match(css, /--font-display:\s*var\(--font-newsreader\)/);
+    assert.match(css, /--font-reader:\s*var\(--font-newsreader\)/);
+    assert.match(css, /--font-ui:\s*var\(--font-franklin\)/);
+  });
+
+  it("keeps editorial and interface roles distinct", () => {
+    for (const selector of [
+      ".wordmark",
+      ".home-hero h1",
+      ".article-title",
+      ".article-row__title",
+    ]) {
+      assert.match(
+        ruleFor(selector),
+        /font-family:\s*var\(--font-display\)/,
+        `${selector} must use the editorial display face`,
+      );
+    }
+    assert.match(ruleFor(".article-body"), /font-family:\s*var\(--font-reader\)/);
+    assert.match(ruleFor("body"), /font-family:\s*var\(--font-ui\)/);
+  });
+});
+
 describe("homepage research figure", () => {
   it("uses deterministic vector geometry rather than a generated raster", () => {
     assert.match(atlasWorkflow, /<svg/);
@@ -411,7 +463,7 @@ describe("article editorial hierarchy", () => {
       '<header className="article-header">',
     );
     const heroIndex = articlePage.indexOf('className="article-hero"');
-    const layoutIndex = articlePage.indexOf('<div className="article-layout">');
+    const layoutIndex = articlePage.indexOf("article-layout article-layout--");
     assert.ok(headerIndex >= 0 && headerIndex < layoutIndex);
     assert.ok(heroIndex >= 0 && heroIndex < layoutIndex);
 

@@ -34,15 +34,14 @@ export default function config(phase) {
      * fails loudly if a route cannot be statically rendered.
      */
     /**
-     * `distDir` is deliberately left at its default.
-     *
-     * Pointing it elsewhere to stop `next build` from clobbering a running dev
-     * server's `.next` does not work: with `output: "export"` it relocates the
-     * *exported site* rather than the compilation cache, so `./out` silently
-     * goes stale and the postbuild gates end up validating the previous build.
-     * The dev/build conflict is handled by not running them concurrently (see
-     * the workflow note in the README).
+     * Development and production must never mutate the same compiler state.
+     * `next dev` writes `.next-dev`; `next build` retains Next's default
+     * `.next` directory and still exports to `./out`. Scoping `distDir` to the
+     * development phase avoids the export relocation problem a global custom
+     * directory causes while making a concurrent or interrupted production
+     * build incapable of truncating a manifest underneath the dev server.
      */
+    ...(isDevServer ? { distDir: ".next-dev" } : {}),
     ...(isDevServer ? {} : { output: "export" }),
 
     /**

@@ -268,7 +268,16 @@ for (const [relKey, entry] of Object.entries(manifest)) {
 fs.mkdirSync(path.dirname(MANIFEST), { recursive: true });
 // Sorted keys keep the manifest byte-identical across runs (plan §3.2).
 const ordered = Object.fromEntries(Object.entries(manifest).sort(([a], [b]) => a.localeCompare(b, "en")));
-fs.writeFileSync(MANIFEST, JSON.stringify(ordered, null, 2) + "\n", "utf8");
+const manifestTemporary = `${MANIFEST}.${process.pid}.tmp`;
+try {
+  // Readers must observe either the complete previous manifest or the complete
+  // replacement. Writing the destination in place exposes a zero-length or
+  // partial JSON document to a live development server.
+  fs.writeFileSync(manifestTemporary, JSON.stringify(ordered, null, 2) + "\n", "utf8");
+  fs.renameSync(manifestTemporary, MANIFEST);
+} finally {
+  fs.rmSync(manifestTemporary, { force: true });
+}
 
 console.log(`image pipeline: ${planned.length} source image(s)`);
 console.log(`  encoded: ${encoded} | reused from cache: ${reused} | pruned: ${pruned}`);

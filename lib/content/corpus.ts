@@ -12,6 +12,7 @@ import crypto from "node:crypto";
 import matter from "gray-matter";
 import { countProseWords, estimateReadingMinutes } from "./reading";
 import { extractLede } from "./lede";
+import { titleLabel } from "./tex-text";
 import { basePath, withBasePath } from "../site";
 
 const REPO_ROOT = process.cwd();
@@ -182,10 +183,11 @@ function walk(dir: string, acc: string[]): void {
 function firstHeading(body: string): string | null {
   const match = body.match(/^\s{0,3}#\s+(.+?)\s*$/m);
   if (!match) return null;
-  return match[1]
+  const raw = match[1]
     .replace(/\s*#*\s*$/, "")
     .replace(/^\s*\d+(?:\.\d+)*[.)]\s+/, "")
     .trim();
+  return titleLabel(raw) || null;
 }
 
 function extractDate(body: string): string | null {
@@ -582,8 +584,8 @@ export function getAllArticles(): ArticleMeta[] {
     }
     usedRoutes.add(route);
 
-    const title =
-      (typeof data.title === "string" && data.title) || firstHeading(content) || titleCase(slugTail);
+    const authoredTitle = typeof data.title === "string" ? titleLabel(data.title) : "";
+    const title = authoredTitle || firstHeading(content) || titleCase(slugTail);
     const description =
       (typeof data.description === "string" && data.description) ||
       extractLede(content);

@@ -77,6 +77,7 @@ web_modules/
 # Next.js build output
 .next
 .next-build
+.next-dev
 out
 
 # Generated at build time by the content compiler from docs/**/assets

@@ -111,6 +111,18 @@ describe("corpus discovery", () => {
     }
   });
 
+  it("never leaks TeX markup into a page title", () => {
+    // Page titles are plain `<h1>` text and metadata; unlike body mathematics,
+    // they are never processed by KaTeX.
+    for (const article of articles) {
+      assert.doesNotMatch(
+        article.title,
+        /\\[A-Za-z]+|[{}$]/,
+        `${article.documentId} title contains raw TeX: ${article.title}`,
+      );
+    }
+  });
+
   it("returns a stable order across calls (plan §3.2 determinism)", () => {
     const first = getAllArticles().map((a) => a.documentId);
     const second = getAllArticles().map((a) => a.documentId);

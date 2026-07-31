@@ -4,8 +4,7 @@
   "private": true,
   "description": "Neural Atlas — static-first research publication platform (plan.md implementation)",
   "scripts": {
-    "predev": "node scripts/clean-dev-cache.mjs && node scripts/optimize-images.mjs",
-    "dev": "next dev",
+    "dev": "node scripts/dev-server.mjs",
     "prebuild": "node scripts/optimize-images.mjs",
     "build": "next build",
     "postbuild": "node scripts/verify-math.mjs && node scripts/audit-html.mjs",

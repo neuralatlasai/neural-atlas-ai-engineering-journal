@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { headingLabel, plainTextFromTeX } from "../lib/content/tex-text";
+import { headingLabel, plainTextFromTeX, titleLabel } from "../lib/content/tex-text";
 
 describe("plainTextFromTeX", () => {
   it("leaves ordinary prose untouched", () => {
@@ -68,5 +68,22 @@ describe("headingLabel", () => {
 
   it("prefers the cleaned form when there is one", () => {
     assert.equal(headingLabel("\\text{Prefill}"), "Prefill");
+  });
+});
+
+describe("titleLabel", () => {
+  it("turns a TeX-only algorithm heading into a plain page title", () => {
+    assert.equal(
+      titleLabel("(\\boxed{\\textbf{Algorithm 1: }\\mathsf{DEEPSEEK_V4_PRETRAIN}})"),
+      "Algorithm 1: DEEPSEEK V4 PRETRAIN",
+    );
+  });
+
+  it("does not return raw TeX when no readable label exists", () => {
+    assert.equal(titleLabel("\\alpha"), "");
+  });
+
+  it("leaves ordinary authored titles unchanged", () => {
+    assert.equal(titleLabel("PagedAttention in production"), "PagedAttention in production");
   });
 });

@@ -100,3 +100,34 @@ export function headingLabel(raw: string): string {
   const cleaned = plainTextFromTeX(raw);
   return cleaned || raw.replace(/\s+/g, " ").trim();
 }
+
+function hasSingleOuterParenthesisPair(value: string): boolean {
+  if (!value.startsWith("(") || !value.endsWith(")")) return false;
+  let depth = 0;
+  for (let i = 0; i < value.length; i++) {
+    if (value[i] === "(") depth++;
+    else if (value[i] === ")") depth--;
+    if (depth < 0 || (depth === 0 && i < value.length - 1)) return false;
+  }
+  return depth === 0;
+}
+
+/**
+ * Plain-text label suitable for page metadata and the visible article `<h1>`.
+ *
+ * Unlike an in-article heading, a page title is rendered as ordinary text and
+ * never passes through KaTeX. Returning the raw heading as a fallback would
+ * therefore expose `\boxed{...}` directly in the masthead. A title either has
+ * a readable TeX reduction or lets the caller fall back to the source filename.
+ *
+ * Parentheses are part of this corpus' inline-math delimiter convention, not
+ * part of the title. Snake-case algorithm identifiers are also presented with
+ * word spacing while their authored spelling remains untouched in the body.
+ */
+export function titleLabel(raw: string): string {
+  let label = plainTextFromTeX(raw);
+
+  while (hasSingleOuterParenthesisPair(label)) label = label.slice(1, -1).trim();
+
+  return label.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+}

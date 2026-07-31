@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { compileArticle, extractArticleIndex } from "../lib/content/compile";
+import { titleLabel } from "../lib/content/tex-text";
 
 /** Heading levels rendered in document order, e.g. `[2, 3, 3, 2]`. */
 function headingLevels(html: string): number[] {
@@ -33,6 +34,13 @@ describe("heading normalization", () => {
     assertNoHeadingJumps(html);
   });
 
+  it("keeps heading ids without injecting hover hash links", async () => {
+    const { html } = await compileArticle("## Stable section\n\ntext\n", "Title");
+
+    assert.match(html, /<h2 id="stable-section">Stable section<\/h2>/);
+    assert.doesNotMatch(html, /heading-anchor|aria-label="Copy link|>\s*#\s*<\/a>/);
+  });
+
   it("drops a leading # that merely repeats the page title", async () => {
     const { html } = await compileArticle(
       "# My Title\n\n## Section\n\ntext\n",
@@ -43,6 +51,31 @@ describe("heading normalization", () => {
       "the duplicated title heading is removed",
     );
     assert.deepEqual(headingLevels(html), [2]);
+  });
+
+  it("drops a TeX-authored heading represented by a plain page title", async () => {
+    const rawTitle = "(\\boxed{\\textbf{Algorithm 1: }\\mathsf{DEEPSEEK_V4_PRETRAIN}})";
+    const title = titleLabel(rawTitle);
+    const { html, headings } = await compileArticle(
+      `# ${rawTitle}\n\n## (\\boxed{\\mathbf{0.\\ INPUT}})\n\ntext\n`,
+      title,
+    );
+
+    assert.equal(title, "Algorithm 1: DEEPSEEK V4 PRETRAIN");
+    assert.ok(!html.includes("DEEPSEEK_V4_PRETRAIN"), "the duplicate body heading is removed");
+    assert.deepEqual(headings.map((heading) => heading.text), ["0. INPUT"]);
+    assert.deepEqual(headingLevels(html), [2]);
+  });
+
+  it("drops repeated title headings from concatenated source", async () => {
+    const { html, headings } = await compileArticle(
+      "# My Title\n\n## First\n\ntext\n\n# My Title\n\n## Second\n\ntext\n",
+      "My Title",
+    );
+
+    assert.ok(!html.includes("My Title"));
+    assert.deepEqual(headings.map((heading) => heading.text), ["First", "Second"]);
+    assert.deepEqual(headingLevels(html), [2, 2]);
   });
 
   it("keeps a leading # that is not the title, renumbered into the outline", async () => {

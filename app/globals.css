@@ -34,8 +34,11 @@
   --shadow-md: 0 4px 12px rgba(20, 20, 15, 0.06), 0 2px 4px rgba(20, 20, 15, 0.04);
   --shadow-lg: 0 12px 40px rgba(20, 20, 15, 0.1), 0 4px 12px rgba(20, 20, 15, 0.06);
 
-  --font-ui: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-reader: var(--font-serif), ui-serif, Georgia, "Times New Roman", serif;
+  /* Editorial pairing: Newsreader carries the long-form and display voice;
+     Libre Franklin supplies compact, highly legible publication furniture. */
+  --font-ui: var(--font-franklin), "Franklin Gothic Medium", "Arial Narrow", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-newsreader), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-reader: var(--font-newsreader), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
 
   --text-xs: 0.75rem;
@@ -61,13 +64,10 @@
   --text-h1: 1.5rem; /* 24px */
   --text-title: 1.875rem; /* 30px — page/article title */
 
-  /* One leading value for every reading surface. It was 1.7 on desktop and 1.62
-     on mobile; two values meant the rhythm changed as the window resized, and
-     1.7 is tuned for wide unconstrained columns — against a fixed measure in a
-     large-x-height serif it separates lines enough that a paragraph reads as a
-     stack of separate lines. 1.52 keeps them grouped and stays above the 1.5
-     minimum WCAG asks for body text. */
-  --leading-reader: 1.52;
+  /* One leading value for every reading surface. A compact 1.45 keeps adjacent
+     lines visually grouped without sacrificing legibility at the bounded
+     article width, and avoids a layout jump between desktop and mobile. */
+  --leading-reader: 1.45;
   /* Decks and intros are set larger, where the same optical rhythm needs less
      leading. Two tokens, not a value invented per surface. */
   --leading-lead: 1.45;
@@ -101,16 +101,9 @@
   --radius-md: 11px;
   --radius-lg: 18px;
 
-  /* The page width is derived from the content, not chosen arbitrarily.
-     The widest thing the site lays out is the article composition: reading
-     measure (38rem) + column gap (up to 6rem) + outline rail (up to 17rem) =
-     61rem, plus the page gutters. At the previous 90rem the shell was far
-     wider than anything in it, so the centred article sat 155–228px to the
-     right of the axis the header, footer, home page and section lists all
-     align to — the article looked indented from the rest of the site, which is
-     what read as a large empty margin on the left. */
-  /* Prose keeps its typographic measure while the article stage gives
-     evidence surfaces enough resolution beside a bounded outline gap. */
+  /* The page width follows the article composition: 42rem stage + at most 2rem
+     gap + 16rem outline, plus page gutters. The shell remains bounded so its
+     empty margins cannot outgrow the content they frame. */
   --shell-max: 74rem;
   --reader-max: var(--measure);
   --wide-content-max: 72rem;
@@ -223,7 +216,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "kern", "liga", "cv05", "ss01";
+  font-feature-settings: "kern", "liga";
 }
 ::selection {
   background: var(--color-accent-soft);
@@ -331,10 +324,11 @@ video {
   height: var(--header-h);
 }
 .wordmark {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  letter-spacing: -0.022em;
-  font-size: 1.08rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  font-size: 1.28rem;
   color: var(--color-text);
   text-decoration: none;
   display: inline-flex;
@@ -409,109 +403,206 @@ video {
   margin: 0 0 var(--space-4);
 }
 .home-hero {
-  padding-block: clamp(3rem, 7vw, 6rem) var(--space-7);
+  padding-block: clamp(4rem, 8vw, 7rem) var(--space-8);
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(28rem, 1.18fr);
-  align-items: center;
-  gap: clamp(3rem, 7vw, 7rem);
+  grid-template-columns: minmax(24rem, 0.92fr) minmax(32rem, 1.08fr);
+  align-items: start;
+  gap: clamp(2.5rem, 5vw, 5rem);
 }
 .home-hero__copy {
   min-width: 0;
+  padding-block-start: clamp(0.5rem, 2vw, 1.5rem);
 }
 .home-hero h1 {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: var(--text-title);
-  line-height: 1.02;
-  letter-spacing: -0.033em;
-  margin: 0 0 var(--space-5);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 570;
+  font-size: clamp(3.25rem, 4vw, 4.75rem);
+  line-height: 0.94;
+  letter-spacing: -0.037em;
+  margin: 0 0 var(--space-6);
   text-wrap: balance;
 }
 .home-hero p {
   font-family: var(--font-reader);
-  font-size: var(--text-lg);
+  font-size: clamp(1.05rem, 1.5vw, 1.18rem);
   color: var(--color-text-secondary);
-  line-height: var(--leading-lead);
+  line-height: 1.5;
   margin: 0;
-  max-width: var(--measure-lead);
+  max-width: 32rem;
 }
 .home-hero__visual {
   min-width: 0;
   margin: 0;
+  align-self: center;
 }
 .atlas-workflow {
   display: block;
   inline-size: 100%;
   block-size: auto;
-  aspect-ratio: 3 / 2;
-  border-radius: var(--radius-md);
+  aspect-ratio: 38 / 25;
+  border-radius: var(--radius-lg);
+}
+.atlas-workflow--mobile {
+  display: none;
 }
 .atlas-workflow__canvas {
-  fill: var(--color-code-bg);
-  stroke: var(--color-border);
-}
-.atlas-workflow__stage {
-  fill: var(--color-surface);
+  fill: var(--color-surface-subtle);
   stroke: var(--color-border-strong);
   stroke-width: 1;
 }
-.atlas-workflow__item {
-  fill: var(--color-surface-subtle);
+.atlas-workflow__grid {
+  fill: none;
   stroke: var(--color-border);
-  stroke-width: 0.8;
+  stroke-width: 1;
+  stroke-dasharray: 1 5;
 }
-.atlas-workflow__number,
-.atlas-workflow__title,
+.atlas-workflow__overline,
+.atlas-workflow__coordinate,
+.atlas-workflow__section,
+.atlas-workflow__index,
 .atlas-workflow__label,
-.atlas-workflow__principle {
+.atlas-workflow__node-label,
+.atlas-workflow__micro-label,
+.atlas-workflow__audit-label,
+.atlas-workflow__publication-label,
+.atlas-workflow__legend text {
   font-family: var(--font-ui);
 }
-.atlas-workflow__number {
-  fill: var(--color-accent);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-.atlas-workflow__title {
+.atlas-workflow__overline {
   fill: var(--color-text);
-  font-size: 16px;
+  font-size: 13px;
+  font-weight: 680;
+  letter-spacing: 0.11em;
+}
+.atlas-workflow__coordinate {
+  fill: var(--color-text-tertiary);
+  font-size: 10px;
+  font-weight: 560;
+  letter-spacing: 0.09em;
+}
+.atlas-workflow__section {
+  fill: var(--color-text-tertiary);
+  font-size: 10px;
   font-weight: 650;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.1em;
+}
+.atlas-workflow__index {
+  fill: var(--color-text-tertiary);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
 }
 .atlas-workflow__label {
-  fill: var(--color-text-secondary);
+  fill: var(--color-text);
   font-size: 12px;
-  font-weight: 530;
+  font-weight: 560;
 }
-.atlas-workflow__node {
+.atlas-workflow__source-line,
+.atlas-workflow__output-line,
+.atlas-workflow__edge,
+.atlas-workflow__focus-ring {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.atlas-workflow__source-line,
+.atlas-workflow__output-line {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+.atlas-workflow__source-node,
+.atlas-workflow__output-node {
   fill: var(--color-accent);
 }
-.atlas-workflow__spine {
-  fill: none;
-  stroke: var(--color-accent);
+.atlas-workflow__field {
+  fill: color-mix(in srgb, var(--color-accent-soft) 45%, transparent);
+  stroke: var(--color-border-strong);
   stroke-width: 1;
-  stroke-opacity: 0.45;
+  vector-effect: non-scaling-stroke;
 }
-.atlas-workflow__connector {
-  fill: none;
+.atlas-workflow__field--inner {
+  fill: var(--color-surface);
+  stroke-dasharray: 3 5;
+}
+.atlas-workflow__edge {
+  stroke: var(--color-border-strong);
+  stroke-width: 1.15;
+}
+.atlas-workflow__graph-node {
+  fill: var(--color-surface);
+  stroke: var(--color-border-strong);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+.atlas-workflow__graph-node--reported,
+.atlas-workflow__graph-node--focus {
+  fill: var(--color-accent);
+  stroke: var(--color-accent);
+}
+.atlas-workflow__graph-node--verified {
+  fill: var(--color-success);
+  stroke: var(--color-success);
+}
+.atlas-workflow__graph-node--derived {
+  fill: var(--color-accent-soft);
+  stroke: var(--color-accent);
+}
+.atlas-workflow__graph-node--unknown {
+  fill: var(--color-surface);
+  stroke-dasharray: 2 2;
+}
+.atlas-workflow__node-label {
+  fill: var(--color-text-secondary);
+  font-size: 8px;
+  font-weight: 720;
+}
+.atlas-workflow__node-label--reported,
+.atlas-workflow__node-label--verified,
+.atlas-workflow__node-label--focus {
+  fill: var(--color-accent-contrast);
+}
+.atlas-workflow__focus-ring {
   stroke: var(--color-accent);
   stroke-width: 1.5;
+  stroke-dasharray: 2 4;
 }
-.atlas-workflow__arrowhead {
-  fill: var(--color-accent);
-}
-.atlas-workflow__principle {
+.atlas-workflow__micro-label {
   fill: var(--color-text-tertiary);
-  font-size: 13px;
+  font-size: 9px;
+  font-weight: 620;
+  letter-spacing: 0.08em;
+}
+.atlas-workflow__audit-label,
+.atlas-workflow__publication-label {
+  fill: var(--color-text-secondary);
+  font-size: 10px;
   font-weight: 540;
-  letter-spacing: 0.01em;
+}
+.atlas-workflow__legend {
+  fill: var(--color-text-tertiary);
+  font-size: 9px;
+  font-weight: 540;
+  letter-spacing: 0.015em;
+}
+.atlas-workflow__legend .atlas-workflow__principle {
+  fill: var(--color-text-secondary);
+  font-weight: 620;
 }
 .home-hero__visual figcaption {
-  margin-top: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
   color: var(--color-text-tertiary);
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   line-height: 1.45;
+}
+.home-hero__visual figcaption::before {
+  content: "";
+  inline-size: 2rem;
+  block-size: 1px;
+  flex: none;
+  background: var(--color-accent);
 }
 
 .section-block {
@@ -526,9 +617,9 @@ video {
   margin-bottom: var(--space-2);
 }
 .section-block__head h2 {
-  font-family: var(--font-ui);
-  font-size: var(--text-xl);
-  font-weight: 640;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 650;
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -604,11 +695,12 @@ video {
   letter-spacing: 0.01em;
 }
 .article-row__title {
-  font-family: var(--font-ui);
-  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: var(--text-xl);
   font-weight: 600;
-  letter-spacing: -0.017em;
-  line-height: 1.22;
+  letter-spacing: -0.021em;
+  line-height: 1.16;
   margin: 0;
 }
 .article-row__title a {
@@ -666,11 +758,12 @@ video {
   height: auto;
 }
 .featured__title {
-  font-family: var(--font-ui);
-  font-size: var(--text-3xl);
-  font-weight: 680;
-  letter-spacing: -0.028em;
-  line-height: 1.06;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: clamp(2rem, 3vw, 2.65rem);
+  font-weight: 620;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
   margin: 0;
   text-wrap: balance;
 }
@@ -685,15 +778,15 @@ video {
 
 /* ----- Article layout (plan §8.3, §6.5) ---------------------------------- */
 .article-shell {
-  padding-block: var(--space-7) var(--space-9);
+  padding-block: var(--space-6) var(--space-8);
 }
 /* A bounded two-track stage keeps the outline close to the evidence instead of
-   allowing a flexible middle track to absorb hundreds of empty pixels. The
-   main track is wider than prose so tables and figures gain resolution; text
-   descendants retain `--measure`. */
+   allowing a flexible middle track to absorb hundreds of empty pixels. Every
+   article block shares this one width, preventing copy, figures and equations
+   from producing competing alignment axes. */
 .article-layout {
-  --article-stage: 44rem;
-  --article-gap: clamp(3rem, 4vw, 4rem);
+  --article-stage: 42rem;
+  --article-gap: clamp(1.25rem, 2vw, 2rem);
   display: grid;
   grid-template-columns:
     minmax(0, var(--article-stage))
@@ -704,6 +797,8 @@ video {
 }
 .article-main {
   grid-column: 1;
+  inline-size: 100%;
+  max-inline-size: var(--article-stage);
   min-width: 0;
 }
 .article-rail {
@@ -715,14 +810,12 @@ video {
   align-self: start;
   max-height: calc(100vh - var(--header-h) - 48px);
   overflow-y: auto;
-  padding: 2px 0 2px var(--space-5);
+  padding: 2px 0 2px var(--space-4);
   border-inline-start: 1px solid var(--color-border-hairline);
 }
 
-/* The three-column composition needs reading measure + minimum gap + rail =
-   38 + 2 + 15 = 55rem of content, which a 60rem viewport supplies once the page
-   gutters are taken off. Below that the rail is dropped for the collapsible
-   inline outline.
+/* The desktop composition needs article stage + minimum gap + rail. Below the
+   64rem threshold the rail is dropped for the collapsible inline outline.
 
    The shell narrows to the reading width at the same moment. Without that the
    article would sit in a shell far wider than its single column and the surplus
@@ -730,9 +823,9 @@ video {
    above. Narrowing the shell moves the header, footer, home page and section
    lists in with it, so the whole site keeps one alignment axis and both edges
    stay flush at every width. */
-@media (max-width: 60rem) {
+@media (max-width: 64rem) {
   :root {
-    --shell-max: 44rem;
+    --shell-max: 42rem;
   }
   .article-rail {
     display: none;
@@ -751,9 +844,12 @@ video {
   }
 }
 
-/* Short articles render no rail at all (see `showOutline`). Without this the
-   grid would still reserve the rail track and push the text off centre. */
-.article-layout:not(:has(.article-rail)) {
+/* The server writes this class into the opening layout tag. A relational
+   descendant-state selector would initially match the no-rail state while
+   a large streamed article was still parsing, then move the main column when
+   the trailing rail arrived. The explicit class reserves the final geometry
+   from the first paint. */
+.article-layout--without-outline {
   grid-template-columns: minmax(0, min(100%, var(--article-stage)));
   justify-content: center;
   column-gap: 0;
@@ -794,7 +890,7 @@ video {
 }
 .article-header {
   inline-size: min(100%, 62rem);
-  margin: 0 auto var(--space-7);
+  margin: 0 auto var(--space-6);
 }
 .article-kicker {
   margin: 0 0 var(--space-4);
@@ -806,12 +902,13 @@ video {
   text-transform: uppercase;
 }
 .article-title {
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
   font-size: clamp(2.4rem, 3.5vw, 3.5rem);
-  line-height: 1.01;
-  letter-spacing: -0.045em;
-  font-weight: 650;
-  margin: 0 0 var(--space-6);
+  line-height: 0.98;
+  letter-spacing: -0.033em;
+  font-weight: 600;
+  margin: 0 0 var(--space-5);
   max-inline-size: 58rem;
   text-wrap: balance;
 }
@@ -820,7 +917,7 @@ video {
   font-size: clamp(1.12rem, 1.5vw, 1.28rem);
   line-height: var(--leading-lead);
   color: var(--color-text-secondary);
-  margin: 0 0 var(--space-7);
+  margin: 0 0 var(--space-6);
   max-width: min(100%, 46rem);
 }
 .article-meta {
@@ -828,7 +925,7 @@ video {
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-5);
   align-items: center;
-  padding-block-start: var(--space-4);
+  padding-block-start: var(--space-3);
   border-block-start: 1px solid var(--color-border);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
@@ -867,7 +964,7 @@ video {
 }
 .article-hero {
   inline-size: min(100%, 64rem);
-  margin: 0 auto var(--space-9);
+  margin: 0 auto var(--space-7);
 }
 .article-hero img {
   display: block;
@@ -889,22 +986,23 @@ video {
 /* ----- Prose contract (plan §7.5) ---------------------------------------- */
 .article-body {
   font-family: var(--font-reader);
+  font-optical-sizing: auto;
   font-size: var(--text-body);
   line-height: var(--leading-reader);
   letter-spacing: -0.003em;
-  /* The body fills the bounded stage so evidence can use it. Direct children
-     are independently capped below, preserving the prose measure. */
+  /* The body and each direct child fill the same bounded article stage. */
   inline-size: 100%;
   max-inline-size: 100%;
   color: var(--color-text);
   font-feature-settings: "kern", "liga", "onum", "pnum";
 }
-/* Fixed paragraph measure — never varies with viewport above the breakpoint. */
+/* One consistent width for prose, equations, tables, code and figures. */
 .article-body > * {
-  inline-size: min(100%, var(--measure));
+  inline-size: 100%;
+  max-inline-size: 100%;
 }
 .article-body p {
-  margin-block: 0 1.05em;
+  margin-block: 0 0.82em;
   overflow-wrap: break-word;
 }
 .article-body > p:first-of-type {
@@ -916,35 +1014,36 @@ video {
 .article-body h5,
 .article-body h6 {
   position: relative;
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
   scroll-margin-top: calc(var(--header-h) + 20px);
   color: var(--color-text);
   text-wrap: balance;
 }
 .article-body h2 {
-  margin-block: 3.25rem 0.8rem;
+  margin-block: 2rem 0.55rem;
   font-size: clamp(1.55rem, 2vw, 1.85rem);
   line-height: 1.15;
-  letter-spacing: -0.03em;
-  font-weight: 640;
+  letter-spacing: -0.022em;
+  font-weight: 650;
 }
 .article-body h3 {
-  margin-block: 2.25rem 0.55rem;
+  margin-block: 1.45rem 0.4rem;
   font-size: clamp(1.25rem, 1.5vw, 1.42rem);
   line-height: 1.24;
-  letter-spacing: -0.022em;
-  font-weight: 620;
+  letter-spacing: -0.018em;
+  font-weight: 640;
 }
 .article-body h4 {
-  margin-block: 1.15rem 0.3rem;
+  margin-block: 0.95rem 0.25rem;
   font-size: var(--text-h4);
   line-height: 1.35;
-  font-weight: 620;
-  letter-spacing: -0.01em;
+  font-weight: 650;
+  letter-spacing: -0.008em;
 }
 .article-body h5 {
   font-family: var(--font-ui);
-  margin-block: 1rem 0.25rem;
+  margin-block: 0.85rem 0.2rem;
   font-size: var(--text-h5);
   line-height: 1.4;
   font-weight: 620;
@@ -952,7 +1051,7 @@ video {
 }
 .article-body h6 {
   font-family: var(--font-ui);
-  margin-block: 0.9rem 0.25rem;
+  margin-block: 0.8rem 0.2rem;
   font-size: var(--text-h6);
   line-height: 1.45;
   font-weight: 620;
@@ -961,50 +1060,13 @@ video {
   color: var(--color-text-secondary);
 }
 .article-body h1 {
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
   font-size: var(--text-h1);
-  margin-block: 2rem 0.6rem;
+  margin-block: 1.5rem 0.45rem;
   line-height: 1.15;
   letter-spacing: -0.024em;
-  font-weight: 680;
+  font-weight: 650;
 }
-/* Heading anchor affordance (build-time autolink) */
-.article-body .heading-anchor {
-  position: absolute;
-  left: -1.25em;
-  top: 0;
-  width: 1.1em;
-  text-align: center;
-  color: var(--color-text-tertiary);
-  text-decoration: none;
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard);
-  font-weight: 500;
-}
-.article-body :is(h2, h3, h4):hover .heading-anchor,
-.article-body .heading-anchor:focus-visible {
-  opacity: 1;
-}
-.article-body .heading-anchor:hover {
-  color: var(--color-accent);
-}
-.article-body .heading-anchor.is-copied::after {
-  content: "Copied";
-  position: absolute;
-  left: 1.4em;
-  top: 0.1em;
-  font-family: var(--font-ui);
-  font-size: 0.6em;
-  color: var(--color-accent);
-  white-space: nowrap;
-}
-@media (max-width: 640px) {
-  .article-body .heading-anchor {
-    display: none;
-  }
-}
-
 .article-body ul,
 .article-body ol {
   margin-block: 0 0.9em;
@@ -1018,7 +1080,7 @@ video {
   color: var(--color-text-tertiary);
 }
 .article-body blockquote {
-  margin: 2rem 0;
+  margin: 1.25rem 0;
   padding: 0.25rem 0 0.25rem 1.35rem;
   border-inline-start: 3px solid var(--color-accent);
   color: var(--color-text-secondary);
@@ -1037,15 +1099,14 @@ video {
 .article-body hr {
   border: none;
   border-top: 1px solid var(--color-border);
-  margin-block: var(--space-8);
+  margin-block: 2.25rem;
 }
 
-/* Source-authored technical figures fill the bounded evidence stage. Prose
-   remains pinned to `--measure`. */
+/* Source-authored technical figures fill the bounded article stage. */
 .article-body .content-figure {
   inline-size: 100%;
   max-inline-size: 100%;
-  margin: 2.75rem 0 3rem;
+  margin: 1.75rem 0 2rem;
 }
 .article-body .content-figure--lead {
   margin-block-start: var(--space-3);
@@ -1065,7 +1126,7 @@ video {
   margin-block: 0;
 }
 .content-figure__caption {
-  max-inline-size: var(--measure);
+  max-inline-size: 100%;
   margin-block-start: var(--space-3);
   color: var(--color-text-tertiary);
   font-family: var(--font-ui);
@@ -1089,8 +1150,8 @@ video {
   color: var(--color-text);
 }
 .article-body figure.code-block {
-  margin: 2rem 0;
-  inline-size: min(100%, var(--measure));
+  margin: 1.25rem 0;
+  inline-size: 100%;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -1218,7 +1279,7 @@ video {
   max-inline-size: 100%;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
-  margin-block: 2rem;
+  margin-block: 1.25rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -1308,7 +1369,7 @@ video {
    tall construct (matrices, nested fractions) is not clipped by the implied
    `overflow-y`. */
 .article-body .katex-display {
-  margin-block: 1.4rem;
+  margin-block: 0.85rem;
   overflow-x: auto;
   overflow-y: hidden;
   padding-block: 0.4rem;
@@ -1327,10 +1388,10 @@ video {
    element's larger bottom margin. Without `:has()` support the rule degrades
    to the reduced base spacing above, which is still correct. */
 .article-body .katex-display:has(+ .katex-display) {
-  margin-block-end: 0.7rem;
+  margin-block-end: 0.35rem;
 }
 .article-body .katex-display + .katex-display {
-  margin-block-start: 0.7rem;
+  margin-block-start: 0.35rem;
 }
 .article-body .katex {
   font-size: 1.04em;
@@ -1383,7 +1444,7 @@ video {
 .article-body .article-wide {
   inline-size: 100%;
 }
-@media (min-width: 60.01rem) {
+@media (min-width: 64.01rem) {
   .article-body .article-wide {
     inline-size: min(var(--wide-content-max), calc(100dvw - 2 * var(--page-gutter)));
     max-inline-size: 100dvw;
@@ -1439,7 +1500,7 @@ video {
 .only-narrow {
   display: none;
 }
-@media (max-width: 60rem) {
+@media (max-width: 64rem) {
   .only-narrow {
     display: block;
   }
@@ -1520,9 +1581,11 @@ video {
 }
 .prev-next .t {
   display: block;
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
   margin-top: var(--space-2);
   line-height: 1.3;
 }
@@ -1590,10 +1653,6 @@ body {
   .article-row__title a:hover {
     background-size: 0% 1.5px;
   }
-  /* Anchors are hover-revealed on desktop; keep them hidden on touch. */
-  .article-body .heading-anchor {
-    display: none;
-  }
 }
 
 /* Comfortable touch targets (plan §20: 44×44 where feasible). */
@@ -1645,10 +1704,10 @@ html {
    squeezing the reading measure below a usable width. */
 @media (orientation: landscape) and (max-height: 560px) {
   /* Narrow the shell alongside dropping the rail, for the same reason as the
-     60rem rule: a single column in a wide shell leaves surplus pooling on one
+     64rem rule: a single column in a wide shell leaves surplus pooling on one
      side. */
   :root {
-    --shell-max: 44rem;
+    --shell-max: 42rem;
   }
   .site-header {
     position: static;
@@ -1657,7 +1716,7 @@ html {
     display: none;
   }
   .article-layout {
-    grid-template-columns: minmax(0, min(100%, var(--measure)));
+    grid-template-columns: minmax(0, min(100%, var(--article-stage)));
     justify-content: center;
     column-gap: 0;
   }
@@ -1673,10 +1732,10 @@ html {
 }
 
 /* The old landscape-tablet rule that dropped the rail up to 1180px is gone.
-   It predated the three-column grid, where the middle track absorbs surplus and
-   the reading measure is fixed — so a 1024px landscape tablet now holds the
+   It predated the bounded two-column grid, where the article stage is fixed —
+   so a 1024px landscape tablet now holds the
    full composition comfortably. Keeping it would have hidden the rail while the
-   shell stayed wide, pooling the surplus on one side between 60rem and 1180px:
+   shell stayed wide, pooling the surplus on one side between 64rem and 1180px:
    exactly the imbalance this layout exists to remove. */
 
 /* ----- Small screens ------------------------------------------------------ */
@@ -1704,21 +1763,39 @@ html {
     --text-xl: 1.1875rem;
   }
   .article-shell {
-    padding-block: var(--space-5) var(--space-8);
+    padding-block: var(--space-4) var(--space-7);
+  }
+  .home-hero {
+    padding-block: var(--space-7) var(--space-6);
+    gap: var(--space-6);
+  }
+  .home-hero__copy {
+    padding-block-start: 0;
+  }
+  .home-hero h1 {
+    font-size: clamp(2.75rem, 13vw, 3.5rem);
+    letter-spacing: -0.035em;
+  }
+  .atlas-workflow--desktop {
+    display: none;
+  }
+  .atlas-workflow--mobile {
+    display: block;
+    aspect-ratio: 18 / 25;
   }
   .article-header {
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-5);
   }
   .article-title {
     font-size: clamp(2rem, 9vw, 2.4rem);
-    line-height: 1.04;
-    letter-spacing: -0.04em;
+    line-height: 1;
+    letter-spacing: -0.028em;
   }
   .article-body h2 {
-    margin-block: 2.6rem 0.7rem;
+    margin-block: 1.75rem 0.5rem;
   }
   .article-body h3 {
-    margin-block: 2.1rem 0.55rem;
+    margin-block: 1.25rem 0.35rem;
   }
   .article-meta {
     gap: var(--space-2) var(--space-3);
@@ -1732,7 +1809,7 @@ html {
     border-radius: var(--radius-md);
   }
   .article-body .content-figure {
-    margin-block: 2.25rem 2.5rem;
+    margin-block: 1.5rem 1.75rem;
   }
   .article-body figure.code-block pre {
     padding: var(--space-3) var(--space-4);
@@ -1800,14 +1877,14 @@ html {
   }
   /* Vertical space is scarcer on a phone, so close the runs up a little more. */
   .article-body .katex-display {
-    margin-block: 1.1rem;
+    margin-block: 0.7rem;
     padding-block: 0.3rem;
   }
   .article-body .katex-display:has(+ .katex-display) {
-    margin-block-end: 0.55rem;
+    margin-block-end: 0.3rem;
   }
   .article-body .katex-display + .katex-display {
-    margin-block-start: 0.55rem;
+    margin-block-start: 0.3rem;
   }
   .article-hero,
   .featured__hero {
@@ -2254,10 +2331,11 @@ kbd {
 .search-result__title {
   display: block;
   margin-top: 2px;
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
   font-weight: 600;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.018em;
+  line-height: 1.18;
   color: var(--color-text);
 }
 .search-result__snippet {
@@ -2314,10 +2392,10 @@ mark {
   max-width: 46rem;
 }
 .page-intro h1 {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: var(--text-title);
-  line-height: 1.05;
+  font-family: var(--font-display);
+  font-weight: 620;
+  font-size: clamp(2.25rem, 4vw, 3.4rem);
+  line-height: 0.98;
   letter-spacing: -0.03em;
   margin: 0 0 var(--space-4);
   text-wrap: balance;
@@ -2349,11 +2427,11 @@ mark {
   inline-size: min(100%, var(--measure));
 }
 .prose-page h2 {
-  font-family: var(--font-ui);
-  font-size: var(--text-h2);
-  font-weight: 660;
-  letter-spacing: -0.021em;
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2vw, 1.8rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   margin-block: 2rem 0.6rem;
   padding-bottom: 0.35rem;
   border-bottom: 1px solid var(--color-border-hairline);
@@ -2373,9 +2451,9 @@ mark {
 }
 
 .section-heading {
-  font-family: var(--font-ui);
-  font-size: var(--text-xl);
-  font-weight: 640;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 650;
   letter-spacing: -0.02em;
   margin: 0 0 var(--space-2);
 }
@@ -2427,10 +2505,11 @@ mark {
 }
 .section-grid__label {
   display: block;
-  font-family: var(--font-ui);
-  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
   font-weight: 620;
-  letter-spacing: -0.017em;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   color: var(--color-text);
 }
 .section-grid__count {
@@ -2470,10 +2549,11 @@ mark {
 .folder-card__label {
   display: block;
   overflow-wrap: anywhere;
-  font-family: var(--font-ui);
-  font-size: var(--text-lg);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
   font-weight: 640;
-  letter-spacing: -0.017em;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 .folder-card__meta {
   display: block;
@@ -2572,9 +2652,9 @@ mark {
 }
 .article-related h2,
 .article-references h2 {
-  font-family: var(--font-ui);
-  font-size: var(--text-xl);
-  font-weight: 640;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 650;
   letter-spacing: -0.02em;
   margin: 0 0 var(--space-4);
 }
@@ -2597,10 +2677,10 @@ mark {
   padding-bottom: var(--space-6);
 }
 .site-footer__wordmark {
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 650;
+  letter-spacing: -0.025em;
   color: var(--color-text);
   margin: 0 0 var(--space-2);
 }
@@ -2789,9 +2869,6 @@ mark {
   .article-body img {
     max-height: 60vh;
     object-fit: contain;
-  }
-  .article-body .heading-anchor {
-    display: none;
   }
   /* Expand every disclosure so no article content is hidden on paper. */
   details {

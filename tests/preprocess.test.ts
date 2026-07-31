@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import katex from "katex";
 import { preprocess } from "../lib/content/preprocess";
 
 describe("display-math normalization", () => {
@@ -263,6 +264,80 @@ e\in
 \{\text{math, code, agent, instruction, ...}\}`),
       markdown,
     );
+  });
+
+  it("makes indexed singleton set braces visible without changing grouping", () => {
+    const equalityScar = "=".repeat(7);
+    const source = String.raw`[
+S_{t,a}
+${equalityScar}
+{s_{e,j}}
+]
+
+[
+R_{t,a}
+${equalityScar}
+{\operatorname{expertID}_{j,k}}.
+]
+
+[
+x
+${equalityScar}
+{a+b}
+]
+
+[
+\mathcal T
+${equalityScar}
+{\mathsf T_{b,i}}_{b=1,i=1}^{B,G}
+]
+
+[
+\mathcal T
+${equalityScar}
+{\tau_{b,i}}_{b,i}
+]`;
+    const { markdown, displayBlocks } = preprocess(source);
+
+    assert.equal(displayBlocks, 5);
+    assert.ok(markdown.includes(String.raw`\{s_{e,j}\}`), markdown);
+    assert.ok(
+      markdown.includes(String.raw`\{\operatorname{expertID}_{j,k}\}`),
+      markdown,
+    );
+    assert.ok(markdown.includes("{a+b}"), "ordinary TeX grouping stays invisible");
+    assert.ok(!markdown.includes(String.raw`\{a+b\}`), markdown);
+    assert.ok(markdown.includes(String.raw`\{\mathsf T_{b,i}\}_{b=1,i=1}^{B,G}`), markdown);
+    assert.ok(markdown.includes(String.raw`\{\tau_{b,i}\}_{b,i}`), markdown);
+  });
+
+  it("normalizes Unicode token glyphs and em dashes for strict TeX", () => {
+    const source = String.raw`[
+\mathtt{<｜begin▁of▁sentence｜>}
+]
+
+[
+\boxed{\mathbf{KEEP\ MASK\ —\ LEARNER\ POLICY}}
+]`;
+    const { markdown, displayBlocks } = preprocess(source);
+    const blocks = [...markdown.matchAll(/\$\$\n([\s\S]*?)\n\$\$/g)].map((match) => match[1]);
+
+    assert.equal(displayBlocks, 2);
+    assert.doesNotMatch(markdown, /[｜▁—]/);
+    assert.match(markdown, /\\text\{\\char"FF5C\}/);
+    assert.match(markdown, /\\rule\{0\.52em\}\{0\.12em\}/);
+    assert.match(markdown, /\\text\{---\}/);
+
+    for (const block of blocks) {
+      const warnings: string[] = [];
+      katex.renderToString(block, {
+        strict: (code) => {
+          warnings.push(code);
+          return "warn";
+        },
+      });
+      assert.deepEqual(warnings, [], `${block} produced ${warnings.join(", ")}`);
+    }
   });
 });
 

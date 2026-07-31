@@ -15,7 +15,6 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import GithubSlugger from "github-slugger";
 import rehypeKatex from "rehype-katex";
 import rehypeShiki from "@shikijs/rehype";
@@ -27,7 +26,7 @@ import type { Root, Element } from "hast";
 import type { Root as MdastRoot } from "mdast";
 import katex from "katex";
 import { preprocess } from "./preprocess";
-import { headingLabel } from "./tex-text";
+import { headingLabel, titleLabel } from "./tex-text";
 
 export interface HeadingRecord {
   id: string;
@@ -151,7 +150,7 @@ function collectHeadings(sink: HeadingRecord[]) {
 }
 
 function normalizeHeading(s: string): string {
-  return s.replace(/\s+/g, " ").trim().toLowerCase();
+  return titleLabel(s).toLocaleLowerCase("en");
 }
 
 /** Elements whose text is markup noise rather than readable content. */
@@ -201,9 +200,8 @@ const SEGMENT_TAGS: ReadonlyMap<string, SearchFieldKind> = new Map([
  * rehype plugin: collect indexable segments in document order, each anchored to
  * the heading that precedes it (plan §18.5).
  *
- * Must run before autolinking (so the injected `#` anchor text is not indexed),
- * before KaTeX (so `readableText` can still recognize and skip math wrappers),
- * and before Shiki (so code is plain text rather than per-token spans).
+ * Must run before KaTeX (so `readableText` can still recognize and skip math
+ * wrappers) and before Shiki (so code is plain text rather than per-token spans).
  */
 function collectSearchText(sink: SearchSegment[]) {
   return (tree: Root) => {
@@ -267,7 +265,6 @@ const MAX_HEADING_LEVEL = 6;
  */
 function fitHeadingLevels(options: { title: string }) {
   return (tree: Root) => {
-    let droppedTitle = false;
     /** Authored levels of the currently-open ancestor headings. */
     const openLevels: number[] = [];
 
@@ -276,17 +273,15 @@ function fitHeadingLevels(options: { title: string }) {
       if (!match) return;
       const authoredLevel = Number(match[1]);
 
-      // A leading `#` that merely restates the title is redundant on a page
+      // Any authored `#` that merely restates the title is redundant on a page
       // that already renders the title — drop it rather than duplicate it.
       if (
         authoredLevel === 1 &&
-        !droppedTitle &&
         parent &&
         index !== undefined &&
         normalizeHeading(hastToString(node)) === normalizeHeading(options.title)
       ) {
         parent.children.splice(index, 1);
-        droppedTitle = true;
         return [SKIP, index];
       }
 
@@ -1105,15 +1100,6 @@ async function compileArticleUncached(
   const processor = structuralStages(title, headings, searchSegments, {
     repairMath: true,
   })
-    .use(rehypeAutolinkHeadings, {
-      behavior: "append",
-      properties: {
-        className: ["heading-anchor"],
-        "aria-label": "Link to this section",
-        tabIndex: -1,
-      },
-      content: { type: "text", value: "#" },
-    })
     .use(hardenLinks)
     .use(removeLeadingThematicBreaks)
     .use(resolveBodyImages, resolveAsset, images, title)
