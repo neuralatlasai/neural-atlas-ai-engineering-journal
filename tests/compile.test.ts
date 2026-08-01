@@ -315,6 +315,18 @@ describe("rendering contract", () => {
     );
   });
 
+  it("renders LaTeX mbox content without exposing an unsupported command", async () => {
+    const source = String.raw`[
+\mathcal E_i \in \{\mathsf{white\mbox{-}box},\mathsf{black\mbox{-}box}\}
+]`;
+    const { html } = await compileArticle(source, "Execution environments");
+
+    assert.ok(html.includes("katex-display"));
+    assert.ok(!html.includes("katex-error"));
+    assert.ok(!html.includes("\\mbox"), "unsupported TeX must not reach rendered HTML");
+    assert.ok(!html.includes("var(--color-danger)"), "no partial error-colour fallback is emitted");
+  });
+
   it("repairs a lost closing slash in a literal brace pair", async () => {
     const source = String.raw`[
 \boxed{

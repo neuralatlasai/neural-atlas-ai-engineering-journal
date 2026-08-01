@@ -239,6 +239,16 @@ function repairMathFragment(s: string): string {
       // as red error text inside an otherwise-fine equation.
       .replace(/\\textsc\b/g, "\\text")
       .replace(/\\textsl\b/g, "\\textit")
+      // KaTeX does not implement LaTeX's `\mbox`. With `throwOnError: false` it
+      // silently renders only the unsupported command in the error colour, so
+      // the surrounding equation appears valid while readers see raw `\mbox`.
+      // `\text` has the same non-breaking text-box semantics for this corpus and
+      // is processed by the text-group escaping pass below.
+      .replace(/\\mbox\b/g, "\\text")
+      // `\centernot` comes from an optional LaTeX package that KaTeX does not
+      // implement. KaTeX's primitive `\not` applies the same negation overlay
+      // to the following relation without emitting a partial error fallback.
+      .replace(/\\centernot\b/g, "\\not")
       // KaTeX strict mode rejects these Unicode characters in math mode even
       // though both are legitimate authored text. Emit TeX-safe equivalents
       // that preserve the visible glyph: the full-width bar is part of model

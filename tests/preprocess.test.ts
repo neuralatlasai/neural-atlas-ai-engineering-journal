@@ -339,6 +339,25 @@ ${equalityScar}
       assert.deepEqual(warnings, [], `${block} produced ${warnings.join(", ")}`);
     }
   });
+
+  it("replaces unsupported mbox commands without changing their text", () => {
+    const source = String.raw`[
+\mathcal E_i \in \{\mathsf{white\mbox{-}box},\mathsf{black\mbox{-}box}\}
+\quad
+\operatorname{Age}_{i,j,t}\uparrow\centernot\Longrightarrow\Delta_{i,j,t}\uparrow
+]`;
+    const { markdown, displayBlocks } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.equal(displayBlocks, 1);
+    assert.doesNotMatch(block, /\\mbox\b/);
+    assert.doesNotMatch(block, /\\centernot\b/);
+    assert.match(block, /\\mathsf\{white\\text\{-\}box\}/);
+    assert.match(block, /\\not\\Longrightarrow/);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
 });
 
 describe("inline-math normalization", () => {
