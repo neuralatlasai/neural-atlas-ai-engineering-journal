@@ -137,6 +137,70 @@ describe("wide tables", () => {
     );
     assert.match(ruleFor(".article-body table"), /inline-size:\s*max-content/);
   });
+
+  it("keeps table typography identical to article prose on every viewport", () => {
+    assert.match(
+      ruleFor(".article-body table"),
+      /font-family:\s*inherit/,
+      "table copy must use the reader face rather than an optically larger UI face",
+    );
+    assert.match(
+      ruleFor(".article-body table"),
+      /font-size:\s*inherit/,
+      "table copy must follow the reader scale instead of defining a smaller one",
+    );
+    assert.match(ruleFor(".article-body table"), /line-height:\s*inherit/);
+    assert.doesNotMatch(
+      css,
+      /\.article-body table\s*\{[^}]*font-size:\s*0\.(?:8|86)rem/s,
+      "desktop and mobile must not reintroduce independent table sizes",
+    );
+  });
+
+  it("keeps reference-table rows compact", () => {
+    assert.match(
+      ruleFor(".article-body td"),
+      /padding:\s*0\.375rem 0\.85rem/,
+      "desktop rows must not carry card-like vertical padding",
+    );
+    assert.match(css, /padding:\s*0\.375rem 0\.65rem/);
+    assert.doesNotMatch(css, /padding:\s*0\.(?:5|6)rem 0\.(?:7|95)rem/);
+  });
+});
+
+describe("display mathematics rhythm", () => {
+  function ruleFor(selector: string): string {
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const index = stripped.indexOf(`${selector} {`);
+    if (index === -1) return "";
+    return stripped.slice(index, stripped.indexOf("}", index));
+  }
+
+  it("uses compact tokens for equation padding and derivation gaps", () => {
+    assert.match(css, /--math-space-block:\s*0\.5rem/);
+    assert.match(css, /--math-space-run:\s*0\.125rem/);
+    assert.match(css, /--math-padding-block:\s*0\.1875rem/);
+    assert.match(
+      ruleFor(".article-body .katex-display"),
+      /padding-block:\s*var\(--math-padding-block\)/,
+    );
+    assert.match(
+      ruleFor(".article-body .katex-display + .katex-display"),
+      /margin-block-start:\s*var\(--math-space-run\)/,
+    );
+  });
+
+  it("does not stack prose-rule margins against equation groups", () => {
+    assert.match(css, /--math-space-rule:\s*1rem/);
+    assert.match(
+      ruleFor(".article-body hr:has(+ .katex-display)"),
+      /margin-block-end:\s*var\(--math-space-rule\)/,
+    );
+    assert.match(
+      ruleFor(".article-body .katex-display + hr"),
+      /margin-block-start:\s*var\(--math-space-rule\)/,
+    );
+  });
 });
 
 describe("page composition", () => {
@@ -323,8 +387,17 @@ describe("code block presentation", () => {
 
     assert.match(diagramFrame, /inline-size:\s*100%/);
     assert.match(diagramFrame, /container-type:\s*inline-size/);
-    assert.match(diagramRule, /font-size:\s*0\.78rem/);
-    assert.match(wideRule, /font-size:\s*0\.72rem/);
+    assert.match(diagramRule, /font-family:\s*var\(--font-diagram\)/);
+    assert.match(diagramRule, /font-variant-ligatures:\s*none/);
+    assert.match(diagramRule, /font-kerning:\s*none/);
+    assert.match(diagramRule, /font-variant-numeric:\s*lining-nums tabular-nums/);
+    assert.match(diagramRule, /font-size:\s*0\.82rem/);
+    assert.match(wideRule, /font-size:\s*0\.74rem/);
+    assert.match(
+      ruleFor('.article-body figure.code-block[data-layout="diagram"] pre code'),
+      /font-family:\s*inherit/,
+      "the child code node must not restore the subset webfont",
+    );
     assert.match(
       diagramRule,
       /background-attachment:\s*local,\s*local,\s*scroll,\s*scroll/,
@@ -401,6 +474,48 @@ describe("editorial typography", () => {
     }
     assert.match(ruleFor(".article-body"), /font-family:\s*var\(--font-reader\)/);
     assert.match(ruleFor("body"), /font-family:\s*var\(--font-ui\)/);
+  });
+
+  it("uses one compact modular scale from h1 through h6", () => {
+    const remValue = (token: string): number => {
+      const match = css.match(new RegExp(`${token}:\\s*([0-9.]+)rem`));
+      assert.ok(match, `missing ${token}`);
+      return Number(match[1]);
+    };
+    const headingTokens = [
+      "--text-h6",
+      "--text-h5",
+      "--text-h4",
+      "--text-h3",
+      "--text-h2",
+      "--text-h1",
+    ];
+    const sizes = headingTokens.map(remValue);
+
+    assert.equal(remValue("--text-body"), 0.9375, "reader copy must remain 15px");
+    for (let index = 1; index < sizes.length; index += 1) {
+      assert.ok(sizes[index] > sizes[index - 1], "heading sizes must increase monotonically");
+      assert.ok(
+        sizes[index] / sizes[index - 1] <= 1.17,
+        "adjacent headings must stay within the compact 1.16 ratio",
+      );
+    }
+
+    for (const level of [1, 2, 3, 4, 5, 6]) {
+      const levelRules = [
+        ...css.matchAll(
+          new RegExp(`\\.article-body h${level}\\s*\\{([^}]*)\\}`, "g"),
+        ),
+      ].map((match) => match[1]);
+      assert.ok(
+        levelRules.some((rule) =>
+          new RegExp(`font-size:\\s*var\\(--text-h${level}\\)`).test(rule),
+        ),
+        `article h${level} must use its scale token`,
+      );
+    }
+    assert.match(ruleFor(".article-title"), /font-size:\s*var\(--text-title\)/);
+    assert.match(ruleFor(".article-deck"), /font-size:\s*var\(--text-lg\)/);
   });
 });
 

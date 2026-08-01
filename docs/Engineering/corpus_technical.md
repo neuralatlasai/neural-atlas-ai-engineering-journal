@@ -1,6 +1,6 @@
 # Versioned Multimodal Enterprise Corpus Architecture for Frontier AI Systems
 
-
+![](./assets/version_data.png)
 
 ## Abstract
 

@@ -33,11 +33,11 @@ These are different optimization problems over different distributions and, freq
 
 The three lineages have converged on **sequential, distribution-changing optimization programs**, but their current endpoints expose substantially different levels of mathematical detail.
 
-**DeepSeek-V4** has the cleanest separation between foundation optimization and post-training consolidation. Foundation training retains DeepSeekMoE and the sequential MTP mechanism from V3, while combining gradient-based sequence balancing with a separate auxiliary-loss-free expert-load controller. Its training curriculum expands context to one million tokens and transitions from dense to sparse attention. Post-training no longer terminates in a heterogeneous mixed-RL policy: domain specialists are independently SFT-initialized and RL-optimized, then collapsed into one policy through **student-on-policy, full-vocabulary reverse-KL distillation from more than ten teachers**. FP4 QAT is integrated into that post-training trajectory rather than represented as a fictitious additive quantization loss. ([arXiv][1])
+**DeepSeek-V4** has the cleanest separation between foundation optimization and post-training consolidation. Foundation training retains DeepSeekMoE and the sequential MTP mechanism from V3, while combining gradient-based sequence balancing with a separate auxiliary-loss-free expert-load controller. Its training curriculum expands context to one million tokens and transitions from dense to sparse attention. Post-training no longer terminates in a heterogeneous mixed-RL policy: domain specialists are independently SFT-initialized and RL-optimized, then collapsed into one policy through **student-on-policy, full-vocabulary reverse-KL distillation from more than ten teachers**. FP4 QAT is integrated into that post-training trajectory rather than represented as a fictitious additive quantization loss.
 
-**Qwen3.6** is the current open-weight Qwen endpoint, but its released artifacts expose architecture and broad pre/post-training status rather than an auditable scalar training program. It contains a multimodal causal model and trained multi-step MTP, but the current MTP objective, coefficients, MoE balancing objective, SFT masking, RL estimator, reward decomposition, distillation estimator, and speculative-training objective are **UNDISCLOSED**. The last Qwen generation with a substantially reconstructable post-training program is Qwen3: three-stage pretraining; small long-CoT cold start; reasoning GRPO; continual SFT to fuse thinking/non-thinking policies; then general RL. Smaller models instead receive off-policy response transfer followed by on-policy logit distillation. Importantly, the Qwen report names GRPO but does **not** establish equivalence to DeepSeek's exact GRPO estimator. ([Hugging Face][2])
+**Qwen3.6** is the current open-weight Qwen endpoint, but its released artifacts expose architecture and broad pre/post-training status rather than an auditable scalar training program. It contains a multimodal causal model and trained multi-step MTP, but the current MTP objective, coefficients, MoE balancing objective, SFT masking, RL estimator, reward decomposition, distillation estimator, and speculative-training objective are **UNDISCLOSED**. The last Qwen generation with a substantially reconstructable post-training program is Qwen3: three-stage pretraining; small long-CoT cold start; reasoning GRPO; continual SFT to fuse thinking/non-thinking policies; then general RL. Smaller models instead receive off-policy response transfer followed by on-policy logit distillation. Importantly, the Qwen report names GRPO but does **not** establish equivalence to DeepSeek's exact GRPO estimator.
 
-**Kimi K3** exposes the most structurally integrated pipeline: native text-vision pretraining under a common autoregressive target, auxiliary-loss-free Quantile Balancing, progressively expanded context, SFT that already contains tool and long-horizon trajectories, QAT beginning at SFT, specialization into domain × reasoning-effort RL policies, then **multi-teacher on-policy distillation as token-level RL reward**. Long agent trajectories are supported by partial rollout and persistent execution state. Its speculative drafter is explicitly trained from the pretrained MTP pathway, but unlike ordinary MTP supervision it directly minimizes negative log distribution overlap with the frozen target—therefore optimizing the one-step lossless speculative acceptance probability. ([GitHub][3])
+**Kimi K3** exposes the most structurally integrated pipeline: native text-vision pretraining under a common autoregressive target, auxiliary-loss-free Quantile Balancing, progressively expanded context, SFT that already contains tool and long-horizon trajectories, QAT beginning at SFT, specialization into domain × reasoning-effort RL policies, then **multi-teacher on-policy distillation as token-level RL reward**. Long agent trajectories are supported by partial rollout and persistent execution state. Its speculative drafter is explicitly trained from the pretrained MTP pathway, but unlike ordinary MTP supervision it directly minimizes negative log distribution overlap with the frozen target—therefore optimizing the one-step lossless speculative acceptance probability.
 
 The strongest cross-family distinction is therefore not “which uses SFT/RL/distillation.” It is **what distribution generates the gradient** and **what divergence or policy estimator is applied to that distribution**.
 
@@ -45,16 +45,16 @@ The strongest cross-family distinction is therefore not “which uses SFT/RL/dis
 
 # 2. Source/version ledger
 
-| Family   | Model / lineage evidence       | Primary source                                  | Relevant disclosure                                                                                                                                                                |
-| -------- | ------------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DeepSeek | **DeepSeek-V4-Pro / V4-Flash** | V4 technical report + official model repository | Current architecture, MTP inheritance, routing, long-context curriculum, specialist SFT/RL, GRM, OPD, QAT, post-training systems. ([arXiv][1])                                     |
-| DeepSeek | DeepSeek-V3                    | Technical report                                | Exact MTP equations, routing bias controller, sequence balance loss inherited by V4. ([arXiv][4])                                                                                  |
-| DeepSeek | DeepSeek-V3.2                  | Technical report                                | Exact earlier GRPO estimator, off-policy masking, routing/sampling consistency; relevant only where V4 says its infrastructure/pipeline derives from this lineage.                 |
-| DeepSeek | DSpark / DeepSpec              | Official paper + repository                     | Separately trained speculative drafter, CE + TV + confidence objectives, target frozen, deployment with V4. ([arXiv][5])                                                           |
-| Qwen     | **Qwen3.6-35B-A3B**            | Official model repository                       | Current open-weight multimodal checkpoint; pretraining/post-training status and architecture. Detailed training objective not released. ([Hugging Face][2])                        |
-| Qwen     | Qwen3                          | Technical report                                | Last fully documented general-model pretraining/post-training lineage: cold-start SFT, reasoning GRPO, thinking-mode fusion, general RL, strong-to-weak distillation. ([arXiv][6]) |
-| Kimi     | **Kimi K3**                    | Technical report + official repository          | Current multimodal pretraining, QB routing, SFT, specialist RL, partial rollout, GRM, MOPD, QAT and speculative drafter. ([arXiv][7])                                              |
-| Kimi     | Kimi K2.5                      | Technical report                                | Exact policy estimator explicitly inherited by K3 post-training. ([arXiv][8])                                                                                                      |
+| Family   | Model / lineage evidence       | Primary source                                  | Relevant disclosure                                                                                                                                                   |
+| -------- | ------------------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DeepSeek | **DeepSeek-V4-Pro / V4-Flash** | V4 technical report + official model repository | Current architecture, MTP inheritance, routing, long-context curriculum, specialist SFT/RL, GRM, OPD, QAT, post-training systems.                                     |
+| DeepSeek | DeepSeek-V3                    | Technical report                                | Exact MTP equations, routing bias controller, sequence balance loss inherited by V4.                                                                                  |
+| DeepSeek | DeepSeek-V3.2                  | Technical report                                | Exact earlier GRPO estimator, off-policy masking, routing/sampling consistency; relevant only where V4 says its infrastructure/pipeline derives from this lineage.    |
+| DeepSeek | DSpark / DeepSpec              | Official paper + repository                     | Separately trained speculative drafter, CE + TV + confidence objectives, target frozen, deployment with V4.                                                           |
+| Qwen     | **Qwen3.6-35B-A3B**            | Official model repository                       | Current open-weight multimodal checkpoint; pretraining/post-training status and architecture. Detailed training objective not released.                               |
+| Qwen     | Qwen3                          | Technical report                                | Last fully documented general-model pretraining/post-training lineage: cold-start SFT, reasoning GRPO, thinking-mode fusion, general RL, strong-to-weak distillation. |
+| Kimi     | **Kimi K3**                    | Technical report + official repository          | Current multimodal pretraining, QB routing, SFT, specialist RL, partial rollout, GRM, MOPD, QAT and speculative drafter.                                              |
+| Kimi     | Kimi K2.5                      | Technical report                                | Exact policy estimator explicitly inherited by K3 post-training.                                                                                                      |
 
 ---
 
@@ -114,7 +114,7 @@ At the current endpoint, the publicly reconstructable program is
 
 with FP4 QAT active in post-training.
 
-The first sum is **[DERIVED]**, not a verbatim published single equation: V4 reports the main language-model training regime, the inherited MTP objective and the sequence-balancing term independently. Exact token normalization/masking of the main LM term remains **UNDISCLOSED**. ([arXiv][1])
+The first sum is **[DERIVED]**, not a verbatim published single equation: V4 reports the main language-model training regime, the inherited MTP objective and the sequence-balancing term independently. Exact token normalization/masking of the main LM term remains **UNDISCLOSED**.
 
 A separate speculative path is
 
@@ -162,7 +162,7 @@ They must not be fabricated as (1/T), assistant masks, packed-sequence masks, et
 
 ## 4.3 Multi-token prediction
 
-V4 explicitly retains V3's MTP mechanism **without modification**, and its MTP depth is one. ([arXiv][1])
+V4 explicitly retains V3's MTP mechanism **without modification**, and its MTP depth is one.
 
 For prediction depth (k):
 
@@ -232,7 +232,7 @@ V4 sets
 \end{cases}
 ]
 
-The modules can be removed from ordinary inference or reused as speculative prediction components. ([arXiv][4])
+The modules can be removed from ordinary inference or reused as speculative prediction components.
 
 This is important:
 
@@ -246,7 +246,7 @@ even though both may participate in speculative inference.
 
 ## 4.4 MoE routing: differentiable objective versus controller state
 
-V4 retains DeepSeek's auxiliary-loss-free balancing strategy and a small sequence-wise balance loss. It changes the affinity transform and removes the old routing-node constraint. Its earliest MoE blocks use deterministic token-ID Hash routing. ([arXiv][1])
+V4 retains DeepSeek's auxiliary-loss-free balancing strategy and a small sequence-wise balance loss. It changes the affinity transform and removes the old routing-node constraint. Its earliest MoE blocks use deterministic token-ID Hash routing.
 
 For the inherited controller, V3 defines a per-expert routing bias (b_i):
 
@@ -341,8 +341,6 @@ Current V4 uses
 \alpha=10^{-4}.
 ]
 
-([arXiv][4])
-
 ### Why both mechanisms exist
 
 The gradient term penalizes severe within-sequence imbalance, whereas (b_i) controls global dispatch without forcing semantic gating scores to solve a computational load-balancing objective.
@@ -375,7 +373,7 @@ The context schedule is
 4\text{K}\rightarrow16\text{K}\rightarrow64\text{K}\rightarrow1\text{M}.
 ]
 
-Sparse attention is not enabled from initialization. Training first uses dense attention; when sparsity is introduced, the CSA indexer receives a short warmup and sparse attention is subsequently trained for the main long-context stage. V4-Pro uses the same basic two-stage introduction strategy. ([arXiv][1])
+Sparse attention is not enabled from initialization. Training first uses dense attention; when sparsity is introduced, the CSA indexer receives a short warmup and sparse attention is subsequently trained for the main long-context stage. V4-Pro uses the same basic two-stage introduction strategy.
 
 Therefore:
 
@@ -402,7 +400,7 @@ e\in
 {\text{math, code, agent, instruction, ...}}.
 ]
 
-Each specialist receives high-quality domain-specific data before RL. ([arXiv][1])
+Each specialist receives high-quality domain-specific data before RL.
 
 What is public:
 
@@ -439,7 +437,7 @@ Current V4 reports GRPO for specialist optimization:
 \theta_e.
 ]
 
-Reasoning-effort variants are trained with different context/length-control regimes. Tool and agent specialists operate through explicit tool-call schemas and interleaved reasoning. For verifiable tasks, reward originates from rules/test cases; harder-to-verify tasks use rubric-conditioned generative evaluation rather than the conventional pipeline “human labels → scalar reward model.” ([arXiv][1])
+Reasoning-effort variants are trained with different context/length-control regimes. Tool and agent specialists operate through explicit tool-call schemas and interleaved reasoning. For verifiable tasks, reward originates from rules/test cases; harder-to-verify tasks use rubric-conditioned generative evaluation rather than the conventional pipeline “human labels → scalar reward model.”
 
 ### Critical evidence boundary
 
@@ -560,7 +558,7 @@ Instead of requiring a separately trained scalar RM,
 \text{GRM judgement}.
 ]
 
-The actor can itself function natively as a generative reward model, and the GRM capability itself is subject to RL optimization. ([arXiv][1])
+The actor can itself function natively as a generative reward model, and the GRM capability itself is subject to RL optimization.
 
 Thus:
 
@@ -624,7 +622,7 @@ D_{\rm KL}(\pi_\theta\Vert\pi_E)
 \right].
 ]
 
-The relevant teacher is selected according to task context; (w_i) encodes teacher importance. Teacher weights remain physically separate during training, while capability is consolidated into one student. ([arXiv][1])
+The relevant teacher is selected according to task context; (w_i) encodes teacher importance. Teacher weights remain physically separate during training, while capability is consolidated into one student.
 
 ### Why the sampling distribution matters
 
@@ -667,7 +665,7 @@ A common approximation would insert
 
 as a per-token policy advantage.
 
-V4 instead computes the full-vocabulary reverse KL because the sampled estimator exhibited excessive variance and instability. ([arXiv][1])
+V4 instead computes the full-vocabulary reverse KL because the sampled estimator exhibited excessive variance and instability.
 
 Hence:
 
@@ -708,7 +706,7 @@ W_{\rm FP4}
 W_{\rm FP8}^{\rm compute}.
 ]
 
-Gradients propagate back to the master weights through the quantized simulation pathway. ([arXiv][1])
+Gradients propagate back to the master weights through the quantized simulation pathway.
 
 There is no evidence for
 
@@ -752,7 +750,7 @@ The causal reason is optimization correctness, not merely cluster utilization:
 
 Resuming instead of restarting reduces interruption-induced length bias.
 
-For multi-teacher OPD, teacher parameters are centrally stored/offloaded, sharded when loaded, and selected per batch/task. The system caches teacher hidden representations and reconstructs vocabulary logits through the prediction head, allowing full-vocabulary KL without keeping every teacher resident simultaneously. ([arXiv][1])
+For multi-teacher OPD, teacher parameters are centrally stored/offloaded, sharded when loaded, and selected per batch/task. The system caches teacher hidden representations and reconstructs vocabulary logits through the prediction head, allowing full-vocabulary KL without keeping every teacher resident simultaneously.
 
 ---
 
@@ -760,7 +758,7 @@ For multi-teacher OPD, teacher parameters are centrally stored/offloaded, sharde
 
 DSpark is a **separate draft-model training program**, not V4 foundation MTP.
 
-Training sequences are generated by the target model; random anchor positions yield (\gamma)-token blocks. The target is frozen. The draft shares frozen target embeddings and LM head, while its backbone, sequential block and confidence head update. ([arXiv][5])
+Training sequences are generated by the target model; random anchor positions yield (\gamma)-token blocks. The target is frozen. The draft shares frozen target embeddings and LM head, while its backbone, sequential block and confidence head update.
 
 Position weighting:
 
@@ -846,9 +844,7 @@ c_k^*\log c_k
 }
 ]
 
-([arXiv][5])
-
-The confidence estimator is then calibrated and used by a hardware-aware prefix scheduler so that serving optimizes not just model-level acceptance but verification compute under batch load. DSpark is co-deployed with V4 variants. ([arXiv][5])
+The confidence estimator is then calibrated and used by a hardware-aware prefix scheduler so that serving optimizes not just model-level acceptance but verification compute under batch load. DSpark is co-deployed with V4 variants.
 
 ---
 
@@ -856,7 +852,7 @@ The confidence estimator is then calibrated and used by a hardware-aware prefix 
 
 # 5.1 Evidence boundary: current Qwen3.6 versus documented Qwen3
 
-The current open-weight endpoint is Qwen3.6-35B-A3B. Its official repository describes it as a post-trained multimodal model. The architecture contains a hybrid sequence stack and MoE and reports MTP trained over multiple future steps. ([Hugging Face][2])
+The current open-weight endpoint is Qwen3.6-35B-A3B. Its official repository describes it as a post-trained multimodal model. The architecture contains a hybrid sequence stack and MoE and reports MTP trained over multiple future steps.
 
 However:
 
@@ -940,7 +936,7 @@ The Qwen3 base pipeline is:
 \theta_{\rm base}.
 ]
 
-The stages differ primarily by data and context regime rather than by a published new scalar objective. The report describes a large general phase, a knowledge-intensive STEM/code/reasoning phase, then long-context training that expands context from 4K to 32K. ([arXiv][6])
+The stages differ primarily by data and context regime rather than by a published new scalar objective. The report describes a large general phase, a knowledge-intensive STEM/code/reasoning phase, then long-context training that expands context from 4K to 32K.
 
 Therefore:
 
@@ -962,7 +958,7 @@ The exact causal-LM mask and normalization are **UNDISCLOSED**.
 
 # 5.4 Data-generation pipeline
 
-Qwen3 pretraining includes large amounts of synthetic data. Qwen models specialized for math and coding synthesize domain text, while a Qwen vision-language system performs document text recognition before another Qwen model refines extracted text. The final Qwen3 foundation model itself is not thereby receiving a multimodal objective: multimodal models are used upstream in corpus construction. ([arXiv][6])
+Qwen3 pretraining includes large amounts of synthetic data. Qwen models specialized for math and coding synthesize domain text, while a Qwen vision-language system performs document text recognition before another Qwen model refines extracted text. The final Qwen3 foundation model itself is not thereby receiving a multimodal objective: multimodal models are used upstream in corpus construction.
 
 This distinction is essential:
 
@@ -982,7 +978,7 @@ Current Qwen3.6 is multimodal; Qwen3's documented base pipeline is not.
 
 Qwen3 MoE uses 128 routed experts and activates eight per token, with no shared expert.
 
-It explicitly uses a **global-batch load-balancing loss**. ([arXiv][6])
+It explicitly uses a **global-batch load-balancing loss**.
 
 But:
 
@@ -1019,8 +1015,6 @@ For the documented flagship Qwen3 models:
 }
 ]
 
-([arXiv][6])
-
 This ordering is semantically important.
 
 ---
@@ -1043,7 +1037,7 @@ x
 \mathcal D_{\rm cold}.
 ]
 
-Teacher failures may be inspected by human annotators. Candidate responses are removed for incorrect answers, repetition, guessing, reasoning/summary inconsistency, undesirable language mixing, and likely benchmark overlap. ([arXiv][6])
+Teacher failures may be inspected by human annotators. Candidate responses are removed for incorrect answers, repetition, guessing, reasoning/summary inconsistency, undesirable language mixing, and likely benchmark overlap.
 
 Only a deliberately small subset and few training steps are used.
 
@@ -1058,7 +1052,7 @@ P_{\theta_1}
 
 so subsequent on/off-policy exploration has access to useful reasoning trajectories without overly constraining policy support.
 
-That causal interpretation is explicitly supported by Qwen's stated objective of instilling basic reasoning patterns while preserving room for RL improvement. ([arXiv][6])
+That causal interpretation is explicitly supported by Qwen's stated objective of instilling basic reasoning patterns while preserving room for RL improvement.
 
 Exact SFT mask and normalization:
 
@@ -1082,7 +1076,7 @@ The report states GRPO and explicitly reports:
 * large batch;
 * many rollouts per prompt;
 * off-policy training for sample efficiency;
-* entropy management to prevent degradation. ([arXiv][6])
+* entropy management to prevent degradation.
 
 Thus:
 
@@ -1157,9 +1151,9 @@ y_{\rm think}
 
 followed by filtering.
 
-Non-thinking data cover coding, mathematics, instruction following, multilingual tasks, creative writing, QA and role-playing. ([arXiv][6])
+Non-thinking data cover coding, mathematics, instruction following, multilingual tasks, creative writing, QA and role-playing.
 
-The chat grammar introduces `/think` and `/no_think`; non-thinking examples retain an empty thinking block to maintain format consistency. ([arXiv][6])
+The chat grammar introduces `/think` and `/no_think`; non-thinking examples retain an empty thinking block to maintain format consistency.
 
 The resulting stage is more than “another SFT.”
 
@@ -1272,7 +1266,7 @@ D=D_{\rm KL}(\pi_S\Vert\pi_T)
 
 rather than the opposite direction, nor disclose temperature/full-vocabulary approximation with sufficient precision.
 
-Those fields remain **UNDISCLOSED**. ([arXiv][6])
+Those fields remain **UNDISCLOSED**.
 
 ---
 
@@ -1353,7 +1347,7 @@ K3 trains language and vision jointly from the start.
 
 The corpus includes text domains such as web, code, mathematics and knowledge, plus captions, interleaved multimodal documents, OCR/perception data, video and visual coding data.
 
-Visual and textual tokens are interleaved and optimized under **one next-token prediction objective** rather than separate contrastive and language losses. MoonViT-V2 is trained from scratch under the autoregressive objective instead of beginning from a separately contrastively trained vision encoder. ([arXiv][7])
+Visual and textual tokens are interleaved and optimized under **one next-token prediction objective** rather than separate contrastive and language losses. MoonViT-V2 is trained from scratch under the autoregressive objective instead of beginning from a separately contrastively trained vision encoder.
 
 Thus the disclosed semantics are
 
@@ -1515,8 +1509,6 @@ not
 b_{t+1}=b_t-\eta\nabla_b\mathcal L.
 ]
 
-([arXiv][9])
-
 This is conceptually parallel to DeepSeek's routing-bias controller, but the update law is materially different: Kimi estimates the bias through routing-score quantiles rather than fixed-sign increments.
 
 ---
@@ -1582,8 +1574,6 @@ Thus SFT is simultaneously:
 \text{agent trajectory imitation}.
 ]
 
-([GitHub][3])
-
 Exact token mask, EOS policy, weighting and normalization are **UNDISCLOSED**.
 
 ---
@@ -1602,7 +1592,7 @@ W_{\rm expert}\rightarrow\mathrm{MXFP4},
 A_{\rm expert}\rightarrow\mathrm{MXFP8}.
 ]
 
-Higher-precision paths include non-expert attention components, LatentMoE projections, shared experts and routers. QAT persists across subsequent post-training rather than being a terminal conversion. ([GitHub][3])
+Higher-precision paths include non-expert attention components, LatentMoE projections, shared experts and routers. QAT persists across subsequent post-training rather than being a terminal conversion.
 
 Again:
 
@@ -1648,7 +1638,7 @@ Therefore:
 3\times3=9
 ]
 
-domain/effort experts become the teachers for final consolidation. ([arXiv][9])
+domain/effort experts become the teachers for final consolidation.
 
 This is structurally different from ordinary “one SFT → one RL” training:
 
@@ -1724,8 +1714,6 @@ with
 [
 \alpha,\beta,\tau>0.
 ]
-
-([arXiv][8])
 
 ### Two source-level inconsistencies must be preserved
 
@@ -1821,7 +1809,7 @@ y_{a:T}
 \text{ resumed after learner advancement}.
 ]
 
-K3 therefore explicitly couples partial rollout with token-level off-policy control. ([arXiv][9])
+K3 therefore explicitly couples partial rollout with token-level off-policy control.
 
 ---
 
@@ -1839,7 +1827,7 @@ task reward is overridden by a negative outcome.
 
 For non-agent reasoning, (T(y)) concerns reasoning tokens; for agentic tasks it covers cumulative generated output, including reasoning and tool-call arguments.
 
-Effort levels are generated by beginning with a high-budget policy and annealing the admissible budget regime for lower-effort specialists. ([arXiv][9])
+Effort levels are generated by beginning with a high-budget policy and annealing the admissible budget regime for lower-effort specialists.
 
 This is not just inference-time truncation:
 
@@ -1871,7 +1859,7 @@ r+r_{\rm budget}
 
 where applicable.
 
-For subjective/non-verifiable work, K3 uses a GRM protocol in which candidate responses are compared within groups under a generated rubric; excessive verbosity can itself cause rejection beyond configured limits. ([arXiv][9])
+For subjective/non-verifiable work, K3 uses a GRM protocol in which candidate responses are compared within groups under a generated rubric; excessive verbosity can itself cause rejection beyond configured limits.
 
 Again:
 
@@ -1930,8 +1918,6 @@ R_{\max}
 \right)
 }
 ]
-
-([arXiv][9])
 
 The token reward is inserted into the existing RL framework.
 
@@ -2021,7 +2007,7 @@ W_{\rm E3}^{(0)}
 [0;;0;;I].
 ]
 
-The drafter is unrolled across multiple future positions and consumes its own previous predictions beyond the first step, matching inference-time exposure rather than receiving unavailable future target states. ([arXiv][9])
+The drafter is unrolled across multiple future positions and consumes its own previous predictions beyond the first step, matching inference-time exposure rather than receiving unavailable future target states.
 
 ---
 
@@ -2054,7 +2040,7 @@ K3 optimizes
 
 at temperature one.
 
-There is **no auxiliary ground-truth CE term** in this drafter objective. ([arXiv][9])
+There is **no auxiliary ground-truth CE term** in this drafter objective.
 
 Because
 
@@ -2512,7 +2498,7 @@ Separately:
 +L_{\rm conf}
 ]
 
-trains an external drafter. DSpark's TV term is explicitly acceptance-aligned, and its confidence head further estimates whether draft prefixes survive verification. ([arXiv][5])
+trains an external drafter. DSpark's TV term is explicitly acceptance-aligned, and its confidence head further estimates whether draft prefixes survive verification.
 
 ## Qwen
 
@@ -3028,4053 +3014,1512 @@ The decisive architectural trend is therefore a migration from training stages i
 
 because two stages both called “GRPO,” “SFT,” “MTP,” or “distillation” can have materially different gradients, stability properties, system requirements and deployment behavior.
 
-[1]: https://arxiv.org/html/2606.19348 "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence"
-[2]: https://huggingface.co/Qwen/Qwen3.6-35B-A3B?utm_source=chatgpt.com "Qwen/Qwen3.6-35B-A3B · Hugging Face"
-[3]: https://github.com/MoonshotAI/Kimi-K3?utm_source=chatgpt.com "GitHub - MoonshotAI/Kimi-K3: Open Frontier Intelligence · GitHub"
-[4]: https://arxiv.org/html/2412.19437 "DeepSeek-V3 Technical Report"
-[5]: https://arxiv.org/abs/2607.05147 "DSpark: Confidence-Scheduled Speculative Decoding with Semi-Autoregressive Generation"
-[6]: https://arxiv.org/abs/2505.09388 "Qwen3 Technical Report"
-[7]: https://arxiv.org/abs/2607.24653?utm_source=chatgpt.com "Kimi K3: Open Frontier Intelligence"
-[8]: https://arxiv.org/html/2602.02276 "Kimi K2.5: Visual Agentic Intelligence"
-[9]: https://arxiv.org/pdf/2607.24653 "https://arxiv.org/pdf/2607.24653"
-
-
-
-# DEEPSEEK
-
-## PRETRAINING
 
 [
-\mathrm{STATE}_{\mathrm{V4}}
-============================
+\boxed{
+\begin{array}{c}
+\textbf{DEEPSEEK OUTER TRAINING PROGRAM}[2mm]
+\mathsf M_\theta:\text{black-box model}[1mm]
+\theta:
+\theta_{\rm base}
+\rightarrow
+\theta_{\rm SFT}
+\rightarrow
+\theta_{\rm RL}
+\rightarrow
+\theta_{\rm final}
+\end{array}}
+]
+
+---
+
+[
+\boxed{\textbf{Algorithm 1}\qquad \mathsf{PRETRAIN}(\mathsf M_\theta,\mathcal D_{\rm pre})}
+]
+
+[
+\begin{aligned}
+&\mathbf{Input}:\
+&\qquad
+\mathcal D_{\rm pre}
+====================
+
+{d_n}*{n=1}^{N},
+\qquad
+d_n=(u*{n,1},\ldots,u_{n,L_n})
+\
+&\qquad
+\tau:d_n\mapsto
+(x_{n,1},\ldots,x_{n,L_n}),
+\qquad
+x_{n,t}\in{1,\ldots,V}
+\
+&\qquad
+\theta_0,
+\qquad
+b_0\in\mathbb R^{N_{\rm expert}},
+\qquad
+T,
+\qquad
+B_{\rm global},
+\qquad
+B_\mu,
+\qquad
+W_{\rm DP},
+\
+&\qquad
+K_{\rm acc}
+===========
+
+\frac{B_{\rm global}}
+{W_{\rm DP}B_\mu}
+\
+&\qquad
+\lambda_{\rm MTP}(s),
+\qquad
+\alpha_{\rm Bal},
+\qquad
+\eta_s,
+\qquad
+\gamma_{\rm route}.
+\end{aligned}
+]
+
+[
+\begin{aligned}
+&\mathbf{Schema}:\
+&
+\mathcal S_{\rm pre}
+====================
 
 \left{
-\theta_t,,
-\theta_t^{\mathrm{Muon}},,
-\theta_t^{\mathrm{AdamW}},,
-M_t^{\mathrm{Muon}},,
-m_t^{\mathrm{AdamW}},,
-v_t^{\mathrm{AdamW}},,
-b_t^{\mathrm{router}},,
-\mathcal D_t,,
-\mathcal C_t
+X\in\mathbb N^{B\times(T+1)}
 \right}
-\qquad[\mathrm{DERIVED}]
+\
+&
+X
+=
+
+\begin{bmatrix}
+x_{1,1}&\cdots&x_{1,T+1}\
+\vdots&&\vdots\
+x_{B,1}&\cdots&x_{B,T+1}
+\end{bmatrix}
+\
+&
+X^{\rm in}=X_{:,1:T}\in\mathbb N^{B\times T}
+\
+&
+Y^{\rm NTP}=X_{:,2:T+1}\in\mathbb N^{B\times T}
+\
+&
+Y^{(1)}*{\rm MTP}=X*{:,3:T+1}.
+\end{aligned}
 ]
 
 [
-\theta_t
-========
-
-\theta_t^{\mathrm{Muon}}
-\sqcup
-\theta_t^{\mathrm{AdamW}}
-\qquad[\mathrm{DERIVED}]
+\begin{aligned}
+&\mathbf{Pack}:\
+&
+{,\tau(d_n),}*{n=1}^{N}
+\xrightarrow{\operatorname{concat+boundary}}
+\tilde X
+\xrightarrow{\operatorname{chunk}(T+1)}
+{X_j}*{j=1}^{N_{\rm seq}}
+\
+&
+X_j\in\mathbb N^{T+1}.
+\end{aligned}
 ]
 
 [
-\theta_t^{\mathrm{AdamW}}
-=========================
+\begin{aligned}
+&\mathbf{Shuffle}:\
+&
+\pi_s\sim\operatorname{Perm}(N_{\rm seq}),
+\
+&
+\mathcal B_s
+============
 
 \left{
-\theta_{\mathrm{Emb}},
-\theta_{\mathrm{Head}},
-\theta_{\mathrm{RMSNorm}}
-\right}
-\qquad[\mathrm{REPORTED}]
+X_{\pi_s(j)}
+\right}*{j=1}^{B*{\rm global}}.
+\end{aligned}
 ]
 
 [
-\theta_t^{\mathrm{Muon}}
+\begin{aligned}
+&\mathbf{Shard}:\
+&
+\mathcal B_s
+============
+
+\bigsqcup_{r=1}^{W_{\rm DP}}
+\mathcal B_s^{(r)},
+\
+&
+|\mathcal B_s^{(r)}|
+====================
+
+\frac{B_{\rm global}}{W_{\rm DP}},
+\
+&
+\mathcal B_s^{(r)}
+==================
+
+\bigsqcup_{k=1}^{K_{\rm acc}}
+\mathcal B_{s,k}^{(r)},
+\
+&
+|\mathcal B_{s,k}^{(r)}|
 ========================
 
-\theta_t\setminus\theta_t^{\mathrm{AdamW}}
-\qquad[\mathrm{DERIVED}]
+B_\mu.
+\end{aligned}
 ]
 
 [
-D_{\mathrm{MTP}}=1
-\qquad[\mathrm{REPORTED}]
+\begin{aligned}
+&\mathbf{Initialize}:\
+&
+\theta\leftarrow\theta_0,
+\qquad
+b\leftarrow b_0,
+\qquad
+s\leftarrow0.
+\end{aligned}
 ]
 
 [
-N_r^{\mathrm{V4-Pro}}=384,\qquad K_r^{\mathrm{V4-Pro}}=6
-\qquad[\mathrm{REPORTED}]
-]
+\boxed{
+\begin{aligned}
+&\mathbf{for}\quad s=0,\ldots,S_{\rm pre}-1:
+[1mm]
+&
+g^{(r)}\leftarrow0
+\qquad
+\forall r\in{1,\ldots,W_{\rm DP}}
+[1mm]
+&
+\mathbf{for}\quad
+k=1,\ldots,K_{\rm acc}:
+\
+&
+\qquad
+X_{s,k}^{(r)}
+\leftarrow
+\mathcal B_{s,k}^{(r)}
+\
+&
+\qquad
+X_{s,k}^{\rm in}
+================
 
-[
-\left(T_{\max}^{(0)},T_{\max}^{(1)},T_{\max}^{(2)},T_{\max}^{(3)}\right)
-========================================================================
+X_{s,k,:,1:T}^{(r)}
+\
+&
+\qquad
+Y_{s,k}^{\rm NTP}
+=================
 
-(4\mathrm K,16\mathrm K,64\mathrm K,1\mathrm M)
-\qquad[\mathrm{REPORTED}]
-]
+X_{s,k,:,2:T+1}^{(r)}
+[1mm]
+&
+\qquad
+\left(
+Z_{s,k},
+Z_{s,k}^{\rm MTP},
+\Lambda_{s,k}
+\right)
+=======
 
-([arXiv][1])
+\mathsf M_\theta
+\left(
+X_{s,k}^{\rm in};
+b_s
+\right)
+\
+&
+\qquad
+Z_{s,k}
+\in
+\mathbb R^{B_\mu\times T\times V}
+\
+&
+\qquad
+P_{s,k}
+=======
 
-[
-X=(x_{b,t})\in V^{B\times T},
-\qquad T\leq T_{\max}^{(k)}
-\qquad[\mathrm{DERIVED}]
-]
+\operatorname{softmax}
+(Z_{s,k})
+[1mm]
+&
+\qquad
+\mathcal L_{\rm NTP}^{(s,k)}
+============================
 
-[
-H^{(0)}=\operatorname{Emb}_{\theta}(X)
-\in\mathbb R^{B\times T\times d}
-\qquad[\mathrm{DERIVED}]
-]
+-\frac{1}{Z_{\rm NTP}}
+\sum_{\beta=1}^{B_\mu}
+\sum_{t=1}^{T}
+m_{\beta,t}^{\rm pre}
+\log
+P_{s,k,\beta,t}
+!\left[
+Y^{\rm NTP}*{s,k,\beta,t}
+\right]
+\
+&
+\qquad
+m^{\rm pre},
+Z*{\rm NTP}
+===========
 
-[
-H^{(\ell)}
+\mathrm{UNDISCLOSED}
+[1mm]
+&
+\qquad
+P^{\rm MTP}_{s,k}
+=================
+
+\operatorname{softmax}
+(Z^{\rm MTP}*{s,k})
+\
+&
+\qquad
+\mathcal L*{\rm MTP}^{(s,k)}
+============================
+
+-\frac{1}{T}
+\sum_{\beta=1}^{B_\mu}
+\sum_{t}
+\log
+P^{\rm MTP}*{s,k,\beta,t}
+\left[
+x*{\beta,t+2}
+\right]
+[1mm]
+&
+\qquad
+\mathcal L_{\rm Bal}^{(s,k)}
+============================
+
+\alpha_{\rm Bal}
+\sum_{e=1}^{N_r}
+f_e^{(s,k)}
+P_e^{(s,k)}
+[1mm]
+&
+\qquad
+\mathcal L_{s,k}^{\rm pre}
+==========================
+
+\mathcal L_{\rm NTP}^{(s,k)}
++
+\lambda_{\rm MTP}(s)
+\mathcal L_{\rm MTP}^{(s,k)}
++
+\mathcal L_{\rm Bal}^{(s,k)}
+[1mm]
+&
+\qquad
+g_{s,k}^{(r)}
+=============
+
+\nabla_\theta
+\mathcal L_{s,k}^{\rm pre}
+\
+&
+\qquad
+g^{(r)}
+\leftarrow
+g^{(r)}
++
+\frac{1}{K_{\rm acc}}
+g_{s,k}^{(r)}
+[2mm]
+&
+\mathbf{end}
+[2mm]
+&
+g_s
+===
+
+\frac{1}{W_{\rm DP}}
+\sum_{r=1}^{W_{\rm DP}}
+g^{(r)}
+\
+&
+\widehat g_s
+============
+
+\operatorname{ReduceScatter/AllReduce}
+\left(
+{g^{(r)}}*{r=1}^{W*{\rm DP}}
+\right)
+[1mm]
+&
+\theta_{s+1}
+============
+
+\operatorname{OPT}
+\left(
+\theta_s,
+\widehat g_s,
+\eta_s
+\right)
+[2mm]
+&
+\ell_{e,s}
 ==========
 
-F_{\theta_\ell}
-!\left(H^{(\ell-1)}\right),
-\qquad
-\ell=1,\ldots,L
-\qquad[\mathrm{DERIVED}]
+\sum_{r,k}
+\operatorname{Load}
+\left(
+\Lambda_{s,k}^{(r)},e
+\right)
+\
+&
+\bar\ell_s
+==========
+
+\frac{1}{N_r}
+\sum_{e=1}^{N_r}\ell_{e,s}
+\
+&
+b_{e,s+1}
+=========
+
+\begin{cases}
+b_{e,s}-\gamma_{\rm route},
+&
+\ell_{e,s}>\bar\ell_s,
+\
+b_{e,s}+\gamma_{\rm route},
+&
+\ell_{e,s}<\bar\ell_s,
+\
+b_{e,s},
+&
+\ell_{e,s}=\bar\ell_s,
+\end{cases}
+[1mm]
+&
+\boxed{
+b_{s+1}
+=======
+
+F(b_s,\ell_s)
+\not\equiv
+b_s-\eta_s\nabla_b\mathcal L_s
+}
+[2mm]
+&
+\mathbf{end}
+\end{aligned}}
 ]
 
 [
+\boxed{
+\theta_{\rm base}
+=================
+
+\theta_{S_{\rm pre}}
+}
+]
+
+---
+
+[
+\boxed{\textbf{Algorithm 2}\qquad
+\mathsf{SFT}(\mathsf M_{\theta_{\rm base}},\mathcal D_{\rm SFT}^{(e)})}
+]
+
+[
+\begin{aligned}
+&\mathbf{Input}:\
+&
+\mathcal D_{\rm SFT}^{(e)}
+==========================
+
+{
+(q_n,a_n)
+}_{n=1}^{N_e}
+\
+&
+q_n
+===
+
+(q_{n,1},\ldots,q_{n,L_q}),
+\qquad
+a_n
+===
+
+(a_{n,1},\ldots,a_{n,L_a})
+\
+&
+e\in
+\mathcal E_{\rm specialist}
+\
+&
+\theta_0^{(e)}
+==============
+
+\theta_{\rm base}.
+\end{aligned}
+]
+
+[
+\begin{aligned}
+&\mathbf{Serialize}:\
+&
+S_n
+===
+
+\tau
+\left(
+\langle\mathrm{BOS}\rangle
+\Vert
+q_n
+\Vert
+a_n
+\Vert
+\langle\mathrm{EOS}\rangle
+\right)
+\
+&
+S_n
+===
+
+(x_{n,1},\ldots,x_{n,L_n}).
+\end{aligned}
+]
+
+[
+\begin{aligned}
+&\mathbf{Schema}:\
+&
+X\in\mathbb N^{B\times T},
+\
+&
+Y\in\mathbb N^{B\times T},
+\
+&
+M^{\rm SFT}
+\in
+{0,1}^{B\times T},
+\
+&
+X_{\beta,t}
+===========
+
+x_{\beta,t},
+\
+&
+Y_{\beta,t}
+===========
+
+x_{\beta,t+1},
+\
+&
+M^{\rm SFT}_{\beta,t}
+=====================
+
+\mathrm{UNDISCLOSED}.
+\end{aligned}
+]
+
+[
+\begin{aligned}
+&\mathbf{Batch}:\
+&
+\mathcal B_s^{(e)}
+==================
+
+\operatorname{PackBatch}
+\left(
+{S_n},
+B_{\rm global},
+T
+\right)
+\
+&
+\mathcal B_s^{(e)}
+==================
+
+\bigsqcup_{r=1}^{W_{\rm DP}}
+\bigsqcup_{k=1}^{K_{\rm acc}}
+\mathcal B_{s,k}^{(e,r)}.
+\end{aligned}
+]
+
+[
+\boxed{
+\begin{aligned}
+&\theta^{(e)}
+\leftarrow
+\theta_{\rm base}
+[1mm]
+&
+\mathbf{for}\quad
+s=0,\ldots,S_{\rm SFT}^{(e)}-1:
+\
+&
+\qquad
+g^{(r)}\leftarrow0
+\
+&
+\qquad
+\mathbf{for}\quad
+k=1,\ldots,K_{\rm acc}:
+\
+&
+\qquad\qquad
+(X,Y,M)
+\leftarrow
+\mathcal B_{s,k}^{(e,r)}
+\
+&
+\qquad\qquad
 Z
 =
 
-H^{(L)}W_{\mathrm{out}}^{\top}
-\in\mathbb R^{B\times T\times |V|}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
+\mathsf M_{\theta^{(e)}_s}(X)
+\
+&
+\qquad\qquad
 P
 =
 
 \operatorname{softmax}(Z)
-\in[0,1]^{B\times T\times |V|}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal L_{\mathrm{NTP}}
-=========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-M_{\mathrm{loss}}
-=================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{dtype}(X,H,Z,P)
-=============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{shard}(X,H,Z,P)
-=============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-### MTP
-
-[
-M_k\in\mathbb R^{d\times 2d},
-\qquad
-h_i^{k-1}\in\mathbb R^d,
-\qquad
-\operatorname{Emb}(x_{i+k})\in\mathbb R^d
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-h_i^{\prime k}
-==============
-
-M_k
-\begin{bmatrix}
-\operatorname{RMSNorm}(h_i^{k-1})\
-\operatorname{RMSNorm}(\operatorname{Emb}(x_{i+k}))
-\end{bmatrix}
-\in\mathbb R^d
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-h_{1:T-k}^{k}
-=============
-
-\operatorname{TRM}*k
-!\left(
-h*{1:T-k}^{\prime k}
-\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-P_{i+k+1}^{k}
-=============
-
-\operatorname{OutHead}(h_i^k)
-\in[0,1]^{|V|}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{MTP}}^{k}
-=============================
-
--\frac1T
-\sum_{i=2+k}^{T+1}
-\log P_i^k[x_i]
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{MTP}}
-=========================
-
-\frac{\lambda_{\mathrm{MTP}}}{D}
-\sum_{k=1}^{D}
-\mathcal L_{\mathrm{MTP}}^{k}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-D=1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\lambda_{\mathrm{MTP}}(t)
-=========================
-
-\begin{cases}
-0.3,&t<t_{\mathrm{LR\ decay}},\
-0.1,&t\geq t_{\mathrm{LR\ decay}}
-\end{cases}
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][2])
-
-### MOE ROUTING
-
-[
-s_{i,t}^{\mathrm{V3}}
-=====================
-
-\sigma!\left(u_t^\top e_i\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-s_{i,t}^{\mathrm{V4}}
-=====================
-
-\sqrt{
-\operatorname{Softplus}(u_t^\top e_i)
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal I_t
-============
-
-\operatorname{TopK}
-\left(
-{s_{j,t}+b_j}_{j=1}^{N_r},
-K_r
-\right)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-g'_{i,t}
-========
-
-\begin{cases}
-s_{i,t},&i\in\mathcal I_t,\
-0,&i\notin\mathcal I_t
-\end{cases}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-g_{i,t}
-=======
-
-\frac{g'*{i,t}}
-{\sum*{j=1}^{N_r}g'_{j,t}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-h'_t
-====
-
-u_t
-+
-\sum_{i=1}^{N_s}\operatorname{FFN}^{(s)}*i(u_t)
-+
-\sum*{i=1}^{N_r}
-g_{i,t}\operatorname{FFN}^{(r)}_i(u_t)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\frac{\partial g_{i,t}}{\partial b_j}=0
-\quad
-\text{a.e. on fixed routing assignments}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-b_{i}^{(t+1)}
-=============
-
-\begin{cases}
-b_i^{(t)}-\gamma_b,&\ell_i^{(t)}>\ell_{\mathrm{target}},\
-b_i^{(t)}+\gamma_b,&\ell_i^{(t)}<\ell_{\mathrm{target}}
-\end{cases}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\gamma_b^{\mathrm{V4}}
-======================
-
-10^{-3}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-b^{(t+1)}
-\not\equiv
-b^{(t)}
--------
-
-\eta
-\nabla_b\mathcal L_{\mathrm{pre}}
-\qquad[\mathrm{DERIVED}]
-]
-
-([arXiv][2])
-
-### SEQUENCE-WISE BALANCE
-
-[
-f_i
-===
-
-\frac{N_r}{K_rT}
-\sum_{t=1}^{T}
-\mathbf 1
-\left[
-s_{i,t}
-\in
-\operatorname{TopK}
-\left(
-{s_{j,t}}_{j=1}^{N_r},K_r
-\right)
-\right]
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-s'_{i,t}
-========
-
-\frac{s_{i,t}}
-{\sum_{j=1}^{N_r}s_{j,t}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-P_i
-===
-
-\frac1T
-\sum_{t=1}^{T}s'_{i,t}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{Bal}}
-=========================
-
-\alpha_{\mathrm{Bal}}
-\sum_{i=1}^{N_r}f_iP_i
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\alpha_{\mathrm{Bal}}^{\mathrm{V4}}
-===================================
-
-10^{-4}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{router\text{-}bias}}
-========================================
-
-0
-\qquad[\mathrm{DERIVED}]
-]
-
-([arXiv][2])
-
-### TOTAL PRETRAINING OBJECTIVE
-
-[
-\boxed{
-\mathcal L_{\mathrm{pre}}^{\mathrm{V4}}
-=======================================
-
-\mathcal L_{\mathrm{NTP}}
-+
-\frac{\lambda_{\mathrm{MTP}}}{D}
-\sum_{k=1}^{D}
-\mathcal L_{\mathrm{MTP}}^k
-+
-10^{-4}
-\sum_{i=1}^{N_r}f_iP_i
-}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\lambda_{\mathrm{router\text{-}bias}}
-=====================================
-
-0
-\qquad[\mathrm{DERIVED}]
-]
-
-### BACKWARD
-
-[
-g_t
-===
-
-\nabla_{\theta_t}
-\mathcal L_{\mathrm{pre}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-g_t
-===
-
-\left(
-g_t^{\mathrm{Muon}},
-g_t^{\mathrm{AdamW}}
-\right)
-\qquad[\mathrm{DERIVED}]
-]
-
-### MUON
-
-[
-W_{t-1}\in\mathbb R^{n\times m}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-G_t
-===
-
-\nabla_W
-\mathcal L_t(W_{t-1})
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-M_t
-===
-
-\mu M_{t-1}+G_t
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-O'_t
-====
-
-\operatorname{HybridNewtonSchulz}
-\left(
-\mu M_t+G_t
-\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-O_t
-===
-
-O'_t
-\sqrt{\max(n,m)}
-\gamma
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-W_t
-===
-
-W_{t-1}(1-\eta_t\lambda_{\mathrm{wd}})
--\eta_tO_t
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mu=0.95,\qquad
-\lambda_{\mathrm{wd}}=0.1,\qquad
-\operatorname{RMS}(O_t)=0.18
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][1])
-
-### ADAMW
-
-[
-(\beta_1,\beta_2,\epsilon,\lambda_{\mathrm{wd}})
-================================================
-
-(0.9,0.95,10^{-20},0.1)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{AdamWTransition}
-\left(
-\theta_t,m_t,v_t,g_t
-\right)
-=======
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-### DISTRIBUTED STATE
-
-[
-P_{\mathrm{PP}}=16,\qquad
-P_{\mathrm{EP}}=64
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{DP}
-=================
-
-\operatorname{ZeRO!-!1}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-P_{\mathrm{TP}}=1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal E
-==========
-
-\bigsqcup_{r=1}^{64}
-\mathcal E_r
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal E_r\cap\mathcal E_s=\varnothing,
-\qquad r\neq s
-\qquad[\mathrm{DERIVED}]
-]
-
-([arXiv][2])
-
-[
-\operatorname{life}(X,H,Q,K,V,A,Z,P)
-====================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
----
-
-## CPT/MIDTRAINING
-
-[
-(\theta_{\mathrm{pre}},\mathcal D_{\mathrm{pre}})
-\rightarrow
-(\theta_{\mathrm{LC}},\mathcal D_{4K})
-\rightarrow
-(\theta_{\mathrm{LC}}',\mathcal D_{16K})
-\rightarrow
-(\theta_{\mathrm{LC}}'',\mathcal D_{64K})
-\rightarrow
-(\theta_{\mathrm{LC}}''',\mathcal D_{1M})
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T_{\max}:
-4K
-\rightarrow16K
-\rightarrow64K
-\rightarrow1M
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{Attention}_{\mathrm{Flash}}
-:
-\operatorname{Dense}
-\xrightarrow[;T=64K;]{\mathrm{after};1T;\mathrm{tokens}}
-\operatorname{Sparse}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\theta_{\mathrm{feature}}^{(t)}
-===============================
-
-\theta_t
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\theta_{\mathrm{route}}^{(t)}
-=============================
-
-\theta_{t-\Delta t}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal I_t
-============
-
-\operatorname{Route}
-\left(
-X_t;\theta_{t-\Delta t}
-\right)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-H_t
-===
-
-F
-\left(
-X_t;\theta_t,\mathcal I_t
-\right)
-\qquad[\mathrm{DERIVED}]
-]
-
-([arXiv][1])
-
-[
-\mathcal L_{\mathrm{CPT}}^{\mathrm{V4}}
-=======================================
-
-\mathcal L_{\mathrm{pre}}^{\mathrm{V4}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-p_{\mathcal D}^{(4K)}
-\neq
-p_{\mathcal D}^{(16K)}
-\neq
-p_{\mathcal D}^{(64K)}
-\neq
-p_{\mathcal D}^{(1M)}
-\quad\Longrightarrow\quad
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
----
-
-## SFT
-
-[
-\mathcal S_{\mathrm{SFT}}^{(d)}
-===============================
-
-\left{
-\theta_{\mathrm{base}},
-\mathcal D_{\mathrm{SFT}}^{(d)},
-d
-\right},
-\qquad
-d\in
-{\mathrm{math},\mathrm{code},\mathrm{agent},\mathrm{instruction},\ldots}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-(x,y)
-\sim
-\mathcal D_{\mathrm{SFT}}^{(d)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\pi_\theta(y\mid x)
-===================
-
-\prod_{t=1}^{|y|}
-\pi_\theta(y_t\mid x,y_{<t})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-m_t^{\mathrm{prompt}}
-=====================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-m_t^{\mathrm{assistant}}
-========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-m_t^{\mathrm{reasoning}}
-========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-m_t^{\mathrm{tool}}
-===================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-m_t^{\mathrm{observation}}
-==========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-m_t^{\mathrm{special}}
-======================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-w_t^{\mathrm{SFT}}
-==================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{SFT}}^{(d)}
-===============================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_{\mathrm{base}}
-\xrightarrow{
-\mathcal L_{\mathrm{SFT}}^{(d)}
-}
-\theta_{\mathrm{SFT}}^{(d)}
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][1])
-
-[
-Q_{\mathrm{MXFP4}}
-:
-\theta_{\mathrm{expert}}^{\mathrm{FP32}}
-\mapsto
-\widetilde\theta_{\mathrm{expert}}^{\mathrm{MXFP4}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{dtype}
-\left(
-I_{\mathrm{index}}
-\right)
-:
-\mathrm{FP32}
-\rightarrow
-\mathrm{BF16}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{QAT\text{-}regularizer}}
-============================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][1])
-
----
-
-## RL
-
-[
-q\sim P(Q)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-{o_i}*{i=1}^{G}
-\sim
-\pi*{\theta_{\mathrm{old}}}(O\mid q)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-r_i=r(q,o_i)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\bar r
-======
-
-\frac1G\sum_{i=1}^{G}r_i
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\sigma_r
-========
-
-\operatorname{std}
-{r_1,\ldots,r_G}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-A_i
-===
-
-\frac{r_i-\bar r}{\sigma_r}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\rho_i(\theta)
-==============
-
-\frac{\pi_\theta(o_i\mid q)}
-{\pi_{\theta_{\mathrm{old}}}(o_i\mid q)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-D_{\mathrm{KL}}^{\mathrm{GRPO}}
-(\pi_\theta\Vert\pi_{\mathrm{ref}})
-===================================
-
-\frac{\pi_{\mathrm{ref}}(o_i\mid q)}
-{\pi_\theta(o_i\mid q)}
------------------------
-
-\log
-\frac{\pi_{\mathrm{ref}}(o_i\mid q)}
-{\pi_\theta(o_i\mid q)}
--1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\boxed{
-\mathcal J_{\mathrm{GRPO}}(\theta)
-==================================
-
-\mathbb E
-\left[
-\frac1G
-\sum_{i=1}^{G}
-\left(
-\min
-\left[
-\rho_iA_i,,
-\operatorname{clip}
-(\rho_i,1-\varepsilon,1+\varepsilon)A_i
-\right]
--------
-
-\beta
-D_{\mathrm{KL}}^{\mathrm{GRPO}}
-\right)
-\right]
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][2])
-
-[
-\mathcal L_{\mathrm{RL}}
-========================
-
--\mathcal J_{\mathrm{GRPO}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\rho_{i,t}
-==========
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-A_{i,t}
-=======
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-G_{\mathrm{V4}}
-===============
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\varepsilon_{\mathrm{V4}}
-=========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\beta_{\mathrm{V4}}
-===================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-r_i
-===
-
-\begin{cases}
-r_{\mathrm{rule/test}}(q,o_i),&\mathcal V(q,o_i)\ \mathrm{available},\
-r_{\mathrm{GRM}}(q,o_i,\mathcal R),&\mathcal V(q,o_i)\ \mathrm{unavailable}
-\end{cases}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\theta_{\mathrm{SFT}}^{(d)}
-\xrightarrow{
--\mathcal J_{\mathrm{GRPO}}^{(d,e)}
-}
-\theta_{\mathrm{RL}}^{(d,e)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-g_t
-===
-
-\nabla_{\theta_t}
-\mathcal L_{\mathrm{RL}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\widehat g_t
-============
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{Optimizer}_{\mathrm{RL}}
-======================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
----
-
-## DISTILLATION
-
-[
-\mathcal E
-==========
-
-{\pi_{E_1},\ldots,\pi_{E_N}},
-\qquad
-N>10
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-y
-\sim
-\pi_\theta(\cdot\mid x)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\pi_{E_i}
-=========
-
-\operatorname{sg}(\pi_{E_i})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-D_{\mathrm{KL}}
-(\pi_\theta\Vert\pi_{E_i})
-==========================
-
-\sum_{v\in V}
-\pi_\theta(v\mid s)
-\log
-\frac{\pi_\theta(v\mid s)}
-{\pi_{E_i}(v\mid s)}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{OPD}}(\theta)
-=================================
-
-\sum_{i=1}^{N}
-w_i
-D_{\mathrm{KL}}
-\left(
-\pi_\theta\Vert\pi_{E_i}
-\right)
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{support}
-\left(
-D_{\mathrm{KL}}
-\right)
-=======
-
-V
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-w_i
-===
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\nabla_{\theta_{E_i}}
-\mathcal L_{\mathrm{OPD}}
-=========================
-
-0
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-g_t^{\mathrm{OPD}}
-==================
-
-\nabla_{\theta_t}
-\sum_iw_i
-\sum_{v\in V}
-\pi_{\theta_t}(v\mid s)
-\log
-\frac{\pi_{\theta_t}(v\mid s)}
-{\operatorname{sg}[\pi_{E_i}(v\mid s)]}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\widehat g_t^{\mathrm{OPD}}
-===========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_{t+1}
-============
-
-\operatorname{OptimizerUpdate}
-(\theta_t,\widehat g_t^{\mathrm{OPD}})
-======================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][1])
-
----
-
-## SPECULATIVE TRAINING
-
-[
-\theta_T
-========
-
-\theta_T^{\mathrm{frozen}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\nabla_{\theta_T}\mathcal L_{\mathrm{DSpark}}
-=============================================
-
-0
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\phi
-====
-
-{
-\phi_{\mathrm{backbone}},
-\phi_{\mathrm{sequential}},
-\phi_{\mathrm{confidence}}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\phi_{\mathrm{Emb}}
-===================
-
-# \phi_{\mathrm{LMHead}}
-
-\mathrm{frozen}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-(p_k^d,p_k^t)
-\in
-[0,1]^{|V|}
-\times[0,1]^{|V|}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-w_k
-===
-
-\exp
-\left(
--\frac{k-1}{\gamma}
-\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-c_k^*
-=====
-
-1-\frac12
-|p_k^d-p_k^t|_1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{CE}}
-========================
-
--\sum_{k=1}^{\gamma}
-w_k
-\log p_k^d(x_k^*)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{TV}}
-========================
-
-\sum_{k=1}^{\gamma}
-w_k
-|p_k^d-p_k^t|_1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{conf}}
-==========================
-
--\sum_{k=1}^{\gamma}
-w_k
-\left[
-c_k^*\log c_k
-+
-(1-c_k^*)\log(1-c_k)
-\right]
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{DSpark}}
-============================
-
-0.1\mathcal L_{\mathrm{CE}}
-+
-0.9\mathcal L_{\mathrm{TV}}
-+
-1.0\mathcal L_{\mathrm{conf}}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-A_k
-===
-
-1-\frac12
-|p_k^d-p_k^t|_1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-g_\phi
-======
-
-\nabla_\phi
-\mathcal L_{\mathrm{DSpark}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\operatorname{Optimizer}_{\mathrm{DSpark}}
-==========================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{dtype}
-(p^t,p^d,c,\phi)
-================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{life}
-(p^t,p^d,c)
-===========
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][3])
-
-# QWEN
-
-## PRETRAINING
-
-[
-\mathcal S_{\mathrm{Qwen3}}
-===========================
-
-{
-\theta_t,\mathcal D_t,\mathcal C_t
-}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-|V|_{\mathrm{Qwen3}}
-====================
-
-151669
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-N_{\mathrm{expert}}
-===================
-
-128,
-\qquad
-K_{\mathrm{expert}}
-===================
-
-8
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{global\text{-}balance}}
-\neq
-\varnothing
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{global\text{-}balance}}
-===========================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\lambda_{\mathrm{global\text{-}balance}}
-========================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][4])
-
-[
-X\in V^{B\times T}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-H^{(0)}
-=======
-
-\operatorname{Emb}_\theta(X)
-\in\mathbb R^{B\times T\times d}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-H^{(\ell)}
-==========
-
-F_{\theta_\ell}
-(H^{(\ell-1)})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-Z
-\in
-\mathbb R^{B\times T\times151669}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-P=\operatorname{softmax}(Z)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal L_{\mathrm{LM}}
-========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{pre}}^{\mathrm{Qwen3}}
-==========================================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-M_{\mathrm{loss}}
-=================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{dtype}(X,H,Z,P)
-=============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{Optimizer}_{\mathrm{pre}}
-=======================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{shard}_{\mathrm{pre}}
-===================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
----
-
-## CPT/MIDTRAINING
-
-[
-\mathcal D_{\mathrm{pre}}
-=========================
-
-\mathcal D_1
-\rightarrow
-\mathcal D_2
-\rightarrow
-\mathcal D_3
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-|\mathcal D_{\mathrm{total}}|
-\simeq
-36\times10^{12}
-\ \mathrm{tokens}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T_{\max}^{(1)}
-==============
-
-4096
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T_{\max}^{(2)}
-==============
-
-4096
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T_{\max}^{(3)}
-==============
-
-32768
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal D_1
-============
-
-\mathcal D_{\mathrm{general}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal D_2
-============
-
-\mathcal D_{\mathrm{knowledge/STEM/code/reasoning}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal D_3
-============
-
-\mathcal D_{\mathrm{long\ context}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T_{\max}:
-4096
-\rightarrow
-4096
-\rightarrow
-32768
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{CPT}}^{(1)}
-===============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\mathcal L_{\mathrm{CPT}}^{(2)}
-===============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\mathcal L_{\mathrm{CPT}}^{(3)}
-===============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][4])
-
----
-
-## SFT
-
-### LONG-COT COLD START
-
-[
-(x,y)
-\sim
-\mathcal D_{\mathrm{LongCoT}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-y
-\in
-\operatorname{Filter}
-\left(
-{y_j}_{j=1}^{N};
-\operatorname{QwQ32B}
-\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\pi_\theta(y\mid x)
-===================
-
-\prod_t
-\pi_\theta(y_t\mid x,y_{<t})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-m_t^{\mathrm{prompt}}
-=====================
-
-# m_t^{\mathrm{assistant}}
-
-# m_t^{\mathrm{reasoning}}
-
-# m_t^{\mathrm{tool}}
-
-# m_t^{\mathrm{observation}}
-
-# m_t^{\mathrm{special}}
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-w_t
-===
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{LongCoT\text{-}SFT}}
-========================================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_{\mathrm{base}}
-\xrightarrow{
-\mathcal L_{\mathrm{LongCoT\text{-}SFT}}
-}
-\theta_{\mathrm{cold}}
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][4])
-
-### THINKING-MODE-FUSION SFT
-
-[
-\mathcal D_{\mathrm{fusion}}
-============================
-
-\mathcal D_{\mathrm{think}}
-\cup
-\mathcal D_{\mathrm{no\text{-}think}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-y_{\mathrm{think}}
-\sim
-\operatorname{RejectionSample}
-\left(
-\pi_{\mathrm{Stage2}}
-\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-c
-\in
-{
-/\mathrm{think},
-/\mathrm{no_think}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\pi_\theta(y\mid x,c)
-=====================
-
-\prod_t
-\pi_\theta(y_t\mid x,c,y_{<t})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{FusionSFT}}
-===============================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_{\mathrm{reason\ RL}}
-\xrightarrow{
-\mathcal L_{\mathrm{FusionSFT}}
-}
-\theta_{\mathrm{fusion}}
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][4])
-
----
-
-## RL
-
-### REASONING RL
-
-[
-|\mathcal D_{\mathrm{reason\ RL}}|
-==================================
-
-3995
-\quad
-\mathrm{query\text{-}verifier\ pairs}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{Algorithm}
-========================
-
-\operatorname{GRPO}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-x\sim
-\mathcal D_{\mathrm{reason\ RL}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-y_i
-\sim
-\pi_{\mathrm{rollout}}(\cdot\mid x),
-\qquad
-i=1,\ldots,G
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\pi_{\mathrm{rollout}}
-======================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-G
-=
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-r_i
-===
-
-r_{\mathrm{verifier}}(x,y_i)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-A_i
-===
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-A_{i,t}
-=======
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\rho_i
-======
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\rho_{i,t}
-==========
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{clip}_{\mathrm{Qwen}}
-===================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\pi_{\mathrm{ref}}
-==================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-D_{\mathrm{KL}}
-===============
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\mathcal H(\pi_\theta)
-\ \mathrm{controlled}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{entropy}}
-=============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{PolicyData}
-=========================
-
-\operatorname{off\text{-}policy}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{ReasoningRL}}^{\mathrm{Qwen3}}
-==================================================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-g_t
-===
-
-\nabla_{\theta_t}
-\mathcal L_{\mathrm{ReasoningRL}}
-=================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][4])
-
-### GENERAL RL
-
-[
-\tau
-====
-
-(x,y_{1:T},a_{1:T},o_{1:T})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\pi_{\mathrm{rollout}}
-:
-x
-\rightarrow
-y
-\rightarrow
-a
-\rightarrow
-o
-\rightarrow\cdots
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-r
-\in
-\left{
-r_{\mathrm{rule}},
-r_{\mathrm{judge+reference}},
-r_{\mathrm{RM}}
-\right}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-r_{\mathrm{judge+reference}}
-============================
-
-\operatorname{Score}_{\mathrm{Qwen2.5\text{-}72B\text{-}Instruct}}
-(x,y,y^*)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-r_{\mathrm{RM}}
-===============
-
-R_\psi(x,y)
-\in\mathbb R
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\lambda_k^{(r)}
-===============
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{GeneralRL}}
-===============================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_{\mathrm{fusion}}
-\xrightarrow{
-\mathcal L_{\mathrm{GeneralRL}}
-}
-\theta_{\mathrm{flagship}}
-\qquad[\mathrm{REPORTED}]
-]
-
-
-
----
-
-## DISTILLATION
-
-### OFF-POLICY
-
-[
-c
-\in
-{
-/\mathrm{think},
-/\mathrm{no_think}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-y_T
-\sim
-\pi_T(\cdot\mid x,c)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal D_{\mathrm{off}}
-=========================
-
-{
-(x,c,y_T)
-}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{off\text{-}policy}}
-=======================================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-### ON-POLICY
-
-[
-x
-\sim
-\mathcal D_{\mathrm{distill}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-y_S
-\sim
-\pi_S(\cdot\mid x,c)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-Z_S(s_t),Z_T(s_t)
-\in
-\mathbb R^{|V|}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\pi_S
-=====
-
-\operatorname{softmax}(Z_S)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\pi_T
-=====
-
-\operatorname{softmax}(Z_T)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\operatorname{sg}(\pi_T)=\pi_T
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-D_{\mathrm{KL}}
-(\pi_T,\pi_S)
-\ \mathrm{minimized}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-D_{\mathrm{KL}}
-===============
-
-D_{\mathrm{KL}}(\pi_T\Vert\pi_S)
-\quad\mathrm{or}\quad
-D_{\mathrm{KL}}(\pi_S\Vert\pi_T)
-================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\lambda_{\mathrm{KL}}
-=====================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{on\text{-}policy}}
-======================================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_S^{(0)}
-\xrightarrow{
-\mathcal L_{\mathrm{off\text{-}policy}}
-}
-\theta_S^{(1)}
-\xrightarrow{
-\mathcal L_{\mathrm{on\text{-}policy}}
-}
-\theta_S^{(2)}
-\qquad[\mathrm{REPORTED}]
-]
-
-
-
----
-
-## SPECULATIVE TRAINING
-
-[
-\mathrm{Qwen3.6!-!35B!-!A3B}
-:
-\quad
-|V|_{\mathrm{padded}}
-=====================
-
-248320
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{MTP}
-==================
-
-\mathrm{trained\ with\ multi\text{-}steps}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-q_{\phi,k}
-==========
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-K_{\mathrm{train}}
-==================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_{\mathrm{target\ frozen}}
-================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\phi_{\mathrm{draft\ trainable}}
-================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{MTP/NEXTN}}^{\mathrm{Qwen3.6}}
-==================================================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\lambda_k^{\mathrm{MTP}}
-========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-D_{\mathrm{KL}}^{\mathrm{MTP}}
+\
+&
+\qquad\qquad
+\mathcal L_{\rm SFT}^{(e,s,k)}
 ==============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\mathcal L_{\mathrm{CE}}^{\mathrm{MTP}}
-=======================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([Hugging Face][5])
-
-# KIMI
-
-## PRETRAINING
-
-[
-\mathcal S_{\mathrm{K3}}
-========================
-
-\left{
-\theta_t,
-M_t^{\mathrm{Muon}},
-b_t^{\mathrm{QB}},
-\mathcal D_t,
-\mathcal C_t
-\right}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-d_{\mathrm{model}}
-==================
-
-7168
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-|V|
-===
-
-160000
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-N_r=896,\qquad
-K_r=16,\qquad
-N_s=2
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-D_{\mathrm{MTP}}=1
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][6])
-
-[
-z_{1:T}
-\in
-\left(
-V_{\mathrm{text}}
-\cup
-V_{\mathrm{vision}}
-\right)^T
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-z_{\mathrm{text}}
-\ \Vert
-z_{\mathrm{vision}}
-\ \Vert
-z_{\mathrm{text}}
-\ \Vert\cdots
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-p_\theta(z_{1:T})
-=================
-
-\prod_{t=1}^{T}
-p_\theta(z_t\mid z_{<t})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\operatorname{Objective}_{\mathrm{core}}
-========================================
-
-\operatorname{NTP}
-(z_{\mathrm{text}}\oplus z_{\mathrm{vision}})
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{NTP}}
-=========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\mathcal L_{\mathrm{MTP}}
-=========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\lambda_{\mathrm{MTP}}
-======================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\mathcal L_{\mathrm{aux\ balance}}
-==================================
-
-0
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{pre}}^{\mathrm{K3}}
-=======================================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][6])
-
-### QUANTILE BALANCING
-
-[
-S
-=
-
-(s_{ij})
-\in
-(0,1)^{m\times n}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-s_i
-===
-
-\sigma(W_rx_i)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T_i
-===
-
-\operatorname{argTopK}
-(s_i+b,k)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-p_{i,j}
-=======
-
-\frac{s_{i,j}}
-{\sum_{r\in T_i}s_{i,r}},
-\qquad j\in T_i
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-b_j
-\notin
-p_{i,j}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-q
-=
-
-\frac{mk}{n}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\alpha_i^{(t)}
-==============
-
-\operatorname{Top}_{k+1}
-\left(
-s_i+b^{(t)}
-\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\widehat b_j^{(t+1)}
-====================
 
 *
 
-\operatorname{Quantile}*{1-k/n}
-\left(
-s*{:,j}-\alpha^{(t)}
-\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-b^{(t+1)}
-=========
-
-## \widehat b^{(t+1)}
-
-\frac1n
-\mathbf 1
-\mathbf 1^\top
-\widehat b^{(t+1)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-b^{(t+1)}
-\neq
-b^{(t)}
--\eta\nabla_b\mathcal L_{\mathrm{pre}}
-\qquad[\mathrm{DERIVED}]
-]
-
-([arXiv][6])
-
-### OPTIMIZER
-
-[
-\operatorname{Optimizer}_{\mathrm{matrix}}
-==========================================
-
-\operatorname{PerHeadMuon}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-M_t^{Q}
-=======
-
-\bigsqcup_{h=1}^{H_Q}M_{t,h}^{Q}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-M_t^{K}
-=======
-
-\bigsqcup_{h=1}^{H_K}M_{t,h}^{K}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-M_t^{V}
-=======
-
-\bigsqcup_{h=1}^{H_V}M_{t,h}^{V}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-O_{t,h}
-=======
-
-\operatorname{Orthogonalize}(M_{t,h})
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\lambda_{\mathrm{wd}}
-=====================
-
-0.1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\eta_t
-======
-
-\operatorname{CosineSchedule}
-\left(
-\eta_{\max},
-0.01,T_{\mathrm{train}}
-\right)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\eta_{\max}
-===========
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{PerHeadMuonUpdate}_{\mathrm{exact}}
-=================================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][6])
-
-[
-\operatorname{dtype}_{\mathrm{pre}}
-===================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\operatorname{life}
-(X,H,Q,K,V,A,Z,P)
-=================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
----
-
-## CPT/MIDTRAINING
-
-### K3
-
-[
-T_{\max}
-:
-8K
-\rightarrow
-64K
-\rightarrow
-256K
-\rightarrow
-1M
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-x
-\sim
-\mathcal D_k,
-\qquad
-|x|\leq T_{\max}^{(k)}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\operatorname{PE}
-=================
-
-\operatorname{NoPE}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\Delta_{\mathrm{PE}}
-====================
-
-0
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal D_{\mathrm{cooldown}}
-==============================
-
-\operatorname{Upsample}
-(\mathcal D_{\mathrm{long}})
-\cup
-\mathcal D_{\mathrm{synthetic\ long}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{K3,CPT}}
-============================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][6])
-
-### K2.5
-
-[
-\theta_{\mathrm{ViT}}^{(0)}
-===========================
-
-\theta_{\mathrm{SigLIP}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-(v,c)
-\sim
-\mathcal D_{\mathrm{image/video\text{-}caption}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{ViT\text{-}CPT}}
-====================================
-
-\mathcal L_{\mathrm{caption}}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{contrastive}}
-=================================
-
-0
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\theta_{\mathrm{ViT}}^{(0)}
-\xrightarrow{
-\mathcal L_{\mathrm{caption}}
-}
-\theta_{\mathrm{ViT}}^{(1)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\theta_{\mathrm{projector}}^{(0)}
-\xrightarrow{
-\mathcal L_{\mathrm{caption}}
-}
-\theta_{\mathrm{projector}}^{(1)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T_{\max}:
-4096
-\rightarrow
-32768
-\rightarrow
-262144
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][7])
-
----
-
-## SFT
-
-[
-(x,\tau)
-\sim
-\mathcal D_{\mathrm{agentic\ SFT}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\tau
-====
-
-(x,y_{1:T},a_{1:T},o_{1:T})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\tau
-\in
-\operatorname{XTML}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\pi_\theta(y\mid x)
-===================
-
-\prod_t
-\pi_\theta(y_t\mid x,y_{<t})
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-m_t^{\mathrm{prompt}}
-=====================
-
-# m_t^{\mathrm{assistant}}
-
-# m_t^{\mathrm{reasoning}}
-
-# m_t^{\mathrm{tool}}
-
-# m_t^{\mathrm{observation}}
-
-# m_t^{\mathrm{special}}
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-w_t^{\mathrm{SFT}}
-==================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\boxed{
-\mathcal L_{\mathrm{SFT}}^{\mathrm{K3}}
-=======================================
-
-\mathrm{UNDISCLOSED}
-}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_{\mathrm{pre}}
-\xrightarrow{
-\mathcal L_{\mathrm{SFT}}
-}
-\theta_{\mathrm{cold}}
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][6])
-
-### QAT
-
-[
-\widetilde\theta_{\mathrm{expert}}
-==================================
-
-Q_{\mathrm{MXFP4}}
-(\theta_{\mathrm{expert}})
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{dtype}
-(\widetilde\theta_{\mathrm{expert}})
-====================================
-
-\mathrm{MXFP4}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{dtype}
-(A_{\mathrm{expert}})
-=====================
-
-\mathrm{MXFP8}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{dtype}
-(\theta_{\mathrm{nonexpert}})
-=============================
-
-\mathrm{higher\ precision}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{SFT,QAT}}
-=============================
-
-\mathcal L_{\mathrm{SFT}}
-\left(
-Q_{\mathrm{MXFP4}}(\theta_{\mathrm{expert}}),
-\theta_{\mathrm{nonexpert}}
-\right)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal L_{\mathrm{quant\ regularizer}}
-========================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][6])
-
----
-
-## RL
-
-[
-d
-\in
-{
-\mathrm{general},
-\mathrm{general\ agent},
-\mathrm{coding\ agent}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-e
-\in
-{
-\mathrm{low},
-\mathrm{high},
-\mathrm{max}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-|\mathcal E_{\mathrm{RL}}|
-==========================
-
-# 3\times3
-
-9
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][6])
-
-### ROLLOUT
-
-[
-x
-\sim
-\mathcal D
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-y_j
-\sim
-\pi_{\mathrm{old}}(\cdot\mid x),
-\qquad
-j=1,\ldots,K
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-N_{\mathrm{tok}}
-================
-
-\sum_{j=1}^{K}|y_j|
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\bar r(x)
-=========
-
-\frac1K
-\sum_{j=1}^{K}
-r(x,y_j)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\rho_{j,i}(\theta)
-==================
-
-\frac{
-\pi_\theta
-(y_j^i\mid x,y_j^{0:i})
-}{
-\pi_{\mathrm{old}}
-(y_j^i\mid x,y_j^{0:i})
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-A_j
-===
-
-r(x,y_j)-\bar r(x)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-A_{j,i}
-=======
-
-A_j
-\qquad[\mathrm{DERIVED}]
-]
-
-### POLICY OBJECTIVE
-
-[
-\boxed{
-\mathcal J_{\mathrm{Kimi}}(\theta)
-==================================
-
-\mathbb E_{x\sim\mathcal D}
-\left[
-\frac1{N_{\mathrm{tok}}}
-\sum_{j=1}^{K}
-\sum_{i=1}^{|y_j|}
-\operatorname{Clip}
-\left(
-\rho_{j,i}(\theta),
-\alpha,\beta
-\right)
-A_j
----
-
-\tau
-\left(
-\log\rho_{j,i}(\theta)
-\right)^2
-\right]
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\alpha>0,\qquad
-\beta>0,\qquad
-\tau>0
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{RL}}
-========================
-
--\mathcal J_{\mathrm{Kimi}}
-\qquad[\mathrm{DERIVED}]
-]
-
-([arXiv][7])
-
-### GRADIENT MASK
-
-[
-\chi_{j,i}
-==========
-
-\mathbf 1
-\left[
-\alpha
-\leq
-\log\rho_{j,i}
-\leq
-\beta
-\right]
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\chi_{j,i}=0
-\quad\Longrightarrow\quad
-\nabla_{\theta}^{\mathrm{policy}}
-\mathcal J_{j,i}
-================
-
-0
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{sgn}(A_j)
-\notin
-\operatorname{MaskDecision}
-(\chi_{j,i})
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\left[
-\operatorname{Clip}(\rho,\alpha,\beta)
-\right]*{\mathrm{Eq.(1)}}
-;\Longleftrightarrow;
-\left[
-\alpha\leq\log\rho\leq\beta
-\right]*{\mathrm{prose}}
-========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][7])
-
-### PARTIAL ROLLOUT
-
-[
-\mathcal A_u
-============
-
-{
-\tau_{n,k}^{(u)}
-:
-n=1,\ldots,N,;
-k=1,\ldots,K
-}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-|\mathcal A_u|
-==============
-
-NK
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-|\mathcal C_u|
-==============
-
-\lambda NK,
-\qquad
-0<\lambda<1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-|\mathcal C_u|
-=\lambda NK
-\quad\Longrightarrow\quad
-\operatorname{PauseGeneration}_u
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal Q_{u+1}
-================
-
-\mathcal A_u\setminus\mathcal C_u
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal Q_{u+1}
-\succ
-\mathcal A_{u+1}^{\mathrm{new}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\left|
-{y_{n,k}}_{k=1}^{K}
-\right|
-=K
-\quad\Longrightarrow\quad
-x_n
-\mapsto
-\operatorname{PolicyOptimization}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\Delta_{j,i}
-============
-
-k_{\mathrm{update}}-k_{\mathrm{rollout}}
-\geq0
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-m_{\mathrm{stale}}(\Delta_{j,i})
-================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\rho_{j,i}
-==========
-
-\frac{\pi_{\theta_{\mathrm{update}}}}
-{\pi_{\theta_{\mathrm{rollout}}}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal R_{\mathrm{off}}
-=========================
-
--\tau
-\left(
-\log\rho_{j,i}
-\right)^2
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][6])
-
-### REASONING-EFFORT REWARD
-
-[
-b_0(x)
-======
-
-\operatorname{BudgetEstimate}*{\pi*{\mathrm{cold}}}(x)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T(y)
-====
-
-\begin{cases}
-N_{\mathrm{thinking}}(y),
-&d=\mathrm{general},\
-N_{\mathrm{reasoning+tool\ arguments}}(y),
-&d\in\mathrm{agentic}
-\end{cases}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-r_e(x,y)
-========
-
-\begin{cases}
--1,
-&T(y)>\tau_e b_0(x),\
-r_{\mathrm{task}}(x,y),
-&T(y)\leq\tau_e b_0(x)
-\end{cases}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\tau_{\max}
-
->
-
-\tau_{\mathrm{high}}
-
->
-
-\tau_{\mathrm{low}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-(\tau_{\max},\tau_{\mathrm{high}},\tau_{\mathrm{low}})
-======================================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][6])
-
-### RL UPDATE
-
-[
-g_t
-===
-
-\nabla_{\theta_t}
-\mathcal L_{\mathrm{RL}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\operatorname{Optimizer}_{\mathrm{RL}}
-======================================
-
-\operatorname{MuonClip}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\widehat g_t
-============
-
-\operatorname{MuonClipTransform}(g_t)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\operatorname{MuonClipTransition}_{\mathrm{K3}}
-===============================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\theta_{t+1}
-============
-
-\operatorname{MuonClipUpdate}
-(
-\theta_t,\widehat g_t
-)
-\qquad[\mathrm{REPORTED}]
-]
-
-([arXiv][7])
-
----
-
-## DISTILLATION
-
-[
-d
-\in
-{
-\mathrm{general},
-\mathrm{general\ agent},
-\mathrm{coding\ agent}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-e
-\sim
-p(e),
-\qquad
-e\in
-{\mathrm{low},\mathrm{high},\mathrm{max}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-p(e)
-====
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\pi_T
-=====
-
-\pi_{\mathrm{teacher}}^{(d,e)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-y_t
-\sim
-\pi_\theta
-(\cdot\mid e,x,y_{<t})
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\pi_T
-=====
-
-\operatorname{sg}(\pi_T)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\boxed{
-r_{\mathrm{OPD}}^{d}
-(y_t\mid e,x,y_{<t})
-====================
-
-\operatorname{clip}
-\left(
-\operatorname{sg}
-\left[
+\frac{1}{Z_{s,k}^{(e)}}
+\sum_{\beta,t}
+M_{\beta,t}
 \log
-\frac{
-\pi_{\mathrm{teacher}}^{(d,e)}
-(y_t\mid x,y_{<t})
-}{
-\pi_\theta
-(y_t\mid e,x,y_{<t})
-}
-\right],
--R_{\max},
-R_{\max}
-\right)
-}
-\qquad[\mathrm{REPORTED}]
-]
+P_{\beta,t}
+[Y_{\beta,t}]
+\
+&
+\qquad\qquad
+M_{\beta,t},
+Z_{s,k}^{(e)}
+=============
 
-[
-R_{\max}>0
-\qquad[\mathrm{REPORTED}]
-]
+\mathrm{UNDISCLOSED}
+\
+&
+\qquad\qquad
+g_{s,k}^{(e,r)}
+===============
 
-[
-\nabla_{\theta_T}
-r_{\mathrm{OPD}}^d
+\nabla_\theta
+\mathcal L_{\rm SFT}^{(e,s,k)}
+\
+&
+\qquad\qquad
+g^{(r)}
+\leftarrow
+g^{(r)}
++
+\frac{1}{K_{\rm acc}}
+g_{s,k}^{(e,r)}
+\
+&
+\qquad
+\mathbf{end}
+[1mm]
+&
+\qquad
+\widehat g_s^{(e)}
 ==================
 
-0
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-R_j^{\mathrm{MOPD}}
-===================
-
-\operatorname{Aggregate}
+\operatorname{Collective}
 \left(
-{
-r_{\mathrm{OPD},t}^{d}
-}_{t=1}^{|y_j|}
+{g^{(r)}}*{r=1}^{W*{\rm DP}}
 \right)
-\qquad[\mathrm{UNDISCLOSED}]
+\
+&
+\qquad
+\theta_{s+1}^{(e)}
+==================
+
+\operatorname{OPT}
+\left(
+\theta_s^{(e)},
+\widehat g_s^{(e)},
+\eta_s^{(e)}
+\right)
+\
+&
+\mathbf{end}
+\end{aligned}}
 ]
 
 [
-\operatorname{Aggregate}
-========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\mathcal J_{\mathrm{MOPD}}
-==========================
-
-\mathcal J_{\mathrm{Kimi}}
-\left[
-r(x,y_j)
-\leftarrow
-R_j^{\mathrm{MOPD}}
-\right]
-=======
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\nabla_{\theta}
-\mathcal L_{\mathrm{MOPD}}
-==========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][6])
-
----
-
-## SPECULATIVE TRAINING
-
-[
-\theta_T
-========
-
-# \theta_{\mathrm{K3,target}}
-
-\mathrm{frozen}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\phi
-====
-
-{
-\phi_{\mathrm{MTP/draft}},
-W_{E3}
-}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\nabla_{\theta_T}
-\mathcal L_{\mathrm{LK}}
-========================
-
-0
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\nabla_{\phi}
-\mathcal L_{\mathrm{LK}}
-\neq0
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-K_{\mathrm{unroll}}
-===================
-
-7
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-h_{\mathrm{fuse}}
-=================
-
-W_{E3}
-\begin{bmatrix}
-h_{\mathrm{low}}\
-h_{\mathrm{mid}}\
-h_{\mathrm{high}}
-\end{bmatrix}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-W_{E3}^{(0)}
-============
-
-\begin{bmatrix}
-0&0&I
-\end{bmatrix}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-p(v)
-====
-
-p_{\theta_T}(v\mid s)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-q(v)
-====
-
-q_{\phi}(v\mid s)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-p,q
-\in
-\Delta^{|V|-1}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-A(p,q)
-======
-
-\sum_{v\in V}
-\min
-{p(v),q(v)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{TV}(p,q)
+\boxed{
+\theta_{\rm SFT}^{(e)}
 ======================
 
-\frac12
-\sum_{v\in V}|p(v)-q(v)|
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-A(p,q)
-======
-
-1-
-\operatorname{TV}(p,q)
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-A(p,q)
-======
-
-1-
-\frac12
-|p-q|_1
-\qquad[\mathrm{DERIVED}]
+\theta_{S_{\rm SFT}^{(e)}}^{(e)}
+}
 ]
 
 [
 \boxed{
-\mathcal L_{\mathrm{LK}}
-========================
-
--\log
-\sum_{v\in V}
-\min
-\left[
-p_{\theta_T}(v\mid s),
-q_\phi(v\mid s)
-\right]
+\theta_{\rm base}
+\xrightarrow[\mathcal D_{\rm SFT}^{(e)}]
+{\mathcal L_{\rm SFT}^{(e)}}
+\theta_{\rm SFT}^{(e)}
 }
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-T_{\mathrm{softmax}}
-====================
-
-1
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\lambda_{\mathrm{GTCE}}
-=======================
-
-0
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\widetilde\phi_{\mathrm{expert}}
-================================
-
-Q_{\mathrm{MXFP4}}
-(\phi_{\mathrm{expert}})
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{dtype}
-(\widetilde\phi_{\mathrm{expert}})
-==================================
-
-\mathrm{MXFP4}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\operatorname{dtype}
-(A_{\mathrm{expert}})
-=====================
-
-\mathrm{MXFP8}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-g_\phi
-======
-
-\nabla_\phi
-\mathcal L_{\mathrm{LK}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\operatorname{Optimizer}_{\mathrm{draft}}
-=========================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-([arXiv][6])
-
-# CROSS-FAMILY
-
-[
-\mathfrak T_f
-=============
-
-\left{
-\mathcal L_{\mathrm{pre}},
-\mathcal L_{\mathrm{CPT}},
-\mathcal L_{\mathrm{SFT}},
-\mathcal L_{\mathrm{RL}},
-\mathcal L_{\mathrm{distill}},
-\mathcal L_{\mathrm{spec}}
-\right}_f
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathfrak T_{\mathrm{DeepSeek}}
-===============================
-
-\left{
-\mathcal L_{\mathrm{NTP}}
-+
-\mathcal L_{\mathrm{MTP}}
-+
-10^{-4}\sum_i f_iP_i,;
-\mathcal L_{\mathrm{pre}},;
-\mathrm{UNDISCLOSED},;
--\mathcal J_{\mathrm{GRPO}},;
-\sum_iw_iD_{\mathrm{KL}}(\pi_S\Vert\pi_{E_i}),;
-0.1L_{\mathrm{CE}}+0.9L_{\mathrm{TV}}+L_{\mathrm{conf}}
-\right}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathfrak T_{\mathrm{Qwen}}
-===========================
-
-\left{
-\mathrm{UNDISCLOSED},;
-\mathrm{UNDISCLOSED},;
-\mathrm{UNDISCLOSED},;
-\mathrm{UNDISCLOSED},;
-(\mathrm{off\text{-}policy\ response},\mathrm{on\text{-}policy\ KL})_{\mathrm{exact\ form\ undisclosed}},;
-\mathrm{UNDISCLOSED}
-\right}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathfrak T_{\mathrm{Kimi}}
-===========================
-
-\left{
-\mathrm{NTP}*{\mathrm{text\oplus vision}};[\mathrm{exact\ reduction\ undisclosed}],;
-\mathrm{UNDISCLOSED},;
-\mathrm{UNDISCLOSED},;
--\mathcal J*{\mathrm{Kimi}},;
-r_{\mathrm{OPD}}^{d,e}\rightarrow\mathcal J_{\mathrm{RL}};[\mathrm{aggregation\ undisclosed}],;
--\log\sum_v\min(p_v,q_v)
-\right}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathfrak T_{\mathrm{DeepSeek}}
-;\Vert;
-\mathfrak T_{\mathrm{Qwen}}
-;\Vert;
-\mathfrak T_{\mathrm{Kimi}}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal L_{\mathrm{DeepSeek\ OPD}}
-===================================
-
-D_{\mathrm{KL}}
-(\pi_S\Vert\pi_T)
-\quad
-\land
-\quad
-\operatorname{support}=V
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal R_{\mathrm{Kimi\ MOPD}}
-================================
-
-\operatorname{clip}
-\operatorname{sg}
-\left[
-\log
-\frac{\pi_T(y_t\mid s_t)}
-{\pi_S(y_t\mid s_t)}
-\right]
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{Qwen\ on\text{-}policy}}
-============================================
-
-D_{\mathrm{KL}}
-(\pi_T,\pi_S),
-\qquad
-\operatorname{orientation}
-==========================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\mathcal L_{\mathrm{balance}}^{\mathrm{DeepSeek}}
-\neq0
-\quad\land\quad
-b_{\mathrm{router}}\ \mathrm{updated\ outside}\ \nabla\mathcal L
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal L_{\mathrm{balance}}^{\mathrm{Kimi}}
-=============================================
-
-0
-\quad\land\quad
-b_{\mathrm{QB}}\ \mathrm{updated\ outside}\ \nabla\mathcal L
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\mathcal L_{\mathrm{global\ balance}}^{\mathrm{Qwen}}
-\neq0
-\quad\land\quad
-\mathrm{form}
-=============
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{spec}}^{\mathrm{DeepSeek}}
-==============================================
-
-0.1L_{\mathrm{CE}}
-+
-0.9L_{\mathrm{TV}}
-+
-L_{\mathrm{conf}}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{spec}}^{\mathrm{Kimi}}
-==========================================
-
--\log A(p,q)
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\mathcal L_{\mathrm{spec}}^{\mathrm{Qwen3.6}}
-=============================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-# END-TO-END STATE MACHINES
-
-## DEEPSEEK
-
-[
-\mathcal S_0^{D}
-\xrightarrow{
-\mathcal B_{\mathrm{pre}}
-}
-\mathcal F_{\mathrm{NTP+MTP+MoE}}
-\xrightarrow{
-\mathcal L_{\mathrm{pre}}
-}
-g_{\mathrm{pre}}
-\xrightarrow{
-\mathrm{Muon/AdamW}
-}
-\mathcal S_1^{D}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\theta_D^{(0)}
-\xrightarrow{
-\mathcal L_{\mathrm{pre}}
-}
-\theta_D^{(1)}
-\xrightarrow{
-T:4K\rightarrow16K\rightarrow64K\rightarrow1M
-}
-\theta_D^{(2)}
-\xrightarrow{
-\mathcal L_{\mathrm{SFT}}^{(d)}
-}
-\theta_{D,d}^{(3)}
-\xrightarrow{
--\mathcal J_{\mathrm{GRPO}}^{(d,e)}
-}
-\theta_{D,d,e}^{(4)}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-{
-\theta_{D,d,e}^{(4)}
-}*{d,e}
-\equiv
-{\pi*{E_i}}_{i=1}^{N}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\theta_{D,S}^{(4)}
-\xrightarrow{
-\sum_{i=1}^{N}
-w_iD_{\mathrm{KL}}
-(\pi_S\Vert\pi_{E_i})
-}
-\theta_D^{(5)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\boxed{
-\theta_D^{(0)}
-\rightarrow
-\theta_D^{(1)}
-\rightarrow
-\theta_D^{(2)}
-\rightarrow
-{\theta_{D,d}^{(3)}}
-\rightarrow
-{\theta_{D,d,e}^{(4)}}
-\rightarrow
-\theta_D^{(5)}
-}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\boxed{
-(\theta_D^{(5)},\phi_D^{(0)})
-\xrightarrow{
-\theta_D^{(5)}\ \mathrm{frozen};
-;
-0.1L_{\mathrm{CE}}
-+
-0.9L_{\mathrm{TV}}
-+
-L_{\mathrm{conf}}
-}
-(\theta_D^{(5)},\phi_D^*)
-}
-\qquad[\mathrm{DERIVED}]
 ]
 
 ---
 
-## QWEN
-
 [
-\theta_Q^{(0)}
-\xrightarrow{
-\mathcal L_{\mathrm{pre}}^{(1)}=\mathrm{UNDISCLOSED}
+\boxed{\textbf{Algorithm 3}\qquad
+\mathsf{RL\text{-}GRPO}(
+\mathsf M_{\theta_{\rm SFT}^{(e)}},
+\mathcal D_{\rm prompt}^{(e)},
+\mathcal E^{(e)})
 }
-\theta_Q^{(1)}
-\xrightarrow{
-\mathcal L_{\mathrm{pre}}^{(2)}=\mathrm{UNDISCLOSED}
-}
-\theta_Q^{(2)}
-\xrightarrow{
-\mathcal L_{\mathrm{long}}=\mathrm{UNDISCLOSED}
-}
-\theta_Q^{(3)}
-\qquad[\mathrm{DERIVED}]
 ]
 
 [
-\theta_Q^{(3)}
-\xrightarrow{
-\mathcal L_{\mathrm{LongCoT\text{-}SFT}}=\mathrm{UNDISCLOSED}
-}
-\theta_Q^{(4)}
-\xrightarrow{
-\mathcal L_{\mathrm{ReasoningRL}}=\mathrm{UNDISCLOSED}
-}
-\theta_Q^{(5)}
-\qquad[\mathrm{DERIVED}]
+\begin{aligned}
+&\mathbf{Input}:\
+&
+\mathcal D_{\rm prompt}^{(e)}
+=============================
+
+{q_n}_{n=1}^{N_e},
+\
+&
+\theta_0
+========
+
+\theta_{\rm SFT}^{(e)},
+\
+&
+G
+=
+
+\text{rollouts per prompt},
+\
+&
+B_q
+===
+
+\text{prompts per rollout batch}.
+\end{aligned}
 ]
 
 [
-\theta_Q^{(5)}
-\xrightarrow{
-\mathcal L_{\mathrm{FusionSFT}}=\mathrm{UNDISCLOSED}
-}
-\theta_Q^{(6)}
-\xrightarrow{
-\mathcal L_{\mathrm{GeneralRL}}=\mathrm{UNDISCLOSED}
-}
-\theta_Q^{(7)}
-\qquad[\mathrm{DERIVED}]
-]
+\begin{aligned}
+&\mathbf{Prompt\ Schema}:\
+&
+Q_s
+===
 
-[
-\boxed{
-\theta_Q^{(0)}
-\rightarrow
-\theta_Q^{(1)}
-\rightarrow
-\theta_Q^{(2)}
-\rightarrow
-\theta_Q^{(3)}
-\rightarrow
-\theta_Q^{(4)}
-\rightarrow
-\theta_Q^{(5)}
-\rightarrow
-\theta_Q^{(6)}
-\rightarrow
-\theta_Q^{(7)}
-}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\theta_{Q,S}^{(0)}
-\xrightarrow{
-\mathcal L_{\mathrm{off}}=\mathrm{UNDISCLOSED}
-}
-\theta_{Q,S}^{(1)}
-\xrightarrow{
-D_{\mathrm{KL}}(\pi_T,\pi_S);[\mathrm{orientation\ undisclosed}]
-}
-\theta_{Q,S}^{(2)}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-(\theta_Q,\phi_{\mathrm{MTP}})
-\xrightarrow{
-\mathcal L_{\mathrm{MTP}}=\mathrm{UNDISCLOSED}
-}
-(\theta_Q',\phi_{\mathrm{MTP}}')
-================================
-
-\mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
----
-
-## KIMI
-
-[
-\theta_K^{(0)}
-\xrightarrow{
-\mathrm{NTP}_{\mathrm{text\oplus vision}}
-}
-\theta_K^{(1)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\theta_K^{(1)}
-\xrightarrow{
-T:
-8K\rightarrow64K\rightarrow256K\rightarrow1M
-}
-\theta_K^{(2)}
-\qquad[\mathrm{REPORTED}]
-]
-
-[
-\theta_K^{(2)}
-\xrightarrow{
-\mathcal L_{\mathrm{SFT}}=\mathrm{UNDISCLOSED};
-;
-Q_{\mathrm{MXFP4/MXFP8}}
-}
-\theta_K^{(3)}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\theta_K^{(3)}
-\xrightarrow{
--\mathcal J_{\mathrm{Kimi}}^{(d,e)}
-}
-\left{
-\theta_{K,d,e}^{(4)}
-\right}_{d=1,e=1}^{3,3}
-\qquad[\mathrm{DERIVED}]
-]
-
-[
-\left|
 {
-\theta_{K,d,e}^{(4)}
+q_{s,1},\ldots,q_{s,B_q}
 }
-\right|
+\
+&
+X_s^{q}
 =======
 
-9
-\qquad[\mathrm{REPORTED}]
+\operatorname{Pad/Pack}
+\left(
+\tau(Q_s)
+\right)
+\in
+\mathbb N^{B_q\times T_q}.
+\end{aligned}
 ]
 
 [
+\boxed{
+\begin{aligned}
+&\mathbf{for}\quad
+s=0,\ldots,S_{\rm RL}^{(e)}-1:
+[1mm]
+&
+\qquad
+Q_s
+\sim
+\mathcal D_{\rm prompt}^{(e)}
+\
+&
+\qquad
+\theta_{\rm beh}
+\leftarrow
+\operatorname{Snapshot}(\theta_s)
+[2mm]
+&
+\qquad
+\mathbf{for}\quad
+\beta=1,\ldots,B_q:
+\
+&
+\qquad\qquad
+\mathbf{for}\quad
+j=1,\ldots,G:
+\
+&
+\qquad\qquad\qquad
+Y_{\beta,j}
+\sim
+\pi_{\theta_{\rm beh}}
+\left(
+\cdot\mid q_\beta
+\right)
+\
+&
+\qquad\qquad\qquad
+Y_{\beta,j}
+===========
+
+(y_{\beta,j,1},\ldots,
+y_{\beta,j,T_{\beta,j}})
+\
+&
+\qquad\qquad\qquad
+\tau_{\beta,j}
+==============
+
+(q_\beta,Y_{\beta,j})
+\
+&
+\qquad\qquad\qquad
+r_{\beta,j}
+===========
+
+\mathcal R^{(e)}
+\left(
+q_\beta,
+Y_{\beta,j},
+\mathcal E^{(e)}
+\right)
+\
+&
+\qquad\qquad
+\mathbf{end}
+\
+&
+\qquad
+\mathbf{end}
+\end{aligned}}
+]
+
+[
+\begin{aligned}
+&
+\mathcal T_s
+============
+
 {
-\theta_{K,d,e}^{(4)}
-}
-\xrightarrow{
-r_{\mathrm{OPD}}^{d,e}
-\rightarrow
-\mathcal J_{\mathrm{MOPD}}
-}
-\theta_K^{(5)}
-\qquad[\mathrm{REPORTED}]
+(q_\beta,Y_{\beta,j},r_{\beta,j})
+}_{\beta=1,j=1}^{B_q,G}
+\
+&
+|\mathcal T_s|
+==============
+
+B_qG.
+\end{aligned}
 ]
 
 [
-\mathcal J_{\mathrm{MOPD}}^{\mathrm{exact}}
-===========================================
+\begin{aligned}
+&\mathbf{RL\ Training\ Batch}:\
+&
+\mathcal T_s
+============
+
+\bigsqcup_{m=1}^{N_{\rm mb}^{\rm RL}}
+\mathcal T_{s,m}
+\
+&
+\mathcal T_{s,m}
+\rightarrow
+(X_{s,m},Y_{s,m},R_{s,m},M_{s,m})
+\
+&
+X_{s,m}
+\in
+\mathbb N^{B_{\rm RL}\times T_{\rm RL}},
+\
+&
+Y_{s,m}
+\in
+\mathbb N^{B_{\rm RL}\times T_{\rm RL}}.
+\end{aligned}
+]
+
+[
+\begin{aligned}
+&
+\bar r_\beta
+============
+
+\frac1G
+\sum_{j=1}^{G}
+r_{\beta,j}
+\
+&
+A_{\beta,j}^{\rm lineage}
+=========================
+
+## r_{\beta,j}
+
+\bar r_\beta.
+\end{aligned}
+]
+
+[
+\begin{aligned}
+&
+\log p_{\theta_s,\beta,j,t}
+===========================
+
+\log
+\pi_{\theta_s}
+\left(
+y_{\beta,j,t}
+\mid
+q_\beta,y_{\beta,j,<t}
+\right)
+\
+&
+\log p_{{\rm beh},\beta,j,t}
+============================
+
+\log
+\pi_{\theta_{\rm beh}}
+\left(
+y_{\beta,j,t}
+\mid
+q_\beta,y_{\beta,j,<t}
+\right)
+\
+&
+\rho_{\beta,j,t}
+================
+
+\exp
+\left(
+\log p_{\theta_s,\beta,j,t}
+---------------------------
+
+\log p_{{\rm beh},\beta,j,t}
+\right).
+\end{aligned}
+]
+
+[
+\boxed{
+\mathcal J_{\rm GRPO}^{\rm V4}
+==============================
 
 \mathrm{UNDISCLOSED}
-\qquad[\mathrm{UNDISCLOSED}]
-]
-
-[
-\boxed{
-\theta_K^{(0)}
-\rightarrow
-\theta_K^{(1)}
-\rightarrow
-\theta_K^{(2)}
-\rightarrow
-\theta_K^{(3)}
-\rightarrow
-{\theta_{K,d,e}^{(4)}}_{9}
-\rightarrow
-\theta_K^{(5)}
 }
-\qquad[\mathrm{DERIVED}]
 ]
 
 [
 \boxed{
-(\theta_K^{(5)},\phi_K^{(0)})
-\xrightarrow{
-\theta_K^{(5)}\ \mathrm{frozen};
-;
--\log
-\sum_{v\in V}
+\begin{aligned}
+&
+\mathcal J_{\rm GRPO}^{\rm lineage}
+===================================
+
+\frac{1}{B_qG}
+\sum_{\beta=1}^{B_q}
+\sum_{j=1}^{G}
+\frac{1}{T_{\beta,j}}
+\sum_{t=1}^{T_{\beta,j}}
+\
+&
+\qquad
+\left[
 \min
-[
-p_{\theta_K^{(5)}}(v\mid s),
-q_{\phi_K}(v\mid s)
+\left(
+\rho_{\beta,j,t}A_{\beta,j},
+\operatorname{clip}
+(
+\rho_{\beta,j,t},
+1-\epsilon,
+1+\epsilon
+)
+A_{\beta,j}
+\right)
+-------
+
+\beta_{\rm KL}
+D_{{\rm KL},\beta,j,t}
+\right].
+\end{aligned}}
 ]
+
+[
+\boxed{
+\begin{aligned}
+&
+\mathbf{for}\quad
+m=1,\ldots,N_{\rm mb}^{\rm RL}:
+\
+&
+\qquad
+\mathcal T_{s,m}
+\rightarrow
+(X,Y,R,M)
+\
+&
+\qquad
+Z_\theta
+========
+
+\mathsf M_{\theta_s}(X)
+\
+&
+\qquad
+\log P_\theta
+=============
+
+\log\operatorname{softmax}(Z_\theta)
+\
+&
+\qquad
+\mathcal J_{s,m}^{(e)}
+======================
+
+\mathfrak G_{\rm V4}
+\left(
+P_\theta,
+P_{\rm behavior},
+R,
+M
+\right)
+\
+&
+\qquad
+\mathfrak G_{\rm V4}
+====================
+
+\mathrm{UNDISCLOSED}
+\
+&
+\qquad
+g_{s,m}
+=======
+
+-\nabla_\theta
+\mathcal J_{s,m}^{(e)}
+\
+&
+\mathbf{end}
+[2mm]
+&
+\widehat g_s
+============
+
+\operatorname{Aggregate}
+\left(
+{g_{s,m}}*{m=1}^{N*{\rm mb}^{\rm RL}}
+\right)
+\
+&
+\theta_{s+1}
+============
+
+\operatorname{OPT}
+(
+\theta_s,
+\widehat g_s,
+\eta_s^{\rm RL}
+)
+[1mm]
+&
+\mathbf{end}
+\end{aligned}}
+]
+
+[
+\boxed{
+\theta_{\rm RL}^{(e)}
+=====================
+
+\theta_{S_{\rm RL}}^{(e)}
 }
-(\theta_K^{(5)},\phi_K^*)
+]
+
+[
+\boxed{
+\theta_{\rm SFT}^{(e)}
+\xrightarrow[
+\substack{
+q\sim\mathcal D_{\rm prompt}^{(e)}\
+y\sim\pi_{\rm behavior}\
+r=\mathcal R^{(e)}(q,y,\mathcal E)
 }
-\qquad[\mathrm{DERIVED}]
+]
+{\operatorname{GRPO}}
+\theta_{\rm RL}^{(e)}
+}
+]
+
+---
+
+[
+\boxed{\textbf{Algorithm 4}\qquad
+\mathsf{MULTI\text{-}TEACHER\ OPD}
+(
+\mathsf M_{\theta_0},
+{\mathsf M_{\phi_i}}_{i=1}^{N_T})
+}
 ]
 
 [
-\nabla_{\theta_K^{(5)}}
-\mathcal L_{\mathrm{LK}}
-========================
+\begin{aligned}
+&\mathbf{Input}:\
+&
+\theta_0
+========
 
-0
-\qquad[\mathrm{DERIVED}]
+\theta_{\rm student}^{(0)},
+\
+&
+\Phi
+====
+
+{\phi_1,\ldots,\phi_{N_T}},
+\qquad
+N_T>10,
+\
+&
+\forall i:
+\qquad
+\nabla_{\phi_i}=0,
+\
+&
+w_i(x)\ge0,
+\qquad
+\sum_iw_i(x)=1,
+\
+&
+x\sim\mathcal D_{\rm OPD}.
+\end{aligned}
 ]
 
 [
-\nabla_{\phi_K}
-\mathcal L_{\mathrm{LK}}
-\neq0
-\qquad[\mathrm{DERIVED}]
+\begin{aligned}
+&\mathbf{Prompt\ Batch}:\
+&
+Q_s
+===
+
+{q_1,\ldots,q_{B_q}}
+\sim
+\mathcal D_{\rm OPD}^{B_q}
+\
+&
+X_s^q
+=====
+
+\operatorname{Pad/Pack}
+(\tau(Q_s)).
+\end{aligned}
 ]
 
-([arXiv][6])
+[
+\boxed{
+\begin{aligned}
+&\mathbf{for}\quad
+s=0,\ldots,S_{\rm OPD}-1:
+[1mm]
+&
+\qquad
+Q_s
+\sim
+\mathcal D_{\rm OPD}
+[1mm]
+&
+\qquad
+\mathbf{for}\quad
+\beta=1,\ldots,B_q:
+\
+&
+\qquad\qquad
+Y_\beta
+\sim
+\pi_{\theta_s}
+(\cdot|q_\beta)
+\
+&
+\qquad\qquad
+Y_\beta
+=======
 
-[1]: https://arxiv.org/html/2606.19348v1 "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence"
-[2]: https://arxiv.org/html/2412.19437v2 "DeepSeek-V3 Technical Report"
-[3]: https://arxiv.org/html/2607.05147v1 "DSpark: Confidence-Scheduled Speculative Decoding with Semi-Autoregressive Generation"
-[4]: https://arxiv.org/html/2505.09388 "https://arxiv.org/html/2505.09388"
-[5]: https://huggingface.co/Qwen/Qwen3.6-35B-A3B?utm_source=chatgpt.com "Qwen/Qwen3.6-35B-A3B · Hugging Face"
-[6]: https://arxiv.org/pdf/2607.24653 "Kimi K3: Open Frontier Intelligence"
-[7]: https://arxiv.org/html/2602.02276v1 "Kimi K2.5: Visual Agentic Intelligence"
+(y_{\beta,1},\ldots,y_{\beta,T_\beta})
+\
+&
+\qquad
+\mathbf{end}
+[2mm]
+&
+\qquad
+\mathcal B_s^{\rm OPD}
+======================
+
+{
+(q_\beta,Y_\beta)
+}_{\beta=1}^{B_q}
+\
+&
+\qquad
+X_s
+===
+
+\operatorname{Serialize}
+(
+\mathcal B_s^{\rm OPD}
+)
+\
+&
+\qquad
+X_s
+\in
+\mathbb N^{B_q\times T_s}
+\
+&
+\qquad
+M_s^{\rm gen}
+\in
+{0,1}^{B_q\times T_s}
+[2mm]
+&
+\qquad
+Z_s^S
+=====
+
+\mathsf M_{\theta_s}(X_s)
+\
+&
+\qquad
+P_s^S
+=====
+
+\operatorname{softmax}(Z_s^S)
+\
+&
+\qquad
+P_s^S
+\in
+[0,1]^{B_q\times T_s\times V}.
+\end{aligned}}
+]
+
+[
+\begin{aligned}
+&
+\mathbf{Teacher\ Selection}:\
+&
+I_\beta
+=======
+
+\mathcal G(q_\beta)
+\subseteq
+{1,\ldots,N_T}
+\
+&
+w_{\beta,i}
+===========
+
+w_i(q_\beta).
+\end{aligned}
+]
+
+[
+\boxed{
+\begin{aligned}
+&
+\mathbf{for}\quad
+i\in
+\bigcup_{\beta=1}^{B_q}I_\beta:
+\
+&
+\qquad
+Z_s^{T_i}
+=========
+
+\mathsf M_{\phi_i}(X_s)
+\
+&
+\qquad
+P_s^{T_i}
+=========
+
+\operatorname{softmax}
+(Z_s^{T_i})
+\
+&
+\qquad
+\operatorname{stopgrad}
+(P_s^{T_i})
+===========
+
+P_s^{T_i}
+\
+&
+\mathbf{end}
+\end{aligned}}
+]
+
+[
+\begin{aligned}
+&
+D_{\beta,t}^{(i)}
+=================
+
+D_{\rm KL}
+\left(
+P_{\beta,t}^{S}
+\Vert
+P_{\beta,t}^{T_i}
+\right)
+\
+&
+=
+
+\sum_{v=1}^{V}
+P_{\beta,t,v}^{S}
+\log
+\frac{
+P_{\beta,t,v}^{S}
+}{
+P_{\beta,t,v}^{T_i}
+}.
+\end{aligned}
+]
+
+[
+\boxed{
+\begin{aligned}
+&
+\mathcal L_{\rm OPD}^{(s)}
+==========================
+
+\frac{1}{Z_s^{\rm OPD}}
+\sum_{\beta=1}^{B_q}
+\sum_{t=1}^{T_s}
+M_{\beta,t}^{\rm gen}
+\sum_{i\in I_\beta}
+w_{\beta,i}
+D_{\rm KL}
+\left(
+P_{\beta,t}^{S}
+\Vert
+P_{\beta,t}^{T_i}
+\right)
+\
+&
+Z_s^{\rm OPD}
+=============
+
+\mathrm{UNDISCLOSED}.
+\end{aligned}}
+]
+
+[
+\boxed{
+\begin{aligned}
+&
+g_s
+===
+
+\nabla_{\theta_s}
+\mathcal L_{\rm OPD}^{(s)}
+\
+&
+\widehat g_s
+============
+
+\operatorname{Collective}
+\left(
+{g_s^{(r)}}*{r=1}^{W*{\rm DP}}
+\right)
+\
+&
+\theta_{s+1}
+============
+
+\operatorname{OPT}
+\left(
+\theta_s,
+\widehat g_s,
+\eta_s^{\rm OPD}
+\right)
+\
+&
+\phi_{i,s+1}
+============
+
+\phi_{i,s},
+\qquad
+\forall i
+\
+&
+\mathbf{end}
+\end{aligned}}
+]
+
+[
+\boxed{
+\theta_{\rm final}
+==================
+
+\theta_{S_{\rm OPD}}
+}
+]
+
+[
+\boxed{
+\begin{aligned}
+&
+Y
+\sim
+\pi_{\theta_s}(\cdot|Q)
+\
+&
+\Downarrow
+\
+&
+P^S
+===
+
+\mathsf M_{\theta_s}(Q,Y)
+\
+&
+P^{T_i}
+=======
+
+\mathsf M_{\phi_i}(Q,Y)
+\
+&
+\Downarrow
+\
+&
+\mathcal L_{\rm OPD}
+====================
+
+\sum_i
+w_i
+D_{\rm KL}
+\left(
+P^S
+\Vert
+P^{T_i}
+\right)
+\
+&
+\Downarrow
+\
+&
+\nabla_{\theta}
+\mathcal L_{\rm OPD}
+\
+&
+\Downarrow
+\
+&
+\theta_{s+1}.
+\end{aligned}}
+]
+
+---
+
+[
+\boxed{
+\begin{array}{ccccccc}
+\mathcal D_{\rm pre}
+&
+\rightarrow&
+\mathsf{Batch}*{\rm token}
+&
+\rightarrow&
+\mathsf M*{\theta}
+&
+\rightarrow&
+\mathcal L_{\rm NTP}
++\lambda_{\rm MTP}\mathcal L_{\rm MTP}
++\mathcal L_{\rm Bal}
+\
+&&&&&&\downarrow\
+&&&&&&\theta_{\rm base}
+[5mm]
+\mathcal D_{\rm SFT}^{(e)}
+&
+\rightarrow&
+\mathsf{Batch}*{(q,a)}
+&
+\rightarrow&
+\mathsf M*{\theta}
+&
+\rightarrow&
+\mathcal L_{\rm SFT}^{(e)}
+\
+&&&&&&\downarrow\
+&&&&&&\theta_{\rm SFT}^{(e)}
+[5mm]
+\mathcal D_{\rm prompt}^{(e)}
+&
+\rightarrow&
+q,;
+Y_{1:G}\sim\pi_{\rm behavior}
+&
+\rightarrow&
+r_{1:G}
+&
+\rightarrow&
+\mathcal J_{\rm GRPO}
+\
+&&&&&&\downarrow\
+&&&&&&\theta_{\rm RL}^{(e)}
+[5mm]
+\mathcal D_{\rm OPD}
+&
+\rightarrow&
+Y\sim\pi_\theta
+&
+\rightarrow&
+(P^S,P^{T_1},\ldots,P^{T_N})
+&
+\rightarrow&
+\displaystyle
+\sum_iw_iD_{\rm KL}(P^S\Vert P^{T_i})
+\
+&&&&&&\downarrow\
+&&&&&&\theta_{\rm final}
+\end{array}}
+]
+
+[
+\boxed{
+\theta_0
+\xrightarrow{\mathsf{PRETRAIN}}
+\theta_{\rm base}
+\xrightarrow{\mathsf{SFT}^{(e)}}
+\theta_{\rm SFT}^{(e)}
+\xrightarrow{\mathsf{RL}^{(e)}}
+\theta_{\rm RL}^{(e)}
+\xrightarrow{\mathsf{OPD}}
+\theta_{\rm final}
+}
+]

@@ -1,6 +1,6 @@
 # Production-Scale Heterogeneous Knowledge and Agent Execution Platform
 
-
+![](./assets/Heterogenous_knowledge_agentic.png)
 
 ---
 

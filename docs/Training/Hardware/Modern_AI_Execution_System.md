@@ -1,6 +1,6 @@
 # The Modern AI Execution System: From HBM Transactions to World-State Mutation
 
-
+![](./assets/Modern_requirement.png)
 I use four evidence classes throughout:
 
 * **[R] Reported** — explicitly documented by an official project/vendor.

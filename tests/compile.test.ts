@@ -251,6 +251,37 @@ describe("rendering contract", () => {
     assert.ok(html.includes(`data-columns="${Array.from(row).length}"`));
   });
 
+  it("preserves every coordinate in a branched plane topology", async () => {
+    const diagram = [
+      "CLIENT PLANE",
+      "     │",
+      "     ▼",
+      "CONTROL / POLICY PLANE",
+      "     │",
+      "     ├───────────────────────────────────────────────┐",
+      "     ▼                                               ▼",
+      "DATA PLANE                                    EVALUATION PLANE",
+      "     │                                               ▲",
+      "     ▼                                               │",
+      "SERVING / CAPABILITY PLANE                           │",
+      "     │                                               │",
+      "     ▼                                               │",
+      "EXECUTION PLANE ────────────────► VERIFICATION PLANE┘",
+      "     │",
+      "     ▼",
+      " VERIFIED OUTPUT",
+    ].join("\n");
+    const { html } = await compileArticle(
+      `\`\`\`text\n${diagram}\n\`\`\`\n`,
+      "Title",
+    );
+
+    assert.ok(html.includes('data-layout="diagram"'));
+    assert.ok(html.includes('data-columns="62"'));
+    assert.ok(html.includes('data-density="standard"'));
+    assert.ok(html.includes(diagram), "the renderer must retain authored spacing and glyphs");
+  });
+
   it("keeps ordinary text blocks on standard code leading", async () => {
     const { html } = await compileArticle(
       "```text\nrequest completed\n```\n",
