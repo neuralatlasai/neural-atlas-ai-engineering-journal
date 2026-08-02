@@ -15,6 +15,11 @@ interface MathNode {
   value: string;
 }
 
+interface TextNode {
+  type: "text";
+  value: string;
+}
+
 function isMathNode(node: unknown): node is MathNode {
   if (typeof node !== "object" || node === null) return false;
   const candidate = node as { type?: unknown; value?: unknown };
@@ -23,6 +28,15 @@ function isMathNode(node: unknown): node is MathNode {
     typeof candidate.value === "string"
   );
 }
+
+function isTextNode(node: unknown): node is TextNode {
+  if (typeof node !== "object" || node === null) return false;
+  const candidate = node as { type?: unknown; value?: unknown };
+  return candidate.type === "text" && typeof candidate.value === "string";
+}
+
+const RAW_TEX_COMMAND =
+  /\\(?:frac|sum|prod|int|mathbb|mathcal|mathrm|mathbf|operatorname|left|right|alpha|beta|gamma|delta|theta|epsilon|sigma|lambda|nabla|cdot|times|leq|geq|neq|approx|propto|text|displaystyle|begin|end|tag|boxed|hat|tilde|vec|quad|mid|vert|in|forall|exists)\b/;
 
 describe("published mathematics", () => {
   it("parses every equation with the production repair pipeline", () => {
@@ -66,6 +80,26 @@ describe("published mathematics", () => {
     }
 
     assert.ok(equations > 0, "the published corpus must contain mathematics");
+    assert.deepEqual(failures, []);
+  });
+
+  it("does not leave TeX commands in prose nodes", () => {
+    const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
+    const failures: string[] = [];
+
+    // Code nodes are structurally distinct from prose text nodes, so technical
+    // examples remain verbatim while missed math delimiters fail before the
+    // slower production export and postbuild audit.
+    for (const article of getAllArticles()) {
+      const markdown = preprocess(readSource(article.sourcePath)).markdown;
+      const tree = parser.parse(markdown);
+
+      visit(tree, (node) => {
+        if (!isTextNode(node) || !RAW_TEX_COMMAND.test(node.value)) return;
+        failures.push(`${article.route}: ${node.value.slice(0, 300)}`);
+      });
+    }
+
     assert.deepEqual(failures, []);
   });
 });

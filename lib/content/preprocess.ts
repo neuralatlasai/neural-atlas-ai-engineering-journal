@@ -166,12 +166,18 @@ function isBalancedTeX(s: string): boolean {
 /**
  * Set literals must use escaped braces to be visible: `\in{1,2}` renders as
  * "∈1,2" because a bare `{…}` is a TeX grouping, not a brace character. Scans
- * for a `{` introduced by a set operator (or `=`), finds its balanced partner,
- * and escapes both — but only when the group holds a top-level comma, so
- * ordinary grouping like `\in{\mathcal X}` is left alone.
+ * for a candidate `{` introduced by a set operator, equality, parenthesized
+ * expression, or display-math line. It escapes the balanced pair only when the
+ * contents prove it is a set literal; ordinary grouping such as
+ * `\in{\mathcal X}` remains untouched.
  */
 function escapeSetBraces(s: string): string {
-  const opener = /(\\(?:in|cup|cap|subset|subseteq|supset|supseteq|setminus|notin)\s*|=\s*)\{/g;
+  const setOperator = String.raw`\\(?:in|cup|cap|subset|subseteq|supset|supseteq|setminus|notin)`;
+  const opener = new RegExp(
+    `(${setOperator}\\s*|=\\s*|\\\\left\\s*\\(\\s*|\\(\\s*|(?:^|\\n)[ \\t]*)\\{`,
+    "g",
+  );
+  const beginsWithSetOperator = new RegExp(`^${setOperator}`);
   let out = "";
   let last = 0;
   let m: RegExpExecArray | null;
@@ -194,6 +200,8 @@ function escapeSetBraces(s: string): string {
       j++;
     }
     const inner = s.slice(braceIdx + 1, j);
+    const context = m[1];
+    const trimmedInner = inner.trim();
     // A set can be authored as one text-mode group:
     // `e\in{\text{math, code, agent}}`. Its commas are one level below the
     // outer set, but still separate set members rather than function arguments.
@@ -206,9 +214,24 @@ function escapeSetBraces(s: string): string {
     // Restrict this repair to a single indexed symbol/name; generic grouping
     // such as `x={a+b}` remains untouched.
     const indexedSingleton = /^(?:(?:\\(?:mathrm|mathbf|mathit|mathsf|mathtt|mathcal|mathbb)\s*)?(?:[A-Za-z][A-Za-z0-9]*|\\[A-Za-z]+)|\\(?:operatorname|mathrm|mathbf|mathit|mathsf|mathtt|mathcal|mathbb)\{[^{}]+\})_\{[^{}]*,[^{}]*\}$/.test(
-      inner.trim(),
+      trimmedInner,
     );
-    if (depth !== 0 || (!topLevelComma && !commaSeparatedText && !indexedSingleton)) continue;
+    // A set operator followed by one scalar element is a singleton literal,
+    // even when it has no comma: `A\cup{\bot}`, `A\cup{-100}`, and
+    // `A\cup{v_{\mathrm{ignore}}}` all require visible braces. A grouped set
+    // symbol such as `x\in{\mathcal X}` deliberately does not match.
+    const singletonSetElement =
+      /^-?\d+(?:\.\d+)?$/.test(trimmedInner) ||
+      /^\\(?:bot|top|emptyset|varnothing)$/.test(trimmedInner) ||
+      /^\\(?:text|textrm|textbf|textit|textsf|texttt)\{[\s\S]*\}$/.test(trimmedInner) ||
+      /^[A-Za-z][A-Za-z0-9]*(?:\s*[_^]\s*\{[\s\S]+\})+$/.test(trimmedInner);
+    const followsSetOperator = beginsWithSetOperator.test(context);
+    const provenSetLiteral =
+      topLevelComma ||
+      commaSeparatedText ||
+      indexedSingleton ||
+      (followsSetOperator && singletonSetElement);
+    if (depth !== 0 || !provenSetLiteral) continue;
     out += s.slice(last, braceIdx) + "\\{" + inner + "\\}";
     last = j + 1;
     opener.lastIndex = last;
@@ -307,9 +330,18 @@ function repairMathLine(line: string): string | null {
   if (SETEXT_SCAR.test(line)) return "=";
   // A lone rule scar inside math has no meaning; drop it.
   if (HR_SCAR.test(line)) return null;
-  // A stray leading Markdown heading marker inside an equation.
+  // The lossy Markdown conversion moved a trailing equality sign to a leading
+  // single hash: `# 4096^2` followed by `16{,}777{,}216` represents
+  // `4096^2 = 16{,}777{,}216`. Restore the relation after the expression. Runs
+  // of two or more hashes are a different conversion scar and retain the
+  // established marker-removal behavior below.
+  const trailingEquality = line.match(/^\s*#(?!#)\s+(.+)$/);
+  if (trailingEquality) {
+    return `${repairMathFragment(trailingEquality[1])}\n=`;
+  }
+  // A stray multi-hash Markdown heading marker inside an equation.
   let s = line
-    .replace(/^\s*#{1,6}\s+/, "")
+    .replace(/^\s*#{2,6}\s+/, "")
     // A leading mathematical `>` can make Markdown continue the blockquote
     // marker onto `\end{...}`. Keep genuine comparison rows (`> 10`) intact,
     // but remove the marker from the structural environment closer.
@@ -447,7 +479,10 @@ function convertInlineMath(text: string): string {
         j !== -1 &&
         carriesTeX(content) &&
         content.length <= 1200 &&
-        !content.includes("|") // never inject `$` into a table pipe boundary
+        // A pipe is structural only in a GFM table row. Outside a table it is
+        // valid TeX (for example the cardinality `(|\mathcal R|)`) and must not
+        // prevent the whole parenthesized expression from becoming math.
+        !(TABLE_ROW.test(text) && content.includes("|"))
       ) {
         // Merge any inner $…$ (from step 1) by dropping their delimiters, so the
         // whole group becomes a single, non-nested inline-math span, then repair

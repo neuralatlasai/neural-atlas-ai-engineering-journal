@@ -32,6 +32,42 @@ function decode(s) {
     .replace(/&amp;/g, "&");
 }
 
+/**
+ * Hide literal text-command payloads from token-level TeX lint rules.
+ *
+ * A `\texttt{slash-star ... star-slash}` annotation intentionally contains
+ * asterisks. They are visible text, not Markdown-emphasis damage. A balanced
+ * scanner handles
+ * nested command arguments and escaped braces without weakening linting in the
+ * surrounding mathematical expression.
+ */
+function maskTextCommandPayloads(tex) {
+  const chars = tex.split("");
+  const command = /\\(?:text|texttt|textrm|textsf|textbf|textit|textnormal|mbox)\s*\{/g;
+  let match;
+
+  while ((match = command.exec(tex)) !== null) {
+    const open = match.index + match[0].length - 1;
+    let depth = 1;
+    let close = open + 1;
+
+    for (; close < tex.length && depth > 0; close++) {
+      if (tex[close] === "\\") {
+        close++;
+        continue;
+      }
+      if (tex[close] === "{") depth++;
+      else if (tex[close] === "}") depth--;
+    }
+
+    if (depth !== 0) continue;
+    for (let i = open + 1; i < close - 1; i++) chars[i] = " ";
+    command.lastIndex = close;
+  }
+
+  return chars.join("");
+}
+
 /** Known corruption signatures that render without erroring. */
 function lint(tex) {
   const issues = [];
@@ -49,8 +85,19 @@ function lint(tex) {
   // `\Theta_{t}`). An asterisk used as a superscript or subscript — `X^{*}`,
   // `\Sigma^*`, `\delta^{*}` — is ordinary TeX and must not be flagged; doing
   // so produced four false positives on the first article that used it.
-  const emphasisArtifact = tex.replace(/[\^_]\s*\{?\s*\*\s*\}?/g, "");
+  const tokenMath = maskTextCommandPayloads(tex);
+  const emphasisArtifact = tokenMath.replace(
+    /[\^_]\s*\{?\s*\*\s*\}?/g,
+    "",
+  );
   if (/(?<![\\\w])\*(?![*\s])/.test(emphasisArtifact)) issues.push("stray-asterisk");
+
+  // A computed value may not follow another numeric expression without a
+  // relation. This catches the silent `4096^2 16{,}777{,}216` rendering caused
+  // by a lost equality separator while allowing explicit multiplication.
+  if (/(?:\d|\})\s+\d{1,3}\{,\}\d{3}/.test(tokenMath)) {
+    issues.push("adjacent-numeric-result");
+  }
 
   // Literal row-break spacing that lost its backslashes.
   if (/(?<!\\)\[[0-9]+(mm|ex|pt|em)\]/.test(tex)) issues.push("literal-dimen");

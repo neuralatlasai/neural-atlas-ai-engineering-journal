@@ -232,6 +232,23 @@ describe("display-math normalization", () => {
     assert.ok(!markdown.includes("====="), "the scar becomes a single '='");
   });
 
+  it("restores an equality moved ahead of a computed expression", () => {
+    const source = String.raw`[
+|I2I|
+=====
+# 4096^2
+16{,}777{,}216
+]`;
+    const { markdown } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.equal(block, String.raw`|I2I|
+=
+4096^2
+=
+16{,}777{,}216`);
+  });
+
   it("recovers a display closer carried into a mathematical blockquote", () => {
     const source = String.raw`[
 \begin{array}{c|c}
@@ -444,6 +461,44 @@ describe("inline-math normalization", () => {
     const { markdown, inlineSpans } = preprocess("where (\\epsilon=10^{-5}) holds\n");
     assert.ok(inlineSpans > 0);
     assert.match(markdown, /\$\\epsilon=10\^\{-5\}\$/);
+  });
+
+  it("converts cardinality bars outside table rows", () => {
+    const source = "Reducing (|\\mathcal R|) increases target-prompt freedom.\n";
+    const { markdown, inlineSpans } = preprocess(source);
+
+    assert.equal(inlineSpans, 1);
+    assert.equal(
+      markdown.trim(),
+      "Reducing $|\\mathcal R|$ increases target-prompt freedom.",
+    );
+  });
+
+  it("makes union-set literals visible without changing grouped set symbols", () => {
+    const source = String.raw`[
+x \in {\mathcal X},
+A \cup {\bot},
+B \cup {v_{\mathrm{ignore}}},
+C \cup {\text{one bounded chunk}},
+D \in
+{\text{prefill chunk},\text{decode token}},
+\left( {0,\ldots,9} \cup {-100} \right)
+]`;
+    const { markdown } = preprocess(source);
+
+    assert.ok(markdown.includes(String.raw`x \in {\mathcal X}`), markdown);
+    assert.ok(markdown.includes(String.raw`A \cup \{\bot\}`), markdown);
+    assert.ok(markdown.includes(String.raw`B \cup \{v_{\mathrm{ignore}}\}`), markdown);
+    assert.ok(markdown.includes(String.raw`C \cup \{\text{one bounded chunk}\}`), markdown);
+    assert.ok(
+      markdown.includes(String.raw`D \in
+\{\text{prefill chunk},\text{decode token}\}`),
+      markdown,
+    );
+    assert.ok(
+      markdown.includes(String.raw`\left( \{0,\ldots,9\} \cup \{-100\} \right)`),
+      markdown,
+    );
   });
 
   it("leaves ordinary prose parentheticals untouched", () => {
