@@ -222,8 +222,11 @@ function repairMathFragment(s: string): string {
   return escapeSetBraces(
     s
       // Markdown emphasis mangled braced subscripts `_{…}` into `*{…}`
-      // (e.g. `\operatorname{TopK}*{1024}` should be `…_{1024}`).
-      .replace(/\*\{/g, "_{")
+      // (e.g. `\operatorname{TopK}*{1024}` should be `…_{1024}`). Preserve
+      // `\operatorname*{…}`: its star is valid TeX that moves limits beneath a
+      // display operator, not a damaged underscore. A later `*{…}` on that same
+      // operator is still repaired as its subscript.
+      .replace(/(?<!\\operatorname)\*\{/g, "_{")
       // …and single-character subscripts into `*x` (e.g. `\mathcal B}*e` →
       // `\mathcal B}_e`). The `*` must sit between a closing delimiter and an
       // identifier, so a genuine `a * b` product is untouched.
@@ -260,13 +263,29 @@ function repairMathFragment(s: string): string {
       // A literal percent sign is a TeX comment and silently eats the rest of
       // the equation.
       .replace(/(?<!\\)%/g, "\\%")
-      // A bare `[2mm]` is a row break whose `\\` and spacing were lost. KaTeX
+      // A bare `[2mm]` / `[1.5mm]` is a row break whose `\\` and spacing were
+      // lost. KaTeX
       // renders the `\\[dimen]` optional argument as literal text, so collapse
       // the whole thing to a plain row break (`\\`) — the mm gap is cosmetic.
-      .replace(/(?<!\\)\[[0-9]+(?:mm|ex|pt|em)\]/g, "\\\\")
+      .replace(
+        /(?<!\\)\[[+-]?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?:mm|ex|pt|em)\]/g,
+        "\\\\",
+      )
+      // A lossy conversion collapsed the array-header sequence `\\ \\hline` to
+      // `\ \\hline`. The first command is then valid TeX whitespace, so generic
+      // undefined-command recovery cannot detect it and KaTeX rejects `\\hline`
+      // as if it were outside the array row. Restore only the slash immediately
+      // before `\\hline`; ordinary `\ ` spacing remains untouched.
+      .replace(/(?<!\\)\\(?=\s+\\hline\b)/g, "\\\\")
       // KaTeX requires escaped braces after \left / \right.
       .replace(/\\left\s*\{/g, "\\left\\{")
       .replace(/\\right\s*\}/g, "\\right\\}")
+      // Delimiter-sizing commands follow the same rule. A bare brace starts or
+      // ends a TeX group, so `\Bigg{ ... \Bigg}` fails as soon as an alignment
+      // marker appears inside it. Escape only braces consumed directly by a
+      // sizing command; ordinary grouping braces remain untouched.
+      .replace(/\\((?:bigg|Bigg|big|Big)[lrm]?)\s*\{/g, "\\$1\\{")
+      .replace(/\\((?:bigg|Bigg|big|Big)[lrm]?)\s*\}/g, "\\$1\\}")
       // Text-mode groups hold prose and identifiers, not notation, yet KaTeX
       // still reads `_ ^ % &` inside them as operators. A snake_case name in a
       // comment — `\text{// fallback when n_decoding_steps absent}` — parses as

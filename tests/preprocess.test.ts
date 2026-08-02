@@ -358,6 +358,85 @@ ${equalityScar}
       katex.renderToString(block, { displayMode: true, throwOnError: true }),
     );
   });
+
+  it("preserves a valid starred operator while repairing its damaged subscript", () => {
+    const source = String.raw`[
+\operatorname*{arg,max}*{0\le r<77} u_r
+]`;
+    const { markdown } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.match(block, /\\operatorname\*\{arg,max\}_\{0\\le r<77\}/);
+    assert.doesNotMatch(block, /\\operatorname_\{/);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
+
+  it("escapes literal braces consumed by delimiter-sizing commands", () => {
+    const source = String.raw`[
+\boxed{
+\begin{aligned}
+\Theta &= \Bigg{
+& W_1,W_2 \\
+& \left{W_3^{\ell}\right}*{\ell=1}^{2}
+\Bigg}
+\end{aligned}
+}
+]`;
+    const { markdown } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.match(block, /\\Bigg\\\{/);
+    assert.match(block, /\\Bigg\\\}/);
+    assert.match(block, /\\left\\\{/);
+    assert.match(block, /\\right\\\}/);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
+
+  it("restores an array row break collapsed before hline", () => {
+    const source = String.raw`[
+\begin{array}{c|c}
+\text{Solver} & \text{NFE budget}\ \hline
+\text{Euler} & 1
+\end{array}
+]`;
+    const { markdown } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.match(block, /\\text\{NFE budget\}\\\\ \\hline/);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
+
+  it("restores row breaks whose decimal dimensions lost both slashes", () => {
+    const source = String.raw`[
+\begin{array}{rcl}
+\text{serving} &\Rightarrow& \textbf{vLLM},
+[1.5mm]
+\text{local} &\Rightarrow& \textbf{llama.cpp}
+\end{array}
+]`;
+    const { markdown } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+    const warnings: string[] = [];
+
+    assert.doesNotMatch(block, /\[1\.5mm\]/);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, {
+        displayMode: true,
+        throwOnError: true,
+        strict: (code) => {
+          warnings.push(code);
+          return "ignore";
+        },
+      }),
+    );
+    assert.deepEqual(warnings, []);
+  });
 });
 
 describe("inline-math normalization", () => {

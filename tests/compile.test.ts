@@ -327,6 +327,17 @@ describe("rendering contract", () => {
     assert.ok(!html.includes("var(--color-danger)"), "no partial error-colour fallback is emitted");
   });
 
+  it("separates provenance labels from ordinary equation numbers", async () => {
+    const provenance = await compileArticle(
+      "$$\n\\boxed{x=y}\\tag{[REPORTED][CODE-VERIFIED]}\n$$",
+      "Provenance",
+    );
+    const numbered = await compileArticle("$$\nx=y\\tag{1.37}\n$$", "Numbered");
+
+    assert.match(provenance.html, /class="tag equation-provenance"/);
+    assert.doesNotMatch(numbered.html, /equation-provenance/);
+  });
+
   it("repairs a lost closing slash in a literal brace pair", async () => {
     const source = String.raw`[
 \boxed{

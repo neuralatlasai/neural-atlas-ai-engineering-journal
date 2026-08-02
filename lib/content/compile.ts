@@ -851,12 +851,58 @@ function repairMathNodes() {
     visit(tree, (node) => {
       if (!isMathNode(node)) return;
       const displayMode = node.type === "math";
-      const repairedBraces = repairUnescapedLiteralClosers(
-        node.value,
-        displayMode,
-      );
-      const repaired = repairCollapsedRowBreaks(repairedBraces, displayMode);
+      const repaired = prepareMathForRendering(node.value, displayMode);
       if (repaired !== node.value) setMathValue(node, repaired);
+    });
+  };
+}
+
+/**
+ * Apply the exact parser-validated repair sequence used before KaTeX rendering.
+ * Exported so the corpus integrity test can audit production-equivalent TeX
+ * without paying the cost of generating and serialising the complete HTML DOM.
+ */
+export function prepareMathForRendering(
+  tex: string,
+  displayMode: boolean,
+): string {
+  const repairedBraces = repairUnescapedLiteralClosers(tex, displayMode);
+  return repairCollapsedRowBreaks(repairedBraces, displayMode);
+}
+
+/** Classes emitted by HAST processors can be arrays or whitespace strings. */
+function elementClassNames(element: Element): string[] {
+  const raw = element.properties?.className ?? element.properties?.class;
+  if (Array.isArray(raw)) return raw.map(String);
+  return typeof raw === "string" ? raw.split(/\s+/).filter(Boolean) : [];
+}
+
+function hasElementClass(element: Element, className: string): boolean {
+  return elementClassNames(element).includes(className);
+}
+
+/**
+ * Rehype plugin: distinguish evidence provenance from equation numbering.
+ *
+ * KaTeX absolutely positions every `\tag` and inserts a full-equation-height
+ * strut so a short number can sit vertically centred at the right edge. That is
+ * correct for `(1.37)`, but corpus provenance such as
+ * `([REPORTED][CODE-VERIFIED])` is too wide: it overlaps a boxed expression and
+ * its strut creates misleading vertical geometry. Bracketed tags are evidence
+ * labels, not equation numbers, so mark only those for a compact in-flow row.
+ */
+function markMathProvenance() {
+  return (tree: Root) => {
+    visit(tree, "element", (node: Element, _index, parent) => {
+      if (!hasElementClass(node, "tag") || parent?.type !== "element") return;
+      if (!hasElementClass(parent, "katex-html")) return;
+      if (!hastToString(node).includes("[")) return;
+
+      node.properties ??= {};
+      node.properties.className = [
+        ...elementClassNames(node),
+        "equation-provenance",
+      ];
     });
   };
 }
@@ -1111,7 +1157,8 @@ async function compileArticleUncached(
     .use(rehypeKatex, {
       throwOnError: false,
       errorColor: "var(--color-danger)",
-    });
+    })
+    .use(markMathProvenance);
 
   // Only pay for the highlighter when the document has code to highlight, and
   // load only the grammars it actually uses. A block with no info-string is
