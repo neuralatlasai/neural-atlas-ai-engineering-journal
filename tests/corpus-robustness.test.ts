@@ -118,6 +118,14 @@ describe("discovery survives hostile input", () => {
     }
   });
 
+  it("falls back to the filename for a damaged math opener", () => {
+    const article = corpus
+      .getAllArticles()
+      .find((candidate) => candidate.documentId.endsWith("delimiter-scar.md"));
+    assert.ok(article);
+    assert.equal(article.title, "Delimiter Scar");
+  });
+
   it("is deterministic across repeated discovery", () => {
     const first = corpus.getAllArticles().map((a) => a.route);
     const second = corpus.getAllArticles().map((a) => a.route);

@@ -83,7 +83,14 @@ describe("titleLabel", () => {
     assert.equal(titleLabel("\\alpha"), "");
   });
 
+  it("rejects punctuation-only structural delimiters", () => {
+    for (const delimiter of ["[", "]", "---", "{}", "✅"]) {
+      assert.equal(titleLabel(delimiter), "", delimiter);
+    }
+  });
+
   it("leaves ordinary authored titles unchanged", () => {
     assert.equal(titleLabel("PagedAttention in production"), "PagedAttention in production");
+    assert.equal(titleLabel("C++ / Rust"), "C++ / Rust");
   });
 });

@@ -44,6 +44,12 @@ describe("corpus discovery", () => {
     assert.equal(new Set(ids).size, ids.length);
   });
 
+  it("assigns every article a semantic title", () => {
+    for (const article of articles) {
+      assert.match(article.title, /[\p{L}\p{N}]/u, article.documentId);
+    }
+  });
+
   it("builds routes that match their segments", () => {
     for (const article of articles) {
       assert.equal(article.route, `/${article.routeSegments.join("/")}`);

@@ -187,6 +187,11 @@ function firstHeading(body: string): string | null {
     .replace(/\s*#*\s*$/, "")
     .replace(/^\s*\d+(?:\.\d+)*[.)]\s+/, "")
     .trim();
+
+  // A damaged display-math opener such as `# [` is structural, not a title.
+  // Do not scan subsequent source headings: lossy equations can contain lines
+  // beginning with `#`, so the deterministic filename fallback is the only
+  // metadata source that cannot mistake equation content for authored prose.
   return titleLabel(raw) || null;
 }
 

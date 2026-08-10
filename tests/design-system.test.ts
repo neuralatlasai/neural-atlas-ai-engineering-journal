@@ -351,6 +351,13 @@ describe("page composition", () => {
     );
   });
 
+  it("keeps standalone source links attached to centred evidence", () => {
+    const citationRule = ruleFor(".article-body p.source-citation");
+    assert.match(citationRule, /text-align:\s*center/);
+    assert.match(citationRule, /font-family:\s*var\(--font-ui\)/);
+    assert.match(citationRule, /font-size:\s*var\(--text-sm\)/);
+  });
+
   it("reserves the final article geometry before streamed content arrives", () => {
     const noRail = selectors.find((s) =>
       s.includes(".article-layout--without-outline"),

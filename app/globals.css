@@ -1022,6 +1022,21 @@ video {
 .article-body > p:first-of-type {
   margin-top: 0;
 }
+/* A paragraph containing only source links belongs to the centred equation,
+   diagram, or table immediately above it; it is not a new prose column. The
+   compiler assigns this class structurally, so the rule covers every citation
+   provider and remains safe for sentences that merely contain a link. */
+.article-body p.source-citation {
+  margin-block: 0 1.25rem;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  text-align: center;
+}
+.article-body p.source-citation a {
+  overflow-wrap: anywhere;
+}
 .article-body h2,
 .article-body h3,
 .article-body h4,

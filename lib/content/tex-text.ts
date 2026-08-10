@@ -129,5 +129,13 @@ export function titleLabel(raw: string): string {
 
   while (hasSingleOuterParenthesisPair(label)) label = label.slice(1, -1).trim();
 
-  return label.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+  label = label.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+
+  // A title must contain semantic text, not only Markdown/TeX punctuation.
+  // In the lossy corpus format, `# [` is a display-math opener that the body
+  // preprocessor repairs later. Metadata is extracted before preprocessing,
+  // so accepting that bracket as a title leaked a structural delimiter into
+  // the masthead, breadcrumbs, search index, and document metadata. Unicode
+  // letter/number properties keep the rule valid for every authored language.
+  return /[\p{L}\p{N}]/u.test(label) ? label : "";
 }

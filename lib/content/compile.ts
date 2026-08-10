@@ -964,6 +964,46 @@ function hardenLinks() {
 }
 
 /**
+ * Rehype plugin: distinguish source-only paragraphs from ordinary prose.
+ *
+ * The authored corpus places citations such as `([NVIDIA Docs][5])` directly
+ * after the equation they support. Markdown emits those as full-width prose,
+ * which visually sends the link to the article stage's far-left edge while
+ * the cited equation remains centred. A structural class lets CSS keep these
+ * source notes attached to their evidence without coupling layout to a label,
+ * URL, reference number, or provider.
+ */
+function markStandaloneCitations() {
+  const citationPunctuation = /^[\s()[\]{},.;:–—-]*$/u;
+
+  return (tree: Root) => {
+    visit(tree, "element", (node: Element) => {
+      if (node.tagName !== "p") return;
+
+      let links = 0;
+      for (const child of node.children) {
+        if (child.type === "text") {
+          if (!citationPunctuation.test(child.value)) return;
+          continue;
+        }
+        if (child.type === "element" && child.tagName === "a") {
+          links++;
+          continue;
+        }
+        return;
+      }
+      if (links === 0) return;
+
+      node.properties ??= {};
+      node.properties.className = [
+        ...elementClassNames(node),
+        "source-citation",
+      ];
+    });
+  };
+}
+
+/**
  * Remove source-leading thematic breaks from the rendered body.
  *
  * The page masthead already owns the opening boundary. Rendering an authored
@@ -1146,6 +1186,7 @@ async function compileArticleUncached(
   const processor = structuralStages(title, headings, searchSegments, {
     repairMath: true,
   })
+    .use(markStandaloneCitations)
     .use(hardenLinks)
     .use(removeLeadingThematicBreaks)
     .use(resolveBodyImages, resolveAsset, images, title)

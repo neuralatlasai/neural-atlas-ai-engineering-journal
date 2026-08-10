@@ -306,6 +306,28 @@ describe("rendering contract", () => {
     );
   });
 
+  it("classifies standalone citations without capturing linked prose", async () => {
+    const { html } = await compileArticle(
+      [
+        "([NVIDIA Docs][5])",
+        "",
+        "See [the implementation][5] for the complete contract.",
+        "",
+        "[5]: https://docs.nvidia.com/example",
+      ].join("\n"),
+      "Title",
+    );
+
+    assert.match(
+      html,
+      /<p class="source-citation">\(<a [^>]*>NVIDIA Docs<\/a>\)<\/p>/,
+    );
+    assert.match(
+      html,
+      /<p>See <a [^>]*>the implementation<\/a> for the complete contract\.<\/p>/,
+    );
+  });
+
   it("renders mathematics at build time with an accessible MathML branch", async () => {
     const { html } = await compileArticle("$$\nx^2\n$$\n", "Title");
     assert.ok(html.includes("katex"), "math must be rendered, not left as TeX");
