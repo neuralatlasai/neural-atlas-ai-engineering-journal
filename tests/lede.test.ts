@@ -36,6 +36,11 @@ describe("extractLede", () => {
     assert.equal(extractLede(body), PROSE);
   });
 
+  it("skips standard TeX display maths", () => {
+    const body = `# T\n\\[\n\\mathcal{L}(\\theta)\n\\]\n\n${PROSE}\n`;
+    assert.equal(extractLede(body), PROSE);
+  });
+
   it("skips fenced code", () => {
     const body = `# T\n\n\`\`\`python\nx = 1  # a fairly long comment line about attention heads\n\`\`\`\n\n${PROSE}\n`;
     assert.equal(extractLede(body), PROSE);

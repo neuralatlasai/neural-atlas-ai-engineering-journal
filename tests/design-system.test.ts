@@ -202,14 +202,20 @@ describe("display mathematics rhythm", () => {
     );
   });
 
-  it("keeps long provenance tags in flow without their equation-height strut", () => {
+  it("right-aligns long provenance tags in flow without their equation-height strut", () => {
     const provenanceSelector =
       ".article-body\n  .katex-display\n  > .katex\n  > .katex-html\n  > .tag.equation-provenance";
     const provenanceRule = ruleFor(provenanceSelector);
 
     assert.match(provenanceRule, /position:\s*static/);
     assert.match(provenanceRule, /display:\s*flex/);
-    assert.match(provenanceRule, /justify-content:\s*flex-start/);
+    assert.match(provenanceRule, /justify-content:\s*flex-end/);
+    assert.match(provenanceRule, /padding-inline-end:\s*0\.25rem/);
+    assert.match(provenanceRule, /font-size:\s*var\(--text-2xs\)/);
+    assert.match(
+      ruleFor(".article-body .katex-display > .katex > .katex-html > .tag"),
+      /font-size:\s*var\(--text-sm\)/,
+    );
     assert.match(
       css,
       /> \.tag\.equation-provenance\s*> \.strut\s*\{\s*display:\s*none/s,

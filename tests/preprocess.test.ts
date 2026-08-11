@@ -10,6 +10,14 @@ describe("display-math normalization", () => {
     assert.match(markdown, /\$\$\nx\^2\n\$\$/);
   });
 
+  it("converts standard TeX display delimiters into remark-math delimiters", () => {
+    const { markdown, displayBlocks } = preprocess("\\[\nx^2\n\\]\n");
+    assert.equal(displayBlocks, 1);
+    assert.match(markdown, /\$\$\nx\^2\n\$\$/);
+    assert.ok(!markdown.includes("\\["));
+    assert.ok(!markdown.includes("\\]"));
+  });
+
   it("tolerates a stray heading marker on the opening bracket", () => {
     // Regression: `# [` was parsed as a heading whose text is a bracket, so the
     // equation rendered as literal TeX in a paragraph, an empty-id <h2>[</h2>
@@ -457,6 +465,15 @@ ${equalityScar}
 });
 
 describe("inline-math normalization", () => {
+  it("converts standard TeX inline delimiters without escaping the dollar fence", () => {
+    const { markdown, inlineSpans } = preprocess(
+      "Under the \\(\\mathrm{iid}\\mid q\\) assumption.\n",
+    );
+    assert.equal(inlineSpans, 1);
+    assert.equal(markdown.trim(), "Under the $\\mathrm{iid}\\mid q$ assumption.");
+    assert.ok(!markdown.includes("\\$"));
+  });
+
   it("converts a parenthesized TeX group", () => {
     const { markdown, inlineSpans } = preprocess("where (\\epsilon=10^{-5}) holds\n");
     assert.ok(inlineSpans > 0);
@@ -632,5 +649,18 @@ describe("determinism", () => {
     assert.equal(first.markdown, second.markdown);
     assert.equal(first.displayBlocks, second.displayBlocks);
     assert.equal(first.inlineSpans, second.inlineSpans);
+  });
+});
+
+describe("private citation transport tokens", () => {
+  const citation = "\uE200cite\uE202turn652764view0\uE201";
+
+  it("removes unresolved transport metadata from publishable prose", () => {
+    assert.equal(preprocess(`Evidence. ${citation}\n`).markdown.trim(), "Evidence.");
+  });
+
+  it("preserves citation-shaped text inside fenced code", () => {
+    const source = `\`\`\`text\n${citation}\n\`\`\`\n`;
+    assert.equal(preprocess(source).markdown.trim(), source.trim());
   });
 });

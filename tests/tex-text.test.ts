@@ -89,6 +89,18 @@ describe("titleLabel", () => {
     }
   });
 
+  it("rejects equation-only labels while preserving prose-bearing TeX titles", () => {
+    for (const formula of ["A^\\pi(s_t,a_t)", "E=mc^2", "(\\mathrm{INPUT})"]) {
+      assert.equal(titleLabel(formula), "", formula);
+    }
+
+    assert.equal(
+      titleLabel("\\(\\mathsf{A}_0\\) — SOURCE + IMPLEMENTATION AUDIT"),
+      "(A 0) — SOURCE + IMPLEMENTATION AUDIT",
+    );
+    assert.equal(titleLabel("\\text{Attention}"), "Attention");
+  });
+
   it("leaves ordinary authored titles unchanged", () => {
     assert.equal(titleLabel("PagedAttention in production"), "PagedAttention in production");
     assert.equal(titleLabel("C++ / Rust"), "C++ / Rust");

@@ -10,6 +10,8 @@
  * Pure and dependency-free: no filesystem, no framework, directly unit-testable.
  */
 
+import { stripInternalCitationTokens } from "./source-tokens";
+
 /** Average adult reading rate for technical prose. */
 export const READING_WORDS_PER_MINUTE = 220;
 
@@ -25,7 +27,7 @@ export const READING_WORDS_PER_MINUTE = 220;
  * backtick inside a code sample cannot start a spurious match.
  */
 export function countProseWords(markdown: string): number {
-  const prose = markdown
+  const prose = stripInternalCitationTokens(markdown)
     .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, " ") // front matter, if present
     .replace(/^( {4}|\t).*$/gm, " ") // indented code
     .replace(/```[\s\S]*?(?:```|$)/g, " ") // fenced code

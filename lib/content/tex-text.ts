@@ -112,6 +112,33 @@ function hasSingleOuterParenthesisPair(value: string): boolean {
   return depth === 0;
 }
 
+const TITLE_EQUATION_SYNTAX = /(?:[_^=<>]|\\[A-Za-z]+)/u;
+const TITLE_PROSE_COMMAND =
+  /\\(?:text|textbf|textit|texttt|textrm|textsf|textnormal|emph)\s*\{/u;
+
+/**
+ * Whether a candidate is mathematical notation without a prose-grade title.
+ *
+ * TeX itself is not disqualifying: authored labels such as
+ * `Algorithm 1: DEEPSEEK_V4_PRETRAIN` are useful titles. A formula made only of
+ * identifiers, operators, and one short symbol sequence is not. Requiring a
+ * multi-word phrase (or an explicit text command containing natural-language
+ * casing) generalizes across formula families without naming algorithms,
+ * variables, evidence labels, or source files.
+ */
+function isEquationOnlyTitle(raw: string, label: string): boolean {
+  if (!TITLE_EQUATION_SYNTAX.test(raw)) return false;
+
+  const words = label.match(/[\p{L}\p{N}]+/gu) ?? [];
+  const semanticWords = words.filter((word) => [...word].length > 1);
+  if (semanticWords.length >= 2) return false;
+
+  const explicitProse =
+    TITLE_PROSE_COMMAND.test(raw) &&
+    semanticWords.some((word) => /\p{Ll}/u.test(word));
+  return !explicitProse;
+}
+
 /**
  * Plain-text label suitable for page metadata and the visible article `<h1>`.
  *
@@ -131,11 +158,11 @@ export function titleLabel(raw: string): string {
 
   label = label.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
 
+  if (isEquationOnlyTitle(raw, label)) return "";
+
   // A title must contain semantic text, not only Markdown/TeX punctuation.
-  // In the lossy corpus format, `# [` is a display-math opener that the body
-  // preprocessor repairs later. Metadata is extracted before preprocessing,
-  // so accepting that bracket as a title leaked a structural delimiter into
-  // the masthead, breadcrumbs, search index, and document metadata. Unicode
-  // letter/number properties keep the rule valid for every authored language.
+  // Structural delimiters can survive malformed or partial author input; they
+  // must not leak into the masthead, breadcrumbs, search index, or metadata.
+  // Unicode properties keep the rule valid for every authored language.
   return /[\p{L}\p{N}]/u.test(label) ? label : "";
 }

@@ -1,4 +1,5 @@
 import { plainTextFromTeX } from "./tex-text";
+import { stripInternalCitationTokens } from "./source-tokens";
 
 /**
  * Lede extraction — the one-sentence summary shown under an article title in
@@ -54,7 +55,7 @@ interface Candidate {
  */
 function toPlainText(markdown: string): string {
   return plainTextFromTeX(
-    markdown
+    stripInternalCitationTokens(markdown)
       .replace(/!\[[^\]]*\]\([^)]*\)/g, " ") // images
       .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // inline links keep their label
       .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1") // reference links keep their label
@@ -142,15 +143,18 @@ export function extractLede(body: string): string {
     }
     if (inFence) continue;
 
-    // Display maths, in both the authored bare-bracket convention (including
-    // the `# [` scar) and standard `$$` delimiters.
-    if (!inDisplayMath && (/^(?:#{1,6}\s*)?\[$/.test(line) || line === "$$")) {
+    // Display maths, in the standard TeX/remark forms and the authored lossy
+    // bare-bracket convention (including the `# [` scar).
+    if (
+      !inDisplayMath &&
+      (/^(?:#{1,6}\s*)?(?:\[|\\\[)$/.test(line) || line === "$$")
+    ) {
       inDisplayMath = true;
       paragraph = [];
       continue;
     }
     if (inDisplayMath) {
-      if (line === "]" || line === "$$") inDisplayMath = false;
+      if (line === "]" || line === "\\]" || line === "$$") inDisplayMath = false;
       continue;
     }
 

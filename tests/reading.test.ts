@@ -55,6 +55,13 @@ Outro text.`;
     assert.equal(countProseWords("Set `head_dim` before https://example.com/x runs"), 3);
   });
 
+  it("does not count private citation transport tokens", () => {
+    assert.equal(
+      countProseWords("Evidence remains. \uE200cite\uE202turn12view3\uE201"),
+      2,
+    );
+  });
+
   it("ignores punctuation-only tokens", () => {
     assert.equal(countProseWords("--- *** ___ word"), 1);
   });

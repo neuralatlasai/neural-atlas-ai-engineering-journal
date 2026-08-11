@@ -45,6 +45,7 @@
      which stretches `─` independently from spaces and destroys topology. */
   --font-diagram: "Cascadia Mono", "SFMono-Regular", "DejaVu Sans Mono", "Liberation Mono", Consolas, Menlo, monospace;
 
+  --text-2xs: 0.625rem;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -1498,8 +1499,9 @@ video {
 /* Evidence labels are longer than equation numbers and must participate in
    intrinsic sizing. Keeping them in flow prevents overlap with `\boxed{...}`;
    removing KaTeX's equation-height strut prevents the label row from inheriting
-   the full height of a matrix or aligned derivation. The display remains the
-   single horizontal scroll boundary for both the expression and its label. */
+   the full height of a matrix or aligned derivation. The label remains aligned
+   to the logical equation-number edge, and the display is the single horizontal
+   scroll boundary for both the expression and its label. */
 .article-body
   .katex-display
   > .katex
@@ -1514,10 +1516,10 @@ video {
   position: static;
   display: flex;
   inline-size: 100%;
-  justify-content: flex-start;
+  justify-content: flex-end;
   margin-block-start: 0.4em;
-  padding-inline-start: 0.25rem;
-  font-size: var(--text-xs);
+  padding-inline-end: 0.25rem;
+  font-size: var(--text-2xs);
   line-height: 1.2;
 }
 .article-body

@@ -2,8 +2,9 @@
  * Source normalization (plan §3.1 fidelity + §5.4 transformation policy).
  *
  * The corpus was authored with a non-standard, partly lossy math convention:
- *   - Display math is delimited by a bare `[` and `]`, each alone on a line,
- *     wrapping TeX such as `\boxed{...}` or `\begin{aligned}...\end{aligned}`.
+ *   - Display math uses either standard `\[` / `\]` delimiters or a lossy bare
+ *     `[` / `]` form, each alone on a line, wrapping TeX such as
+ *     `\boxed{...}` or `\begin{aligned}...\end{aligned}`.
  *   - Inline math appears as parenthesized TeX, e.g. `(\epsilon=10^{-5})`.
  *   - Some blocks carry Markdown-conversion scars: a lone run of `=`/`-`
  *     (setext-underline artifacts) or a stray leading `#` inside an equation.
@@ -20,9 +21,11 @@
  * are never captured.
  */
 
+import { stripInternalCitationTokens } from "./source-tokens";
+
 /**
- * A display block opens with a lone `[`, optionally carrying a stray Markdown
- * heading marker.
+ * A display block opens with a standard `\[` or lossy lone `[`, optionally
+ * carrying a stray Markdown heading marker.
  *
  * The `#` is the same conversion scar `repairMathLine` already strips from
  * lines *inside* an equation, and it also lands on the opening delimiter — the
@@ -32,11 +35,11 @@
  * pollutes the search index. `# ]` does not occur, so the closing delimiter is
  * matched strictly — loosening it could swallow a genuine heading.
  */
-const DISPLAY_OPEN = /^\s*(?:#{1,6}\s*)?\[\s*$/;
+const DISPLAY_OPEN = /^\s*(?:#{1,6}\s*)?(?:\[|\\\[)\s*$/;
 // A lossy Markdown pass can carry a blockquote marker from a preceding
 // greater-than row onto the structural closer (`> ]`). This form is accepted
 // only after a display block has opened, so ordinary blockquotes are unaffected.
-const DISPLAY_CLOSE = /^\s*(?:>\s*)?\]\s*$/;
+const DISPLAY_CLOSE = /^\s*(?:>\s*)?(?:\]|\\\])\s*$/;
 
 /**
  * Net brace balance contributed by a line of TeX, ignoring escaped braces.
@@ -412,6 +415,18 @@ function carriesTeX(s: string): boolean {
   return false;
 }
 
+/** Index of the next unescaped standard TeX inline closer `\)`. */
+function standardInlineClose(text: string, start: number): number {
+  for (let i = start; i < text.length - 1; i++) {
+    if (text[i] !== "\\" || text[i + 1] !== ")") continue;
+
+    let precedingSlashes = 0;
+    for (let j = i - 1; j >= start && text[j] === "\\"; j--) precedingSlashes++;
+    if (precedingSlashes % 2 === 0) return i;
+  }
+  return -1;
+}
+
 function convertInlineMath(text: string): string {
   // The dominant convention: inline math is written as `( … TeX … )`, where the
   // parentheses are the delimiters. Contents routinely nest their own
@@ -440,6 +455,18 @@ function convertInlineMath(text: string): string {
       out += ch;
       i++;
       continue;
+    }
+    // Standard TeX inline delimiters are authoritative even for a single
+    // identifier (`\(x\)`). Handle them before the corpus' lossy parenthesis
+    // convention so the opening slash cannot escape the generated `$` marker.
+    if (!inMath && ch === "\\" && text[i + 1] === "(") {
+      const close = standardInlineClose(text, i + 2);
+      const content = close === -1 ? "" : text.slice(i + 2, close);
+      if (close !== -1 && content.length <= 1200) {
+        out += "$" + repairMathFragment(content.replace(/\$/g, "")) + "$";
+        i = close + 2;
+        continue;
+      }
     }
     if (ch === "$") {
       inMath = !inMath;
@@ -753,24 +780,26 @@ export function preprocess(source: string): PreprocessResult {
   let tableColumns: number | null = null;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    const authoredLine = lines[i];
 
     // Never touch anything inside a fenced code block.
-    const fenceMatch = line.match(/^\s*(```+|~~~+)/);
+    const fenceMatch = authoredLine.match(/^\s*(```+|~~~+)/);
     if (fenceMatch) {
       if (!inFence) {
         inFence = true;
         fenceMarker = fenceMatch[1][0];
-      } else if (line.trim().startsWith(fenceMarker)) {
+      } else if (authoredLine.trim().startsWith(fenceMarker)) {
         inFence = false;
       }
-      out.push(line);
+      out.push(authoredLine);
       continue;
     }
     if (inFence) {
-      out.push(line);
+      out.push(authoredLine);
       continue;
     }
+
+    const line = stripInternalCitationTokens(authoredLine);
 
     // Track the shape of the table being scanned, so the pipe repair can tell a
     // row split by its own mathematics from one whose cells were always separate.
@@ -799,7 +828,7 @@ export function preprocess(source: string): PreprocessResult {
         delimiters = scanDelimiters(opened.head, delimiters);
       }
       while (j < lines.length) {
-        const current = lines[j];
+        const current = stripInternalCitationTokens(lines[j]);
         if (DISPLAY_CLOSE.test(current) && openGroups === 0 && delimiters.brackets === 0) {
           matched = true;
           break;

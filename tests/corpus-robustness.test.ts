@@ -126,6 +126,22 @@ describe("discovery survives hostile input", () => {
     assert.equal(article.title, "Delimiter Scar");
   });
 
+  it("never derives a title from heading syntax inside display maths", () => {
+    const article = corpus
+      .getAllArticles()
+      .find((candidate) => candidate.documentId.endsWith("equation-heading-scar.md"));
+    assert.ok(article);
+    assert.equal(article.title, "Equation Heading Scar");
+  });
+
+  it("preserves authored acronyms in filename-derived titles", () => {
+    const article = corpus
+      .getAllArticles()
+      .find((candidate) => candidate.documentId.endsWith("API_V2.md"));
+    assert.ok(article);
+    assert.equal(article.title, "API V2");
+  });
+
   it("is deterministic across repeated discovery", () => {
     const first = corpus.getAllArticles().map((a) => a.route);
     const second = corpus.getAllArticles().map((a) => a.route);

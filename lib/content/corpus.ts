@@ -10,8 +10,14 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import matter from "gray-matter";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import type { Root as MdastRoot } from "mdast";
 import { countProseWords, estimateReadingMinutes } from "./reading";
 import { extractLede } from "./lede";
+import { preprocess } from "./preprocess";
 import { titleLabel } from "./tex-text";
 import { basePath, withBasePath } from "../site";
 
@@ -173,25 +179,42 @@ function walk(dir: string, acc: string[]): void {
 }
 
 /**
- * Title derived from the document's first `#` heading.
+ * Title derived from the document's first structural level-one heading.
  *
  * A leading section number is stripped: the corpus contains documents that open
  * at `# 1. Source-locked GLM-5.2 dimensions`, and "1." is an artefact of the
  * heading's position in the document, not part of the work's name. An authored
  * `title:` in front matter always wins over this (plan §4.4).
  */
+const TITLE_PARSER = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
+
+/** Plain text carried by an mdast node, including inline maths and link text. */
+function mdastText(node: unknown): string {
+  if (typeof node !== "object" || node === null) return "";
+  const candidate = node as { value?: unknown; alt?: unknown; children?: unknown[] };
+  if (typeof candidate.value === "string") return candidate.value;
+  if (Array.isArray(candidate.children)) return candidate.children.map(mdastText).join("");
+  return typeof candidate.alt === "string" ? candidate.alt : "";
+}
+
 function firstHeading(body: string): string | null {
-  const match = body.match(/^\s{0,3}#\s+(.+?)\s*$/m);
-  if (!match) return null;
-  const raw = match[1]
+  // Share the rendering pipeline's O(n) normalization, then ask the Markdown
+  // tree for a real H1. Regex scanning cannot distinguish an authored heading
+  // from a `#` conversion scar inside display maths or fenced code.
+  const normalized = preprocess(body).markdown;
+  const tree = TITLE_PARSER.parse(normalized) as MdastRoot;
+  const heading = tree.children.find(
+    (node) => node.type === "heading" && node.depth === 1,
+  );
+  if (!heading) return null;
+
+  const raw = mdastText(heading)
     .replace(/\s*#*\s*$/, "")
     .replace(/^\s*\d+(?:\.\d+)*[.)]\s+/, "")
     .trim();
 
-  // A damaged display-math opener such as `# [` is structural, not a title.
-  // Do not scan subsequent source headings: lossy equations can contain lines
-  // beginning with `#`, so the deterministic filename fallback is the only
-  // metadata source that cannot mistake equation content for authored prose.
+  // A syntactically real but equation-only H1 is still structural metadata.
+  // `titleLabel` rejects it so the deterministic filename supplies the title.
   return titleLabel(raw) || null;
 }
 
@@ -551,8 +574,9 @@ export function getAllArticles(): ArticleMeta[] {
     const sectionLabel = folderLabels[0] || titleCase(section);
 
     const baseName = path.basename(abs, path.extname(abs));
+    const isDirectoryIndex = /^(?:index|readme)$/i.test(baseName);
     let slugTail = slugify(baseName);
-    if (slugTail === "index" || slugTail === "readme") {
+    if (isDirectoryIndex) {
       slugTail = slugify(parts[parts.length - 2] || baseName);
     }
     if (!slugTail) {
@@ -590,7 +614,14 @@ export function getAllArticles(): ArticleMeta[] {
     usedRoutes.add(route);
 
     const authoredTitle = typeof data.title === "string" ? titleLabel(data.title) : "";
-    const title = authoredTitle || firstHeading(content) || titleCase(slugTail);
+    const fallbackTitleSource = isDirectoryIndex
+      ? parts[parts.length - 2] || baseName
+      : baseName;
+    // Preserve source-authored acronym casing (`RL_PPO.md` → `RL PPO`) while
+    // retaining the collision-safe slug as the final fallback for punctuation-
+    // only filenames.
+    const fallbackTitle = folderLabel(fallbackTitleSource) || titleCase(slugTail);
+    const title = authoredTitle || firstHeading(content) || fallbackTitle;
     const description =
       (typeof data.description === "string" && data.description) ||
       extractLede(content);
