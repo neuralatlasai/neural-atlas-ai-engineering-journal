@@ -142,6 +142,14 @@ describe("discovery survives hostile input", () => {
     assert.equal(article.title, "API V2");
   });
 
+  it("treats a numbered H1 sequence as sections rather than a page title", () => {
+    const article = corpus
+      .getAllArticles()
+      .find((candidate) => candidate.documentId.endsWith("indexed-sections.md"));
+    assert.ok(article);
+    assert.equal(article.title, "Indexed Sections");
+  });
+
   it("is deterministic across repeated discovery", () => {
     const first = corpus.getAllArticles().map((a) => a.route);
     const second = corpus.getAllArticles().map((a) => a.route);

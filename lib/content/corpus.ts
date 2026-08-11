@@ -197,15 +197,32 @@ function mdastText(node: unknown): string {
   return typeof candidate.alt === "string" ? candidate.alt : "";
 }
 
+interface HeadingSequenceIndex {
+  series: string;
+  index: number;
+}
+
+/** Leading series marker in labels such as `A 0 — INPUT` or `Stage 2: LOSS`. */
+function headingSequenceIndex(label: string): HeadingSequenceIndex | null {
+  const match = label.match(
+    /^\(?([\p{L}][\p{L}\p{N}]*)\s+(\d+)\)?\s*(?:[.:—–-]|$)/u,
+  );
+  if (!match) return null;
+  const index = Number.parseInt(match[2], 10);
+  if (!Number.isSafeInteger(index)) return null;
+  return { series: match[1].toLocaleLowerCase("en"), index };
+}
+
 function firstHeading(body: string): string | null {
   // Share the rendering pipeline's O(n) normalization, then ask the Markdown
   // tree for a real H1. Regex scanning cannot distinguish an authored heading
   // from a `#` conversion scar inside display maths or fenced code.
   const normalized = preprocess(body).markdown;
   const tree = TITLE_PARSER.parse(normalized) as MdastRoot;
-  const heading = tree.children.find(
+  const headings = tree.children.filter(
     (node) => node.type === "heading" && node.depth === 1,
   );
+  const heading = headings[0];
   if (!heading) return null;
 
   const raw = mdastText(heading)
@@ -215,7 +232,25 @@ function firstHeading(body: string): string | null {
 
   // A syntactically real but equation-only H1 is still structural metadata.
   // `titleLabel` rejects it so the deterministic filename supplies the title.
-  return titleLabel(raw) || null;
+  const candidate = titleLabel(raw);
+  if (!candidate) return null;
+
+  // A series of peer H1s (`A 0`, `A 1`, …; `Stage 1`, `Stage 2`, …) is a
+  // sectioning scheme, not a document title. Detect the relationship across
+  // the tree instead of hard-coding any prefix, algorithm, or filename.
+  const firstSequence = headingSequenceIndex(candidate);
+  if (firstSequence) {
+    const continuesSequence = headings.slice(1).some((node) => {
+      const next = headingSequenceIndex(titleLabel(mdastText(node)));
+      return (
+        next?.series === firstSequence.series &&
+        next.index > firstSequence.index
+      );
+    });
+    if (continuesSequence) return null;
+  }
+
+  return candidate;
 }
 
 function extractDate(body: string): string | null {
