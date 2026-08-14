@@ -421,6 +421,29 @@ ${equalityScar}
     );
   });
 
+  it("closes a block whose left set delimiter has an invisible right delimiter", () => {
+    const source = String.raw`[
+\boxed{
+\Theta=
+\left{
+\begin{aligned}
+&D=896,\quad L=24,\
+&H=14.
+\end{aligned}
+\right.
+}
+]`;
+    const { markdown, displayBlocks } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.equal(displayBlocks, 1);
+    assert.ok(!markdown.includes("\n[\n"));
+    assert.match(block, /\\left\\\{/);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
+
   it("restores an array row break collapsed before hline", () => {
     const source = String.raw`[
 \begin{array}{c|c}

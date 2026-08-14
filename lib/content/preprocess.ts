@@ -41,6 +41,9 @@ const DISPLAY_OPEN = /^\s*(?:#{1,6}\s*)?(?:\[|\\\[)\s*$/;
 // only after a display block has opened, so ordinary blockquotes are unaffected.
 const DISPLAY_CLOSE = /^\s*(?:>\s*)?(?:\]|\\\])\s*$/;
 
+/** A TeX sizing command immediately before its delimiter character. */
+const DELIMITER_COMMAND = /\\(?:left|right|middle|bigg?[lr]?|Bigg?[lr]?)\s*$/;
+
 /**
  * Net brace balance contributed by a line of TeX, ignoring escaped braces.
  *
@@ -57,9 +60,11 @@ const DISPLAY_CLOSE = /^\s*(?:>\s*)?(?:\]|\\\])\s*$/;
  * returned to zero and the block's real terminator was swallowed instead,
  * dumping raw TeX onto the page.
  *
- * Braces are the reliable signal: in valid TeX they are always balanced, and
+ * Grouping braces are the reliable signal: in valid TeX they are balanced, and
  * an equation cut short mid-expression is exactly the case that leaves one
- * open. So a lone `]` terminates the block only where no group is open.
+ * open. Braces consumed as delimiter glyphs by `\left`, `\right`, `\Bigg`, and
+ * related commands do not create groups and are excluded from the balance.
+ * A lone `]` therefore terminates the block only where no real group is open.
  */
 function braceDelta(line: string): number {
   let delta = 0;
@@ -69,8 +74,10 @@ function braceDelta(line: string): number {
       i++; // skip the escaped character, including `\{` and `\}`
       continue;
     }
+    if (char !== "{" && char !== "}") continue;
+    if (DELIMITER_COMMAND.test(line.slice(0, i))) continue;
     if (char === "{") delta++;
-    else if (char === "}") delta--;
+    else delta--;
   }
   return delta;
 }
@@ -539,9 +546,6 @@ const TABLE_ROW = /^\s{0,3}\|.*\|\s*$/;
 
 /** TeX metacharacters that mark a parenthesised group as mathematics. */
 const TEX_METACHARACTER = /[\\{}^_]/;
-
-/** A sizing command immediately before a bar, which makes the bar a delimiter. */
-const DELIMITER_COMMAND = /\\(?:left|right|middle|bigg?[lr]?|Bigg?[lr]?)\s*$/;
 
 /**
  * Repair mathematics whose `|` was swallowed by a table.
