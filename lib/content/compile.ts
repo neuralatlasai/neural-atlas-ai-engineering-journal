@@ -793,6 +793,148 @@ function repairCollapsedRowBreaks(tex: string, displayMode: boolean): string {
   return tex;
 }
 
+/** Whether the character at `index` is escaped by an odd backslash run. */
+function isEscaped(tex: string, index: number): boolean {
+  let slashes = 0;
+  for (let i = index - 1; i >= 0 && tex[i] === "\\"; i--) slashes++;
+  return slashes % 2 === 1;
+}
+
+/** Opening brace paired with the bare closing brace at `close`. */
+function matchingGroupOpen(tex: string, close: number): number {
+  let depth = 1;
+  for (let i = close - 1; i >= 0; i--) {
+    if (isEscaped(tex, i)) continue;
+    if (tex[i] === "}") depth++;
+    else if (tex[i] === "{" && --depth === 0) return i;
+  }
+  return -1;
+}
+
+function skipWhitespaceBackward(tex: string, cursor: number): number {
+  while (cursor > 0 && /\s/.test(tex[cursor - 1])) cursor--;
+  return cursor;
+}
+
+/** Start of the one TeX argument immediately before `end`. */
+function previousArgumentStart(tex: string, end: number): number {
+  const cursor = skipWhitespaceBackward(tex, end);
+  if (cursor === 0) return -1;
+
+  if (tex[cursor - 1] === "}" && !isEscaped(tex, cursor - 1)) {
+    return matchingGroupOpen(tex, cursor - 1);
+  }
+
+  // An unbraced control word is one argument (`_\theta`). Ordinary letters
+  // remain one-character arguments even when adjacent (`_next` means `_n`).
+  if (/[A-Za-z]/.test(tex[cursor - 1])) {
+    let start = cursor - 1;
+    while (start > 0 && /[A-Za-z]/.test(tex[start - 1])) start--;
+    if (start > 0 && tex[start - 1] === "\\" && !isEscaped(tex, start - 1)) {
+      return start - 1;
+    }
+  }
+
+  return cursor - 1;
+}
+
+/**
+ * Start of the atom carrying a repeated `_` or `^` at `duplicate`.
+ *
+ * The scan walks complete script arguments backwards, so nested braces and
+ * control-word arguments do not confuse it. It returns a position only when an
+ * earlier script of the same kind belongs to the same atom; separate atoms such
+ * as `H_i + X_j` therefore never qualify.
+ */
+function repeatedScriptAtomStart(tex: string, duplicate: number): number {
+  const repeated = tex[duplicate];
+  if (repeated !== "_" && repeated !== "^") return -1;
+
+  let cursor = duplicate;
+  let foundSameScript = false;
+  while (cursor > 0) {
+    const argumentStart = previousArgumentStart(tex, cursor);
+    if (argumentStart < 0) break;
+    const markerEnd = skipWhitespaceBackward(tex, argumentStart);
+    const marker = markerEnd - 1;
+    if (marker < 0 || (tex[marker] !== "_" && tex[marker] !== "^")) break;
+    if (tex[marker] === repeated) foundSameScript = true;
+    cursor = marker;
+  }
+  if (!foundSameScript) return -1;
+
+  const baseEnd = skipWhitespaceBackward(tex, cursor);
+  const baseStart = previousArgumentStart(tex, baseEnd);
+  if (baseStart < 0) return -1;
+
+  // A group immediately following another group may be a later argument of a
+  // multi-argument command (`\frac{a}{b}`). Without a full TeX parser its atom
+  // boundary is ambiguous, so leave it untouched and retain the source fallback.
+  const beforeBase = skipWhitespaceBackward(tex, baseStart);
+  if (tex[baseStart] === "{" && beforeBase > 0 && tex[beforeBase - 1] === "}") {
+    return -1;
+  }
+  return baseStart;
+}
+
+interface KatexPositionError extends Error {
+  position?: unknown;
+  rawMessage?: unknown;
+}
+
+/**
+ * Repair a repeated script by making the already-scripted expression a group.
+ *
+ * `H_k^{(p+1)}_{next}` is rejected as a double subscript, while
+ * `{H_k^{(p+1)}}_{next}` expresses the authored nested annotation. KaTeX is the
+ * oracle: a candidate is created only for its exact Double sub/superscript
+ * diagnostic, and it is returned only when the complete equation parses.
+ */
+function repairRepeatedScripts(tex: string, displayMode: boolean): string {
+  let hasCandidate = false;
+  for (let i = 0; i < tex.length; i++) {
+    if (
+      (tex[i] === "_" || tex[i] === "^") &&
+      repeatedScriptAtomStart(tex, i) >= 0
+    ) {
+      hasCandidate = true;
+      break;
+    }
+  }
+  if (!hasCandidate) return tex;
+
+  let candidate = tex;
+  for (let pass = 0; pass < 16; pass++) {
+    try {
+      katex.renderToString(candidate, { displayMode, throwOnError: true });
+      return candidate;
+    } catch (error) {
+      const parseError = error as KatexPositionError;
+      const diagnostic =
+        typeof parseError.rawMessage === "string" ? parseError.rawMessage : "";
+      const marker =
+        diagnostic === "Double subscript"
+          ? "_"
+          : diagnostic === "Double superscript"
+            ? "^"
+            : "";
+      const position =
+        typeof parseError.position === "number" ? parseError.position : -1;
+      if (marker === "" || candidate[position] !== marker) return tex;
+
+      const atomStart = repeatedScriptAtomStart(candidate, position);
+      if (atomStart < 0) return tex;
+      candidate =
+        candidate.slice(0, atomStart) +
+        "{" +
+        candidate.slice(atomStart, position) +
+        "}" +
+        candidate.slice(position);
+    }
+  }
+  return tex;
+}
+
 /**
  * remark plugin: apply the row-break repair to every maths node.
  *
@@ -867,7 +1009,8 @@ export function prepareMathForRendering(
   displayMode: boolean,
 ): string {
   const repairedBraces = repairUnescapedLiteralClosers(tex, displayMode);
-  return repairCollapsedRowBreaks(repairedBraces, displayMode);
+  const repairedRows = repairCollapsedRowBreaks(repairedBraces, displayMode);
+  return repairRepeatedScripts(repairedRows, displayMode);
 }
 
 /** Classes emitted by HAST processors can be arrays or whitespace strings. */

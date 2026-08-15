@@ -1,6 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { compileArticle, extractArticleIndex } from "../lib/content/compile";
+import {
+  compileArticle,
+  extractArticleIndex,
+  prepareMathForRendering,
+} from "../lib/content/compile";
 import { titleLabel } from "../lib/content/tex-text";
 
 /** Heading levels rendered in document order, e.g. `[2, 3, 3, 2]`. */
@@ -385,6 +389,29 @@ describe("rendering contract", () => {
       /\\pi_\\theta\\\{\\pi_\{E_i\}\\\}/,
       "the visible literal brace pair is preserved",
     );
+  });
+
+  it("groups atoms carrying repeated subscripts or superscripts", async () => {
+    const subscript = String.raw`H_k^{(p+1)}_{\mathrm{next\ stage}}`;
+    const superscript = String.raw`Z_i^{a}^{b}`;
+
+    assert.equal(
+      prepareMathForRendering(subscript, true),
+      String.raw`{H_k^{(p+1)}}_{\mathrm{next\ stage}}`,
+    );
+    assert.equal(
+      prepareMathForRendering(superscript, true),
+      String.raw`{Z_i^{a}}^{b}`,
+    );
+    assert.equal(
+      prepareMathForRendering(String.raw`H_k^{(p+1)}`, true),
+      String.raw`H_k^{(p+1)}`,
+      "valid scripted atoms remain byte-for-byte unchanged",
+    );
+
+    const { html } = await compileArticle(`$$\n${subscript}\n$$`, "Pipeline transfer");
+    assert.ok(html.includes("katex-display"));
+    assert.ok(!html.includes("katex-error"), "raw TeX fallback is forbidden");
   });
 
   it("renders an array whose closer inherited a blockquote marker", async () => {

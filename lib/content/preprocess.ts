@@ -270,7 +270,9 @@ function escapeSetBraces(s: string): string {
       /^-?\d+(?:\.\d+)?$/.test(trimmedInner) ||
       /^\\(?:bot|top|emptyset|varnothing)$/.test(trimmedInner) ||
       /^\\(?:text|textrm|textbf|textit|textsf|texttt)\{[\s\S]*\}$/.test(trimmedInner) ||
-      /^[A-Za-z][A-Za-z0-9]*(?:\s*[_^]\s*\{[\s\S]+\})+$/.test(trimmedInner);
+      /^[A-Za-z][A-Za-z0-9]*(?:\s*[_^]\s*(?:\{[\s\S]+\}|\\[A-Za-z]+|[A-Za-z0-9]))+$/.test(
+        trimmedInner,
+      );
     const followsSetOperator = beginsWithSetOperator.test(context);
     const provenSetLiteral =
       topLevelComma ||

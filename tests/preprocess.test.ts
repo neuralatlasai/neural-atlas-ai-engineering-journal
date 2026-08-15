@@ -555,6 +555,7 @@ x \in {\mathcal X},
 A \cup {\bot},
 B \cup {v_{\mathrm{ignore}}},
 C \cup {\text{one bounded chunk}},
+E \setminus {r^\star},
 D \in
 {\text{prefill chunk},\text{decode token}},
 \left( {0,\ldots,9} \cup {-100} \right)
@@ -565,6 +566,7 @@ D \in
     assert.ok(markdown.includes(String.raw`A \cup \{\bot\}`), markdown);
     assert.ok(markdown.includes(String.raw`B \cup \{v_{\mathrm{ignore}}\}`), markdown);
     assert.ok(markdown.includes(String.raw`C \cup \{\text{one bounded chunk}\}`), markdown);
+    assert.ok(markdown.includes(String.raw`E \setminus \{r^\star\}`), markdown);
     assert.ok(
       markdown.includes(String.raw`D \in
 \{\text{prefill chunk},\text{decode token}\}`),
