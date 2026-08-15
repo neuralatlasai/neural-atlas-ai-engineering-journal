@@ -197,21 +197,57 @@ function escapeSetBraces(s: string): string {
     let depth = 1;
     let j = braceIdx + 1;
     let topLevelComma = false;
+    let tupleComma = false;
+    let setBuilderSeparator = false;
+    let parenDepth = 0;
+    let bracketDepth = 0;
     while (j < s.length && depth > 0) {
       const c = s[j];
       if (c === "\\") {
-        j += 2;
+        const command = s.slice(j).match(/^\\([A-Za-z]+)/);
+        if (
+          depth === 1 &&
+          parenDepth === 0 &&
+          bracketDepth === 0 &&
+          command &&
+          /^(?:in|notin|mid|colon)$/.test(command[1])
+        ) {
+          setBuilderSeparator = true;
+        }
+        j += command?.[0].length ?? 2;
         continue;
       }
       if (c === "{") depth++;
       else if (c === "}") depth--;
-      else if (c === "," && depth === 1) topLevelComma = true;
+      else if (depth === 1) {
+        if (c === "[") bracketDepth++;
+        else if (c === "]") bracketDepth = Math.max(0, bracketDepth - 1);
+        else if (c === "(") parenDepth++;
+        else if (c === ")" && parenDepth > 0) parenDepth--;
+        else if (c === ")" && bracketDepth > 0) bracketDepth--; // interval: `[a,b)`
+        else if (c === "," && bracketDepth === 0) {
+          if (parenDepth === 0) topLevelComma = true;
+          else if (parenDepth === 1) tupleComma = true;
+        } else if (
+          (c === ":" || c === "|") &&
+          parenDepth === 0 &&
+          bracketDepth === 0
+        ) {
+          setBuilderSeparator = true;
+        }
+      }
       if (depth === 0) break;
       j++;
     }
     const inner = s.slice(braceIdx + 1, j);
     const context = m[1];
     const trimmedInner = inner.trim();
+    // Parenthesised commas prove a tuple set only when the tuple begins the
+    // group. A command call such as `{\max(0,a-b)}` is ordinary TeX grouping
+    // (not a set) and must remain usable as a `\frac` argument across lines.
+    const leadingTuple = /^(?:\\(?:left|bigg?[lr]?|Bigg?[lr]?)\s*)?\(/.test(
+      trimmedInner,
+    );
     // A set can be authored as one text-mode group:
     // `e\in{\text{math, code, agent}}`. Its commas are one level below the
     // outer set, but still separate set members rather than function arguments.
@@ -238,6 +274,8 @@ function escapeSetBraces(s: string): string {
     const followsSetOperator = beginsWithSetOperator.test(context);
     const provenSetLiteral =
       topLevelComma ||
+      (leadingTuple && tupleComma) ||
+      setBuilderSeparator ||
       commaSeparatedText ||
       indexedSingleton ||
       (followsSetOperator && singletonSetElement);

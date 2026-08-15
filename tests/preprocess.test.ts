@@ -291,6 +291,41 @@ e\in
     );
   });
 
+  it("preserves multiline fraction grouping when its denominator contains nested commas", () => {
+    const source = String.raw`\[
+p'(x)=
+\frac{\max(0,p(x)-q(x))}
+{\sum_v\max(0,p(v)-q(v))}.
+\]`;
+    const { markdown, displayBlocks } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.equal(displayBlocks, 1);
+    assert.ok(
+      block.includes(String.raw`{\sum_v\max(0,p(v)-q(v))}`),
+      block,
+    );
+    assert.ok(!block.includes(String.raw`\{\sum_v`), block);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
+
+  it("distinguishes tuple and set-builder literals from grouped function calls", () => {
+    const source = String.raw`\[
+\mathcal D={(x_i,y_i)}_{i=1}^{N},
+T={t\in\mathcal T:P(t)},
+M={\max(0,p-q)}.
+\]`;
+    const { markdown } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.ok(block.includes(String.raw`\mathcal D=\{(x_i,y_i)\}_{i=1}^{N}`), block);
+    assert.ok(block.includes(String.raw`T=\{t\in\mathcal T:P(t)\}`), block);
+    assert.ok(block.includes(String.raw`M={\max(0,p-q)}`), block);
+    assert.ok(!block.includes(String.raw`M=\{\max`), block);
+  });
+
   it("makes indexed singleton set braces visible without changing grouping", () => {
     const equalityScar = "=".repeat(7);
     const source = String.raw`[
