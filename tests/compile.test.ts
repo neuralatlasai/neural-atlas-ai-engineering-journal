@@ -414,6 +414,17 @@ describe("rendering contract", () => {
     assert.ok(!html.includes("katex-error"), "raw TeX fallback is forbidden");
   });
 
+  it("repairs orphaned middle bars without changing valid sized delimiters", () => {
+    const orphaned = String.raw`\operatorname{Conv2d};\middle|;\mathcal B`;
+    const valid = String.raw`\left(a\middle|b\right)`;
+
+    assert.equal(
+      prepareMathForRendering(orphaned, true),
+      String.raw`\operatorname{Conv2d};\mid;\mathcal B`,
+    );
+    assert.equal(prepareMathForRendering(valid, true), valid);
+  });
+
   it("renders an array whose closer inherited a blockquote marker", async () => {
     const source = String.raw`[
 \begin{array}{c|c}

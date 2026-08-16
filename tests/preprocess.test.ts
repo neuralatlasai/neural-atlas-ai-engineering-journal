@@ -326,6 +326,37 @@ M={\max(0,p-q)}.
     assert.ok(!block.includes(String.raw`M=\{\max`), block);
   });
 
+  it("keeps short prose-attached parameter equations in the reading flow", () => {
+    const source = String.raw`For a kernel
+
+[
+(R,S)=(K_h,K_w),
+]
+
+stride
+
+[
+(U,V),
+]
+
+the learned weight tensor is
+
+[
+\boxed{W\in\mathbb R^{K\times C\times R\times S}}
+]
+
+After.`;
+    const { markdown, displayBlocks, inlineSpans } = preprocess(source);
+
+    assert.match(
+      markdown,
+      /For a kernel \$\(R,S\)=\(K_h,K_w\),\$\nstride \$\(U,V\),\$\nthe learned weight tensor is/,
+    );
+    assert.match(markdown, /\$\$\n\\boxed\{/);
+    assert.equal(displayBlocks, 1);
+    assert.equal(inlineSpans, 2);
+  });
+
   it("makes indexed singleton set braces visible without changing grouping", () => {
     const equalityScar = "=".repeat(7);
     const source = String.raw`[

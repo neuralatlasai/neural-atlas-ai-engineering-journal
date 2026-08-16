@@ -936,6 +936,45 @@ function repairRepeatedScripts(tex: string, displayMode: boolean): string {
 }
 
 /**
+ * Repair a relation bar incorrectly sized with `\middle` outside `\left`/`\right`.
+ *
+ * KaTeX reports the exact offending delimiter. Replacing only the orphaned
+ * `\middle|` with `\mid` preserves the intended separator and relation spacing;
+ * a valid middle delimiter parses on the first attempt and is never changed.
+ */
+function repairOrphanedMiddleBars(tex: string, displayMode: boolean): string {
+  if (!tex.includes("\\middle")) return tex;
+
+  let candidate = tex;
+  for (let pass = 0; pass < 16; pass++) {
+    try {
+      katex.renderToString(candidate, { displayMode, throwOnError: true });
+      return candidate;
+    } catch (error) {
+      const parseError = error as KatexPositionError;
+      const diagnostic =
+        typeof parseError.rawMessage === "string" ? parseError.rawMessage : "";
+      const position =
+        typeof parseError.position === "number" ? parseError.position : -1;
+      if (
+        diagnostic !== "\\middle without preceding \\left" ||
+        candidate[position] !== "|"
+      ) {
+        return tex;
+      }
+
+      const command = /\\middle\s*$/.exec(candidate.slice(0, position));
+      if (!command) return tex;
+      candidate =
+        candidate.slice(0, command.index) +
+        "\\mid" +
+        candidate.slice(position + 1);
+    }
+  }
+  return tex;
+}
+
+/**
  * remark plugin: apply the row-break repair to every maths node.
  *
  * `remark-math` contributes `math` and `inlineMath` node types that are not in
@@ -1010,7 +1049,8 @@ export function prepareMathForRendering(
 ): string {
   const repairedBraces = repairUnescapedLiteralClosers(tex, displayMode);
   const repairedRows = repairCollapsedRowBreaks(repairedBraces, displayMode);
-  return repairRepeatedScripts(repairedRows, displayMode);
+  const repairedScripts = repairRepeatedScripts(repairedRows, displayMode);
+  return repairOrphanedMiddleBars(repairedScripts, displayMode);
 }
 
 /** Classes emitted by HAST processors can be arrays or whitespace strings. */

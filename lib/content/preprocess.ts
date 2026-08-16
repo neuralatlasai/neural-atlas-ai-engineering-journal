@@ -761,6 +761,46 @@ const ORPHANED_PYTORCH_OPEN = /^(.*\S\))orch\}\s*$/;
 const ORPHANED_TEXT_OPEN =
   /^(.*\S\))([A-Za-z][A-Za-z0-9 /+_.-]*)\}\s*$/;
 
+/** TeX whose visual structure requires a standalone display equation. */
+const DISPLAY_ONLY_TEX =
+  /\\(?:boxed|begin|end|tag|frac|dfrac|tfrac|sum|prod|int|oint|lim|substack|displaystyle|overset|underset)\b|&|\\\\/;
+
+/**
+ * A prose line that grammatically continues into a following compact formula.
+ *
+ * Terminal punctuation closes the sentence and therefore keeps the next block
+ * as a display. Markdown structural lines are excluded so headings, lists,
+ * tables, quotes, references, and fences can never be merged accidentally.
+ */
+function isOpenProseLead(line: string): boolean {
+  const trimmed = line.trim();
+  return (
+    trimmed !== "" &&
+    !/^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\||```|~~~|\[)/.test(line) &&
+    !/[.!?:;]\s*$/.test(trimmed)
+  );
+}
+
+/** A plain prose continuation, as opposed to another Markdown structure. */
+function isProseContinuation(line: string): boolean {
+  const trimmed = line.trim();
+  return (
+    trimmed !== "" &&
+    !/^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\||```|~~~|\[|---+$)/.test(line)
+  );
+}
+
+/**
+ * Reduce a short prose-attached display to inline TeX when it has no structure
+ * that benefits from display layout. The length cap is a readability boundary,
+ * not a parser boundary; complex or ambiguous expressions remain displays.
+ */
+function compactInlineTeX(lines: string[]): string | null {
+  const tex = lines.join(" ").replace(/\s+/g, " ").trim();
+  if (tex === "" || tex.length > 160 || DISPLAY_ONLY_TEX.test(tex)) return null;
+  return tex;
+}
+
 /**
  * Match a line that opens a display block.
  *
@@ -907,6 +947,29 @@ export function preprocess(source: string): PreprocessResult {
         // next). Run the brace repair once over the assembled block so those
         // cross-line pairs are seen. It is idempotent w.r.t. the per-line pass.
         const block = escapeSetBraces(repaired.join("\n"));
+        const previousSource = i >= 2 ? stripInternalCitationTokens(lines[i - 2]) : "";
+        const nextSource =
+          j + 2 < lines.length ? stripInternalCitationTokens(lines[j + 2]) : "";
+        const compact = compactInlineTeX(block.split("\n"));
+        const proseAttached =
+          compact !== null &&
+          lines[i - 1]?.trim() === "" &&
+          lines[j + 1]?.trim() === "" &&
+          isOpenProseLead(previousSource) &&
+          isProseContinuation(nextSource) &&
+          out.at(-1)?.trim() === "" &&
+          out.at(-2)?.trim() !== "";
+        if (proseAttached) {
+          // Remove the blank before the authored block and attach the compact
+          // formula to its lead-in. Skipping the blank after the block lets the
+          // following source line remain in the same Markdown paragraph. A run
+          // of label/value pairs therefore becomes one coherent prose sentence.
+          out.pop();
+          out[out.length - 1] += ` $${compact}$`;
+          inlineSpans++;
+          i = j + 1;
+          continue;
+        }
         // remark-math needs the fenced $$ separated from prose by blank lines.
         if (out.length > 0 && out[out.length - 1].trim() !== "") out.push("");
         out.push("$$");
