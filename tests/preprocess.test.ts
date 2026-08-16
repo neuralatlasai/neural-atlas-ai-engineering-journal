@@ -357,6 +357,30 @@ After.`;
     assert.equal(inlineSpans, 2);
   });
 
+  it("keeps compact values introduced by colons in the reading flow", () => {
+    const source = String.raw`The indexer and model are jointly adapted for:
+
+[
+20\text{B tokens},
+]
+
+using the training data with constant learning rate:
+
+[
+\eta=10^{-5}.
+]
+
+([arXiv][2])`;
+    const { markdown, displayBlocks, inlineSpans } = preprocess(source);
+
+    assert.match(
+      markdown,
+      /adapted for: \$20\\text\{B tokens\},\$\nusing the training data with constant learning rate: \$\\eta=10\^\{-5\}\.\$\n\(\[arXiv\]\[2\]\)/,
+    );
+    assert.equal(displayBlocks, 0);
+    assert.equal(inlineSpans, 2);
+  });
+
   it("makes indexed singleton set braces visible without changing grouping", () => {
     const equalityScar = "=".repeat(7);
     const source = String.raw`[

@@ -768,16 +768,17 @@ const DISPLAY_ONLY_TEX =
 /**
  * A prose line that grammatically continues into a following compact formula.
  *
- * Terminal punctuation closes the sentence and therefore keeps the next block
- * as a display. Markdown structural lines are excluded so headings, lists,
- * tables, quotes, references, and fences can never be merged accidentally.
+ * Sentence terminators keep the next block as a display. A colon deliberately
+ * remains open because it introduces the compact value that follows. Markdown
+ * structural lines are excluded so headings, lists, tables, quotes, references,
+ * and fences can never be merged accidentally.
  */
 function isOpenProseLead(line: string): boolean {
   const trimmed = line.trim();
   return (
     trimmed !== "" &&
     !/^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\||```|~~~|\[)/.test(line) &&
-    !/[.!?:;]\s*$/.test(trimmed)
+    !/[.!?;]\s*$/.test(trimmed)
   );
 }
 
