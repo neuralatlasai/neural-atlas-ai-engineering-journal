@@ -1036,23 +1036,42 @@ export function preprocess(source: string): PreprocessResult {
         const nextSource =
           j + 2 < lines.length ? stripInternalCitationTokens(lines[j + 2]) : "";
         const compact = compactInlineTeX(block.split("\n"));
+        const blankBefore = lines[i - 1]?.trim() === "";
+        const blankAfter = lines[j + 1]?.trim() === "";
+        const outputEndsWithBlank = out.at(-1)?.trim() === "";
+        const attachesBackward =
+          blankBefore &&
+          outputEndsWithBlank &&
+          out.at(-2)?.trim() !== "" &&
+          isOpenProseLead(previousSource);
+        const continuesInlineRun =
+          blankBefore &&
+          !outputEndsWithBlank &&
+          out.at(-1)?.trim() !== "";
+        const attachesForward =
+          blankAfter && isProseContinuation(nextSource);
         const proseAttached =
           compact !== null &&
-          lines[i - 1]?.trim() === "" &&
-          lines[j + 1]?.trim() === "" &&
-          isOpenProseLead(previousSource) &&
-          isProseContinuation(nextSource) &&
-          out.at(-1)?.trim() === "" &&
-          out.at(-2)?.trim() !== "";
+          blankBefore &&
+          blankAfter &&
+          (attachesBackward || continuesInlineRun || attachesForward);
         if (proseAttached) {
-          // Remove the blank before the authored block and attach the compact
-          // formula to its lead-in. Skipping the blank after the block lets the
-          // following source line remain in the same Markdown paragraph. A run
-          // of label/value pairs therefore becomes one coherent prose sentence.
-          out.pop();
-          out[out.length - 1] += ` $${compact}$`;
+          if (attachesBackward) {
+            out.pop();
+            out[out.length - 1] += ` $${compact}$`;
+          } else if (continuesInlineRun) {
+            out[out.length - 1] += ` $${compact}$`;
+          } else {
+            // A compact equation immediately after a structural boundary starts
+            // the paragraph that the following prose continues.
+            out.push(`$${compact}$`);
+          }
           inlineSpans++;
-          i = j + 1;
+          // Keep a run open across following prose or another authored display.
+          // A complex next display restores its own required blank boundary.
+          const nextStartsDisplay =
+            blankAfter && matchDisplayOpen(nextSource) !== null;
+          i = attachesForward || nextStartsDisplay ? j + 1 : j;
           continue;
         }
         // remark-math needs the fenced $$ separated from prose by blank lines.

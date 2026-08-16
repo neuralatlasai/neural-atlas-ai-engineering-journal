@@ -381,6 +381,47 @@ using the training data with constant learning rate:
     assert.equal(inlineSpans, 2);
   });
 
+  it("groups one-sided and consecutive compact equations with adjacent prose", () => {
+    const source = String.raw`## Stage
+
+[
+X\in\mathbb R^{B\times T}
+]
+
+For each sample,
+
+[
+Y=f(X)
+]
+
+Output:
+
+[
+Z=g(Y)
+]
+
+[
+Z\in\mathbb R^{B\times D}
+]
+
+Temporal output:
+
+[
+\boxed{T=\frac{N+2P-D(K-1)-1}{S}+1}
+]
+
+## Next`;
+    const { markdown, displayBlocks, inlineSpans } = preprocess(source);
+
+    assert.match(
+      markdown,
+      /## Stage\n\n\$X\\in\\mathbb R\^\{B\\times T\}\$\nFor each sample, \$Y=f\(X\)\$\nOutput: \$Z=g\(Y\)\$ \$Z\\in\\mathbb R\^\{B\\times D\}\$\nTemporal output:/,
+    );
+    assert.match(markdown, /\$\$\n\\boxed\{T=\\frac/);
+    assert.equal(displayBlocks, 1);
+    assert.equal(inlineSpans, 4);
+  });
+
   it("makes indexed singleton set braces visible without changing grouping", () => {
     const equalityScar = "=".repeat(7);
     const source = String.raw`[
