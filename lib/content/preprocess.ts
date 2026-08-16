@@ -289,10 +289,92 @@ function escapeSetBraces(s: string): string {
   return last === 0 ? s : out + s.slice(last);
 }
 
+const TEXT_COMMAND_BEFORE_GROUP =
+  /\\(?:text|texttt|textrm|textsf|textbf|textit|textnormal|mbox)\s*$/;
+
+/** Whether `index` is escaped by an odd run of preceding backslashes. */
+function isEscapedCharacter(tex: string, index: number): boolean {
+  let slashes = 0;
+  for (let i = index - 1; i >= 0 && tex[i] === "\\"; i--) slashes++;
+  return slashes % 2 === 1;
+}
+
+/** A star that is syntax (`\operatorname*`, `X^{*}`), not multiplication. */
+function isStructuralAsterisk(tex: string, index: number): boolean {
+  let left = index;
+  while (left > 0 && /\s/.test(tex[left - 1])) left--;
+  if (tex[left - 1] === "_" || tex[left - 1] === "^") return true;
+
+  if (tex[left - 1] === "{") {
+    let marker = left - 1;
+    while (marker > 0 && /\s/.test(tex[marker - 1])) marker--;
+    let right = index + 1;
+    while (right < tex.length && /\s/.test(tex[right])) right++;
+    if (
+      (tex[marker - 1] === "_" || tex[marker - 1] === "^") &&
+      tex[right] === "}"
+    ) {
+      return true;
+    }
+  }
+
+  let commandStart = index;
+  while (commandStart > 0 && /[A-Za-z]/.test(tex[commandStart - 1])) {
+    commandStart--;
+  }
+  return (
+    commandStart < index &&
+    tex[commandStart - 1] === "\\" &&
+    !isEscapedCharacter(tex, commandStart - 1)
+  );
+}
+
+/**
+ * Give raw multiplication stars explicit TeX operator semantics.
+ *
+ * The scanner is O(n) and tracks text-mode brace ancestry. It preserves stars
+ * used by control-word variants, singleton scripts, escaped literals, and text
+ * payloads; every remaining raw `*` is a mathematical product and becomes
+ * `\ast`. This prevents valid-but-wrong low-baseline asterisks from surviving
+ * merely because KaTeX accepts them.
+ */
+function normalizeBareMathAsterisks(tex: string): string {
+  const textModeStack: boolean[] = [];
+  let out = "";
+
+  for (let i = 0; i < tex.length; i++) {
+    const char = tex[i];
+    const inTextMode = textModeStack.at(-1) ?? false;
+
+    if (char === "{" && !isEscapedCharacter(tex, i)) {
+      const opensTextMode = TEXT_COMMAND_BEFORE_GROUP.test(tex.slice(0, i));
+      textModeStack.push(inTextMode || opensTextMode);
+      out += char;
+      continue;
+    }
+    if (char === "}" && !isEscapedCharacter(tex, i)) {
+      textModeStack.pop();
+      out += char;
+      continue;
+    }
+    if (
+      char === "*" &&
+      !inTextMode &&
+      !isEscapedCharacter(tex, i) &&
+      !isStructuralAsterisk(tex, i)
+    ) {
+      out += "\\ast ";
+      continue;
+    }
+    out += char;
+  }
+  return out;
+}
+
 /** Escape/repair TeX tokens the corpus routinely mangles, which either
  *  hard-error KaTeX or render incorrectly. */
 function repairMathFragment(s: string): string {
-  return escapeSetBraces(
+  const repaired =
     s
       // Markdown emphasis mangled braced subscripts `_{…}` into `*{…}`
       // (e.g. `\operatorname{TopK}*{1024}` should be `…_{1024}`). Preserve
@@ -301,8 +383,9 @@ function repairMathFragment(s: string): string {
       // operator is still repaired as its subscript.
       .replace(/(?<!\\operatorname)\*\{/g, "_{")
       // …and single-character subscripts into `*x` (e.g. `\mathcal B}*e` →
-      // `\mathcal B}_e`). The `*` must sit between a closing delimiter and an
-      // identifier, so a genuine `a * b` product is untouched.
+      // `\mathcal B}_e`). A closing delimiter proves the left atom is complete;
+      // a plain identifier is accepted only when the subscript is a control word
+      // (`a*\ell`). This keeps unspaced products such as `a*b` unambiguous.
       //
       // `|` and `]` are closers too: a norm writes its order as a subscript on
       // the closing bar — `|E|_F`, `|a_k|_2` — and those were left as `|E|*F`
@@ -310,7 +393,8 @@ function repairMathFragment(s: string): string {
       // The subscript itself may be a control sequence rather than a plain
       // character — `\operatorname{SwiGLU}*\ell` means `…_\ell`. Longer literal
       // runs are left alone: those are the braced `*{…}` form handled above.
-      .replace(/([}\w)\]|])\*(\\[a-zA-Z]+|[A-Za-z0-9])/g, "$1_$2")
+      .replace(/([})\]|])\*(\\[a-zA-Z]+|[A-Za-z0-9])/g, "$1_$2")
+      .replace(/([A-Za-z0-9])\*(\\[a-zA-Z]+)/g, "$1_$2")
       // KaTeX has no `\textsc` / `\textsl`; unsupported control sequences render
       // as red error text inside an otherwise-fine equation.
       .replace(/\\textsc\b/g, "\\text")
@@ -371,8 +455,8 @@ function repairMathFragment(s: string): string {
           `\\${command}{${inner.replace(/(?<!\\)([_^%&])/g, "\\$1")}}`,
       )
       // A bare `#` is a macro-parameter token (e.g. `\texttt{<|system|># Tools}`).
-      .replace(/(?<!\\)#/g, "\\#")
-  );
+      .replace(/(?<!\\)#/g, "\\#");
+  return escapeSetBraces(normalizeBareMathAsterisks(repaired));
 }
 
 function repairMathLine(line: string): string | null {

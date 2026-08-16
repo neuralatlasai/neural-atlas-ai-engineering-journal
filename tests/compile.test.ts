@@ -425,6 +425,36 @@ describe("rendering contract", () => {
     assert.equal(prepareMathForRendering(valid, true), valid);
   });
 
+  it("moves math-only symbols out of text wrappers", async () => {
+    const invalid = String.raw`\boxed{\text{ALGORITHM 2 — ANALOG \rightarrow DIGITAL}}`;
+    const repaired = String.raw`\boxed{\text{ALGORITHM 2 — ANALOG }\rightarrow\text{ DIGITAL}}`;
+    const repeated = String.raw`\text{IDFT \leftrightarrow DCT \rightarrow OUTPUT}`;
+    const repairedRepeated = String.raw`\text{IDFT }\leftrightarrow\text{ DCT }\rightarrow\text{ OUTPUT}`;
+    const validTextCommand = String.raw`\texttt{"\textbackslash n"}`;
+    const unknownCommand = String.raw`\text{A \definitelyunknown B}`;
+
+    assert.equal(prepareMathForRendering(invalid, false), repaired);
+    assert.equal(prepareMathForRendering(repeated, false), repairedRepeated);
+    assert.equal(
+      prepareMathForRendering(validTextCommand, false),
+      validTextCommand,
+    );
+    assert.equal(
+      prepareMathForRendering(unknownCommand, false),
+      unknownCommand,
+      "an unproven command remains untouched",
+    );
+
+    const { html } = await compileArticle(`$$\n${invalid}\n$$`, "Signal path");
+    const visibleHtml = html.replace(
+      /<annotation[\s\S]*?<\/annotation>/g,
+      "",
+    );
+    assert.ok(!html.includes("katex-error"), "raw TeX fallback is forbidden");
+    assert.ok(visibleHtml.includes("→"), "the arrow renders as a symbol");
+    assert.ok(!visibleHtml.includes("\\rightarrow"), "raw TeX stays hidden");
+  });
+
   it("renders an array whose closer inherited a blockquote marker", async () => {
     const source = String.raw`[
 \begin{array}{c|c}

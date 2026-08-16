@@ -488,6 +488,28 @@ ${equalityScar}
     );
   });
 
+  it("normalizes multiplication stars without changing structural or text stars", () => {
+    const source = String.raw`[
+\begin{aligned}
+p(t)&\xrightarrow{*,g_v*r}q(t) \\
+a*b&=c \\
+X^{*}&=\operatorname*{argmax}_x f(x) \\
+\text{literal * marker}&=1
+\end{aligned}
+]`;
+    const { markdown } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.match(block, /\\xrightarrow\{\\ast ,g_v\\ast r\}/);
+    assert.match(block, /a\\ast b/);
+    assert.match(block, /X\^\{\*\}/);
+    assert.match(block, /\\operatorname\*\{argmax\}/);
+    assert.match(block, /\\text\{literal \* marker\}/);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
+
   it("escapes literal braces consumed by delimiter-sizing commands", () => {
     const source = String.raw`[
 \boxed{

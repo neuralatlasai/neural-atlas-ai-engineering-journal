@@ -974,6 +974,119 @@ function repairOrphanedMiddleBars(tex: string, displayMode: boolean): string {
   return tex;
 }
 
+const TEXT_MODE_WRAPPER_AT_END =
+  /\\(?:text|textrm|textsf|texttt|textbf|textit)\s*$/;
+const HAS_TEXT_MODE_WRAPPER =
+  /\\(?:text|textrm|textsf|texttt|textbf|textit)\s*\{/;
+
+interface TextModeGroup {
+  commandStart: number;
+  open: number;
+  close: number;
+}
+
+/** Closing brace paired with the bare opening brace at `open`. */
+function matchingGroupClose(tex: string, open: number): number {
+  let depth = 1;
+  for (let i = open + 1; i < tex.length; i++) {
+    if (isEscaped(tex, i)) continue;
+    if (tex[i] === "{") depth++;
+    else if (tex[i] === "}" && --depth === 0) return i;
+  }
+  return -1;
+}
+
+/** Innermost supported text-mode group containing `position`. */
+function enclosingTextModeGroup(
+  tex: string,
+  position: number,
+): TextModeGroup | null {
+  const openGroups: number[] = [];
+  for (let i = 0; i < position; i++) {
+    if (isEscaped(tex, i)) continue;
+    if (tex[i] === "{") openGroups.push(i);
+    else if (tex[i] === "}") openGroups.pop();
+  }
+
+  for (let i = openGroups.length - 1; i >= 0; i--) {
+    const open = openGroups[i];
+    const wrapper = TEXT_MODE_WRAPPER_AT_END.exec(tex.slice(0, open));
+    if (!wrapper) continue;
+    const close = matchingGroupClose(tex, open);
+    if (close > position) {
+      return { commandStart: wrapper.index, open, close };
+    }
+  }
+  return null;
+}
+
+/** Whether a zero-argument control word is a complete math-mode symbol. */
+function isStandaloneMathCommand(command: string): boolean {
+  try {
+    katex.renderToString(command, {
+      displayMode: false,
+      throwOnError: true,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Move math-only symbols out of a text-mode wrapper.
+ *
+ * `\text{ANALOG \rightarrow DIGITAL}` makes KaTeX interpret `\rightarrow` in
+ * text mode and render the command as a red error. KaTeX identifies the exact
+ * command and offset. The repair is permitted only when that command is inside
+ * a supported text wrapper and independently parses as a complete math symbol;
+ * the entire candidate must then parse before it can replace the source.
+ */
+function repairMathCommandsInsideText(
+  tex: string,
+  displayMode: boolean,
+): string {
+  if (!HAS_TEXT_MODE_WRAPPER.test(tex)) return tex;
+
+  let candidate = tex;
+  for (let pass = 0; pass < 16; pass++) {
+    try {
+      katex.renderToString(candidate, { displayMode, throwOnError: true });
+      return candidate;
+    } catch (error) {
+      const parseError = error as KatexPositionError;
+      const diagnostic =
+        typeof parseError.rawMessage === "string" ? parseError.rawMessage : "";
+      const undefinedCommand =
+        /^Undefined control sequence: (\\[A-Za-z]+)$/.exec(diagnostic);
+      const position =
+        typeof parseError.position === "number" ? parseError.position : -1;
+      if (!undefinedCommand || position < 0) return tex;
+
+      const command = undefinedCommand[1];
+      if (
+        !candidate.startsWith(command, position) ||
+        !isStandaloneMathCommand(command)
+      ) {
+        return tex;
+      }
+
+      const group = enclosingTextModeGroup(candidate, position);
+      if (!group) return tex;
+      const wrapperOpen = candidate.slice(group.commandStart, group.open + 1);
+      const prefix = candidate.slice(group.open + 1, position);
+      const suffix = candidate.slice(position + command.length, group.close);
+      candidate =
+        candidate.slice(0, group.commandStart) +
+        (prefix === "" ? "" : `${wrapperOpen}${prefix}}`) +
+        command +
+        (suffix === "" ? "" : `${wrapperOpen}${suffix}}`) +
+        candidate.slice(group.close + 1);
+    }
+  }
+  return tex;
+}
+
 /**
  * remark plugin: apply the row-break repair to every maths node.
  *
@@ -1050,7 +1163,8 @@ export function prepareMathForRendering(
   const repairedBraces = repairUnescapedLiteralClosers(tex, displayMode);
   const repairedRows = repairCollapsedRowBreaks(repairedBraces, displayMode);
   const repairedScripts = repairRepeatedScripts(repairedRows, displayMode);
-  return repairOrphanedMiddleBars(repairedScripts, displayMode);
+  const repairedMiddle = repairOrphanedMiddleBars(repairedScripts, displayMode);
+  return repairMathCommandsInsideText(repairedMiddle, displayMode);
 }
 
 /** Classes emitted by HAST processors can be arrays or whitespace strings. */
