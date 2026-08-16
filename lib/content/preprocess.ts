@@ -149,6 +149,108 @@ const SETEXT_SCAR = /^\s*[=]{3,}\s*$/; // a lone `=======` line inside math
 const HR_SCAR = /^\s*[-]{3,}\s*$/;
 
 /**
+ * Commands whose braced arguments are syntax, not visible set delimiters.
+ *
+ * The source can place each argument on its own line. In particular, the
+ * denominator of `\frac{...}{S_{i,j}}` then superficially resembles the
+ * corpus's line-start singleton-set notation. Recognising the owning command
+ * prevents the set repair from turning the denominator into literal `\{...\}`.
+ */
+const GROUP_ARGUMENT_COMMANDS = new Set([
+  "bar",
+  "binom",
+  "boxed",
+  "dbinom",
+  "ddot",
+  "dfrac",
+  "dot",
+  "frac",
+  "hat",
+  "href",
+  "htmlClass",
+  "mathbb",
+  "mathbf",
+  "mathcal",
+  "mathfrak",
+  "mathit",
+  "mathrm",
+  "mathscr",
+  "mathsf",
+  "mathtt",
+  "mbox",
+  "operatorname",
+  "overline",
+  "overset",
+  "phantom",
+  "sqrt",
+  "stackrel",
+  "substack",
+  "tbinom",
+  "text",
+  "textbf",
+  "textit",
+  "textnormal",
+  "textrm",
+  "textsf",
+  "texttt",
+  "tfrac",
+  "tilde",
+  "underline",
+  "underset",
+  "vec",
+  "vphantom",
+  "widehat",
+  "widetilde",
+]);
+
+/** Commands that consume a second mandatory braced argument. */
+const TWO_GROUP_ARGUMENT_COMMANDS = new Set([
+  "binom",
+  "dbinom",
+  "dfrac",
+  "frac",
+  "href",
+  "htmlClass",
+  "overset",
+  "stackrel",
+  "tbinom",
+  "tfrac",
+  "underset",
+]);
+
+/** Command ending immediately before `end`, ignoring inter-line whitespace. */
+function commandBefore(tex: string, end: number): string | null {
+  const match = tex.slice(0, end).match(/\\([A-Za-z]+)\*?\s*$/);
+  return match?.[1] ?? null;
+}
+
+/** Opening brace paired with the closing brace at `close`. */
+function matchingOpenBrace(tex: string, close: number): number {
+  let depth = 1;
+  for (let i = close - 1; i >= 0; i--) {
+    if (isEscapedCharacter(tex, i)) continue;
+    if (tex[i] === "}") depth++;
+    else if (tex[i] === "{" && --depth === 0) return i;
+  }
+  return -1;
+}
+
+/** Whether a group is a mandatory argument owned by a TeX command. */
+function isCommandArgumentGroup(tex: string, open: number): boolean {
+  const direct = commandBefore(tex, open);
+  if (direct !== null && GROUP_ARGUMENT_COMMANDS.has(direct)) return true;
+
+  let previous = open - 1;
+  while (previous >= 0 && /\s/.test(tex[previous])) previous--;
+  if (previous < 0 || tex[previous] !== "}") return false;
+
+  const previousOpen = matchingOpenBrace(tex, previous);
+  if (previousOpen < 0) return false;
+  const owner = commandBefore(tex, previousOpen);
+  return owner !== null && TWO_GROUP_ARGUMENT_COMMANDS.has(owner);
+}
+
+/**
  * Whether a candidate span is structurally well-formed TeX.
  *
  * This is a *delimiter-level* check, not a judgement about meaning: it asks
@@ -281,7 +383,7 @@ function escapeSetBraces(s: string): string {
       commaSeparatedText ||
       indexedSingleton ||
       (followsSetOperator && singletonSetElement);
-    if (depth !== 0 || !provenSetLiteral) continue;
+    if (depth !== 0 || !provenSetLiteral || isCommandArgumentGroup(s, braceIdx)) continue;
     out += s.slice(last, braceIdx) + "\\{" + inner + "\\}";
     last = j + 1;
     opener.lastIndex = last;
@@ -462,8 +564,10 @@ function repairMathFragment(s: string): string {
 function repairMathLine(line: string): string | null {
   // A lone setext-underline scar `=======` stands in for a single `=`.
   if (SETEXT_SCAR.test(line)) return "=";
-  // A lone rule scar inside math has no meaning; drop it.
-  if (HR_SCAR.test(line)) return null;
+  // Markdown conversion expands a standalone subtraction token into a
+  // horizontal-rule run. Inside an already-delimited equation it is an
+  // arithmetic operator, never document structure, so collapse it to `-`.
+  if (HR_SCAR.test(line)) return "-";
   // The lossy Markdown conversion moved a trailing equality sign to a leading
   // single hash: `# 4096^2` followed by `16{,}777{,}216` represents
   // `4096^2 = 16{,}777{,}216`. Restore the relation after the expression. Runs
@@ -866,12 +970,22 @@ function isOpenProseLead(line: string): boolean {
   );
 }
 
-/** A plain prose continuation, as opposed to another Markdown structure. */
+/**
+ * A grammatical continuation of the prose before an intervening equation.
+ *
+ * Merely being plain text is insufficient: labels such as `Permute:` and
+ * `Temporal output:` begin new authored blocks and must not be flattened into
+ * the preceding equation's paragraph. Lowercase prose and parenthetical
+ * citations continue a sentence; uppercase labels close the current block.
+ */
 function isProseContinuation(line: string): boolean {
   const trimmed = line.trim();
   return (
     trimmed !== "" &&
-    !/^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\||```|~~~|\[|---+$)/.test(line)
+    !/^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|\||```|~~~|\[|---+$)/.test(line) &&
+    /^(?:[a-z]|\(|[,.;:!?)]|(?:and|as|because|but|for|if|nor|of|on|or|so|than|that|then|to|using|when|where|which|while|with|yet)\b)/.test(
+      trimmed,
+    )
   );
 }
 
@@ -1038,40 +1152,25 @@ export function preprocess(source: string): PreprocessResult {
         const compact = compactInlineTeX(block.split("\n"));
         const blankBefore = lines[i - 1]?.trim() === "";
         const blankAfter = lines[j + 1]?.trim() === "";
-        const outputEndsWithBlank = out.at(-1)?.trim() === "";
         const attachesBackward =
           blankBefore &&
-          outputEndsWithBlank &&
+          out.at(-1)?.trim() === "" &&
           out.at(-2)?.trim() !== "" &&
           isOpenProseLead(previousSource);
-        const continuesInlineRun =
-          blankBefore &&
-          !outputEndsWithBlank &&
-          out.at(-1)?.trim() !== "";
-        const attachesForward =
-          blankAfter && isProseContinuation(nextSource);
+        const attachesForward = blankAfter && isProseContinuation(nextSource);
         const proseAttached =
           compact !== null &&
           blankBefore &&
           blankAfter &&
-          (attachesBackward || continuesInlineRun || attachesForward);
+          attachesBackward &&
+          attachesForward;
         if (proseAttached) {
-          if (attachesBackward) {
-            out.pop();
-            out[out.length - 1] += ` $${compact}$`;
-          } else if (continuesInlineRun) {
-            out[out.length - 1] += ` $${compact}$`;
-          } else {
-            // A compact equation immediately after a structural boundary starts
-            // the paragraph that the following prose continues.
-            out.push(`$${compact}$`);
-          }
+          out.pop();
+          out[out.length - 1] += ` $${compact}$`;
           inlineSpans++;
-          // Keep a run open across following prose or another authored display.
-          // A complex next display restores its own required blank boundary.
-          const nextStartsDisplay =
-            blankAfter && matchDisplayOpen(nextSource) !== null;
-          i = attachesForward || nextStartsDisplay ? j + 1 : j;
+          // The following lowercase prose completes the same grammatical
+          // sentence, so skip the authored blank around the compact equation.
+          i = j + 1;
           continue;
         }
         // remark-math needs the fenced $$ separated from prose by blank lines.

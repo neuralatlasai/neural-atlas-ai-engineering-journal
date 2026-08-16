@@ -311,6 +311,41 @@ p'(x)=
     );
   });
 
+  it("preserves multiline fraction arguments and restores subtraction scars", () => {
+    const equalityScar = "=".repeat(7);
+    const subtractionScar = "-".repeat(14);
+    const source = String.raw`[
+\boxed{
+T_\ell
+${equalityScar}
+\left\lfloor
+\frac{
+T_{\ell-1}
++
+P_{\ell}^{R}
+${subtractionScar}
+D_\ell(K_\ell-1)
+-1
+}
+{
+S_{\ell,t}
+}
++1
+\right\rfloor
+}
+]`;
+    const { markdown, displayBlocks } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.equal(displayBlocks, 1);
+    assert.match(block, /P_\{\\ell\}\^\{R\}\n-\nD_\\ell/);
+    assert.match(block, /\}\n\{\nS_\{\\ell,t\}\n\}\n\+1/);
+    assert.ok(!block.includes(String.raw`\{S_{\ell,t}\}`), block);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
+
   it("distinguishes tuple and set-builder literals from grouped function calls", () => {
     const source = String.raw`\[
 \mathcal D={(x_i,y_i)}_{i=1}^{N},
@@ -381,7 +416,7 @@ using the training data with constant learning rate:
     assert.equal(inlineSpans, 2);
   });
 
-  it("groups one-sided and consecutive compact equations with adjacent prose", () => {
+  it("keeps one-sided and consecutively authored equations as display blocks", () => {
     const source = String.raw`## Stage
 
 [
@@ -413,13 +448,13 @@ Temporal output:
 ## Next`;
     const { markdown, displayBlocks, inlineSpans } = preprocess(source);
 
-    assert.match(
-      markdown,
-      /## Stage\n\n\$X\\in\\mathbb R\^\{B\\times T\}\$\nFor each sample, \$Y=f\(X\)\$\nOutput: \$Z=g\(Y\)\$ \$Z\\in\\mathbb R\^\{B\\times D\}\$\nTemporal output:/,
-    );
+    assert.match(markdown, /## Stage\n\n\$\$\nX\\in\\mathbb R\^\{B\\times T\}/);
+    assert.match(markdown, /For each sample,\n\n\$\$\nY=f\(X\)/);
+    assert.match(markdown, /Output:\n\n\$\$\nZ=g\(Y\)/);
+    assert.match(markdown, /\$\$\nZ\\in\\mathbb R\^\{B\\times D\}/);
     assert.match(markdown, /\$\$\n\\boxed\{T=\\frac/);
-    assert.equal(displayBlocks, 1);
-    assert.equal(inlineSpans, 4);
+    assert.equal(displayBlocks, 5);
+    assert.equal(inlineSpans, 0);
   });
 
   it("makes indexed singleton set braces visible without changing grouping", () => {
