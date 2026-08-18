@@ -952,6 +952,8 @@ const ORPHANED_TEXT_OPEN =
 /** TeX whose visual structure requires a standalone display equation. */
 const DISPLAY_ONLY_TEX =
   /\\(?:boxed|begin|end|tag|frac|dfrac|tfrac|sum|prod|int|oint|lim|substack|displaystyle|overset|underset)\b|&|\\\\/;
+const INLINE_TEXT_BOX =
+  /^\\boxed\{\s*\\(?:text|textrm|textbf|textit|textsf|texttt)\{[\s\S]*\}\s*\}$/;
 
 /**
  * A prose line that grammatically continues into a following compact formula.
@@ -990,14 +992,55 @@ function isProseContinuation(line: string): boolean {
 }
 
 /**
+ * Remove a conversion-artifact colon from a coordinating conjunction only
+ * while it bridges two compact equation fragments in one prose sentence.
+ * Standalone labels (including `Where:`) retain their authored punctuation.
+ */
+function normalizeInlineEquationConnector(
+  line: string,
+  previousOutput: string | undefined,
+  previousSource: string | undefined,
+  nextSource: string | undefined,
+  followingSource: string | undefined,
+): string {
+  const connector = line.match(/^(\s*)(and|or|but):(\s*)$/);
+  if (
+    connector === null ||
+    previousOutput === undefined ||
+    !/\$\s*$/.test(previousOutput) ||
+    previousSource?.trim() !== "" ||
+    nextSource?.trim() !== "" ||
+    matchDisplayOpen(stripInternalCitationTokens(followingSource ?? "")) === null
+  ) {
+    return line;
+  }
+  return `${connector[1]}${connector[2]}${connector[3]}`;
+}
+
+/**
  * Reduce a short prose-attached display to inline TeX when it has no structure
  * that benefits from display layout. The length cap is a readability boundary,
  * not a parser boundary; complex or ambiguous expressions remain displays.
  */
 function compactInlineTeX(lines: string[]): string | null {
   const tex = lines.join(" ").replace(/\s+/g, " ").trim();
-  if (tex === "" || tex.length > 160 || DISPLAY_ONLY_TEX.test(tex)) return null;
+  if (
+    tex === "" ||
+    tex.length > 160 ||
+    (DISPLAY_ONLY_TEX.test(tex) && !INLINE_TEXT_BOX.test(tex))
+  ) {
+    return null;
+  }
   return tex;
+}
+
+/**
+ * Whether compact TeX carries the punctuation that closes its prose sentence.
+ * Closing TeX groups and delimiters may follow punctuation inside `\text{...}`,
+ * so they are ignored after the terminal mark.
+ */
+function closesProseSentence(tex: string): boolean {
+  return /[.!?;](?:\s*["'”’])*(?:\s*(?:\\right\s*)?[\])}])*\s*$/.test(tex);
 }
 
 /**
@@ -1158,19 +1201,21 @@ export function preprocess(source: string): PreprocessResult {
           out.at(-2)?.trim() !== "" &&
           isOpenProseLead(previousSource);
         const attachesForward = blankAfter && isProseContinuation(nextSource);
+        const closesSentence = compact !== null && closesProseSentence(compact);
         const proseAttached =
           compact !== null &&
           blankBefore &&
           blankAfter &&
           attachesBackward &&
-          attachesForward;
+          (attachesForward || closesSentence);
         if (proseAttached) {
           out.pop();
           out[out.length - 1] += ` $${compact}$`;
           inlineSpans++;
-          // The following lowercase prose completes the same grammatical
-          // sentence, so skip the authored blank around the compact equation.
-          i = j + 1;
+          // Skip the following blank only when prose continues this sentence.
+          // A formula that supplies its own terminal punctuation closes the
+          // paragraph, preserving the next authored sentence as a new block.
+          i = attachesForward ? j + 1 : j;
           continue;
         }
         // remark-math needs the fenced $$ separated from prose by blank lines.
@@ -1195,8 +1240,17 @@ export function preprocess(source: string): PreprocessResult {
       continue;
     }
 
-    const before = line;
-    const converted = convertInlineMath(restorePipesInTableMath(line, tableColumns));
+    const normalizedLine = normalizeInlineEquationConnector(
+      line,
+      out.at(-1),
+      lines[i - 1],
+      lines[i + 1],
+      lines[i + 2],
+    );
+    const before = normalizedLine;
+    const converted = convertInlineMath(
+      restorePipesInTableMath(normalizedLine, tableColumns),
+    );
     if (converted !== before) {
       inlineSpans += (converted.match(/\$[^$]+\$/g) || []).length;
     }

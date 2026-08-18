@@ -416,6 +416,88 @@ using the training data with constant learning rate:
     assert.equal(inlineSpans, 2);
   });
 
+  it("attaches a sentence-closing compact equation without absorbing the next paragraph", () => {
+    const source = String.raw`Therefore:
+
+[
+usage(t_{cancel})
+]
+
+may not equal:
+
+[
+usage(final).
+]
+
+The documentation advises waiting for stable usage values.`;
+    const { markdown, displayBlocks, inlineSpans } = preprocess(source);
+
+    assert.match(
+      markdown,
+      /Therefore: \$usage\(t_\{cancel\}\)\$\nmay not equal: \$usage\(final\)\.\$\n\nThe documentation/,
+    );
+    assert.equal(displayBlocks, 0);
+    assert.equal(inlineSpans, 2);
+  });
+
+  it("removes connector-label colons only inside an inline equation sentence", () => {
+    const source = String.raw`Where:
+
+[
+G_{resource}=(url,mount)
+]
+
+and:
+
+[
+G_{working}=(files,branch).
+]
+
+After.
+
+and:`;
+    const { markdown, displayBlocks, inlineSpans } = preprocess(source);
+
+    assert.match(
+      markdown,
+      /Where: \$G_\{resource\}=\(url,mount\)\$\nand \$G_\{working\}=\(files,branch\)\.\$/,
+    );
+    assert.match(markdown, /\n\nAfter\.\n\nand:$/);
+    assert.equal(displayBlocks, 0);
+    assert.equal(inlineSpans, 2);
+  });
+
+  it("aligns short quoted answers with their prose labels", () => {
+    const source = String.raw`Files answer:
+
+[
+\text{“What material should this session read?”}
+]
+
+Repositories answer:
+
+[
+\text{“What workspace should this session use?”}
+]
+
+Memory answers:
+
+[
+\boxed{
+\text{“What state should survive?”}
+}
+]
+
+---`;
+    const { markdown, displayBlocks, inlineSpans } = preprocess(source);
+
+    assert.match(markdown, /Files answer: \$\\text\{/);
+    assert.match(markdown, /Repositories answer: \$\\text\{/);
+    assert.match(markdown, /Memory answers: \$\\boxed\{ \\text\{/);
+    assert.equal(displayBlocks, 0);
+    assert.equal(inlineSpans, 3);
+  });
+
   it("keeps one-sided and consecutively authored equations as display blocks", () => {
     const source = String.raw`## Stage
 
