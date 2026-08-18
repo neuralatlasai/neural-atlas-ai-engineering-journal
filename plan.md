@@ -2,15 +2,189 @@
 
 **Document type:** UI/UX and frontend implementation blueprint  
 **Audience:** UI/UX designers, design-system engineers, frontend engineers, content-compiler engineers, QA engineers, and technical editors  
-**Status:** Implementation-ready  
-**Default delivery model:** Static-first research publication with optional server rendering and isolated interactive components  
-**Primary source format:** Arbitrarily nested Markdown (`.md`) with optional restricted MDX (`.mdx`)  
+**Status:** Living roadmap; a production static subset is implemented and the remaining requirements are targets
+**Default delivery model:** Next.js static export to GitHub Pages; no production application server
+**Primary source format:** Arbitrarily nested Markdown (`.md`); restricted MDX is a future capability
 **Primary framework:** Next.js App Router + React + TypeScript  
 **Quality level:** Research-laboratory publication system, not a generic blog theme
 
 ---
 
 ## 0. Executive mandate
+
+### 0.1 How to read this plan
+
+This document defines the product direction and the intended quality ceiling. It
+is not evidence that every requirement below is implemented. The current code,
+tests, workflow, and [`AGENTS.md`](./AGENTS.md) are the authority for shipped
+behavior. Requirements in later sections remain roadmap items unless the status
+snapshot below marks them implemented or the repository proves otherwise.
+
+This distinction is deliberate. The earlier version of this plan mixed desired
+architecture, future commands, and acceptance criteria with current behavior.
+That made unimplemented systems appear complete. From this revision onward:
+
+- **Implemented** means executable code exists and is covered by the current
+  verification pipeline.
+- **Partial** means a useful subset exists but the full requirement does not.
+- **Planned** means the requirement is retained as a target only.
+- **Deferred** means the feature is intentionally outside the current static
+  product scope.
+
+No roadmap item may be reported as shipped without code and verification.
+
+### 0.2 Current implementation snapshot
+
+| Capability | Status | Current truth |
+|---|---|---|
+| Recursive corpus discovery | Implemented | Markdown is discovered recursively under `docs/`; normal articles need no route registry edit. |
+| Deterministic routes | Implemented | Corpus-derived routes are stable and collision checked. |
+| Static article rendering | Implemented | Next.js exports complete article HTML to `out/`. |
+| Markdown support | Implemented | Unified/remark/rehype pipeline with GFM and repository-specific normalization. |
+| Restricted MDX | Planned | `.mdx` is not an enabled authoring contract. |
+| Mathematics | Implemented with compatibility risk | KaTeX renders at build time; preprocessing repairs bounded conversion scars; postbuild audits catch parse errors, corruption signatures, and leaked raw TeX. |
+| Code highlighting | Implemented | Shiki renders syntax highlighting at build time. |
+| Responsive images | Implemented | A prebuild script generates static variants with cache-aware reuse; Next runtime optimization is disabled. |
+| Static search | Implemented | A generated local index and client search UI are available without a search server. |
+| Article outline | Implemented | Compiled headings produce on-page navigation. |
+| Feed, sitemap, robots, metadata | Implemented | Static endpoints and structured metadata are generated. |
+| Base-path deployment | Implemented | Shared URL helpers and export audits support GitHub Pages project paths. |
+| Theme and reading enhancements | Implemented | Light/dark theme, reading progress, search dialog, and related client enhancements exist. |
+| Server rendering profile | Deferred | Production is a static export. |
+| Authenticated/private content | Deferred | There is no authentication or application server. |
+| Per-user annotations | Deferred | No user data store exists. |
+| Full author and series system | Planned | Do not assume the target route model is available. |
+| Rich citation graph/BibTeX pipeline | Planned | Source-token cleanup exists, but the full scholarly citation system does not. |
+| General diagram compiler | Planned | No complete Mermaid/Graphviz build pipeline is guaranteed. |
+| Restricted interactive article registry | Partial | Application-level client components exist; the full allowlisted content-directive system is not complete. |
+| Browser E2E tests | Planned | The current automated suite is Node-based and export-audit based. |
+| Automated visual regression | Planned | Visual inspection is currently manual. |
+| Automated accessibility browser suite | Planned | Structural export checks exist; Playwright/Axe coverage is not yet a release gate. |
+| Modern lint gate | Blocked by configuration debt | The current `next lint` script is stale for the installed Next version and is not a valid release signal. |
+| Determinism verification | Implemented | A dedicated script pins the build ID and compares repeatable output. |
+| GitHub Pages deployment | Implemented | Pushes to `main` typecheck, test, build, audit, upload, and deploy. |
+
+### 0.3 Current production architecture
+
+```text
+docs/**/*.md
+    ↓
+recursive corpus discovery and route compilation
+    ↓
+bounded Markdown/TeX preprocessing
+    ↓
+remark/rehype compilation + build-time KaTeX and Shiki
+    ↓
+React Server Component page rendering
+    ↓
+Next.js static export in out/
+    ↓
+strict math verification + exported-HTML audit
+    ↓
+GitHub Pages artifact deployment
+```
+
+Search indexing intentionally uses a structural extraction path instead of the
+full expensive article renderer. Images are optimized before the Next build.
+Development compiler state lives in `.next-dev`; production build state lives in
+`.next`. This separation prevents the old dev/build manifest race, although
+concurrent operations can still compete for CPU, memory, generated images, and
+the export directory.
+
+### 0.4 Current quality gates
+
+The executable local gate is:
+
+```bash
+npm run verify
+```
+
+It runs:
+
+1. `npm run typecheck`;
+2. `npm test`;
+3. `npm run build`, whose lifecycle includes image preprocessing, static export,
+   math verification, and exported-HTML audit.
+
+The Pages workflow uses Node.js 22 and `npm ci`, then repeats typecheck, tests,
+and the complete build under the repository base path. Deployment cannot start
+unless the build job succeeds.
+
+The current gates prove only what they inspect. They do not replace browser E2E,
+screen-reader, 200% zoom, cross-browser, or visual-regression testing. A locally
+successful build also does not prove that a commit was pushed or deployed.
+
+### 0.5 Current content-normalization policy
+
+New documents sometimes expose equations or paragraph alignment incorrectly
+because the corpus contains multiple delimiter conventions and lossy conversion
+scars. The production rule is:
+
+1. Do not edit an article merely to make the renderer accept it unless editorial
+   change is explicitly requested.
+2. Diagnose whether the defect belongs to source-token cleanup, preprocessing,
+   AST compilation, KaTeX, renderer markup, CSS, base-path handling, or export.
+3. Implement a shared syntax- or structure-based rule.
+4. Bound ambiguous matches at blank lines, headings, fences, balanced groups, or
+   another explicit grammar boundary.
+5. Add the failing shape and a valid counterexample to the regression suite.
+6. Run the corpus-wide tests and a fresh build so both math and HTML audits see
+   the new output.
+
+Article names, paths, titles, section numbers, and exact prose are forbidden as
+dispatch keys for rendering repairs. The goal is not to make one screenshot pass;
+the goal is to extend the accepted input grammar without damaging valid input.
+
+### 0.6 Current repository shape
+
+The implemented repository is a single application:
+
+```text
+app/                 routes, endpoints, global styles
+components/          publication UI and client enhancements
+lib/content/         corpus discovery, preprocessing, compilation
+lib/search/          local search behavior
+docs/                canonical Markdown corpus
+public/              static and generated media assets
+scripts/             development, optimization, and verification tools
+tests/               unit, regression, corpus, and hostile fixtures
+.github/workflows/   GitHub Pages deployment
+```
+
+The multi-package `apps/` and `packages/` layout described later is a target
+architecture, not the present filesystem. A migration should occur only when
+module boundaries, independent testing, or build scaling justify the cost.
+
+### 0.7 Near-term priorities
+
+Priorities are ordered by publication risk rather than novelty:
+
+1. Continue replacing intermittent content-specific failures with bounded,
+   generalized parser rules and hostile fixtures.
+2. Add browser-level E2E coverage for representative articles, fragments,
+   search, theme, mobile navigation, and no-JavaScript reading.
+3. Add automated visual regression for long equations, tables, code, provenance
+   markers, side rails, narrow layouts, zoom, dark mode, and print.
+4. Repair the lint command with a supported ESLint configuration and make it a
+   real CI gate.
+5. Add automated accessibility checks, then document required manual assistive
+   technology verification.
+6. Publish measured bundle, build-time, memory, and Web Vitals budgets using the
+   current corpus; do not reuse historical measurements as targets.
+7. Expand citation, author, series, diagram, and media systems only after the
+   core compiler and regression harness are stable.
+
+### 0.8 Explicit non-goals for the current release
+
+- Introducing a backend solely because Next.js can run one.
+- Moving canonical articles into a proprietary CMS or database.
+- Shipping a client-side Markdown, TeX, or syntax-highlighting runtime.
+- Executing arbitrary JSX or JavaScript from documents.
+- Adding article-specific parsing exceptions.
+- Copying a reference laboratory’s brand identity.
+- Treating decorative motion, cards, or dashboards as product progress.
+- Claiming “lossless arbitrary Markdown” before the preservation model and
+  unsupported-syntax representation in this roadmap are fully implemented.
 
 Build a production-grade AI research and engineering publication platform that converts an arbitrary recursively structured Markdown corpus into a deterministic, lossless, accessible, high-performance, interactive website.
 
@@ -1934,16 +2108,23 @@ Optional PDF generation must use the same compiled document and print styles, no
 
 ## 25.1 Author commands
 
+Current executable commands:
+
 ```bash
-pnpm content:validate
-pnpm content:build
-pnpm content:watch
-pnpm content:links
-pnpm content:preservation
-pnpm dev
-pnpm test
-pnpm build
+npm ci
+npm run dev
+npm run content:validate
+npm run typecheck
+npm test
+npm run build
+npm run verify
+npm run verify:determinism
 ```
+
+The dedicated `content:build`, `content:watch`, `content:links`, and
+`content:preservation` commands from the original blueprint do not currently
+exist. Their intended behavior remains a roadmap target and must not be included
+in user instructions until corresponding scripts and tests are implemented.
 
 ## 25.2 Author diagnostics
 
@@ -2222,7 +2403,11 @@ Do not collect article source, selected text, annotations, code snippets, querie
 
 ---
 
-# 29. Repository structure
+# 29. Target repository structure
+
+The following is a possible future modular layout. It is not the current
+filesystem. The current single-application structure is documented in Section
+0.6 and `AGENTS.md`.
 
 ```text
 repository/
@@ -2326,7 +2511,14 @@ Every artifact includes:
 
 ---
 
-# 31. Implementation phases
+# 31. Roadmap implementation phases
+
+These phases describe capability groups, not a claim of linear completion. The
+current application implements useful portions of Phases 0 through 8, but no
+phase is considered fully closed while its listed exit gate remains unverified.
+In particular, the browser E2E, automated accessibility, visual regression,
+formal preservation artifacts, complete interactive registry, and production
+performance-budget gates remain incomplete.
 
 ## Phase 0 — Requirements and corpus audit
 
@@ -2523,9 +2715,11 @@ A feature is complete only when:
 
 ---
 
-# 33. Final acceptance criteria
+# 33. Target acceptance criteria
 
-The platform is accepted only when:
+The complete roadmap is accepted only when every item below is supported by
+executable evidence. The current production site is an implemented subset and
+does not yet satisfy every criterion:
 
 1. Arbitrary recursive Markdown structures are ingestible through configuration.
 2. No fixed directory or filename convention is required.
