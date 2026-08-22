@@ -73,7 +73,7 @@ export const site = {
   shortDescription:
     "Evidence-grounded research and engineering analysis of frontier AI systems.",
   longDescription:
-    "Neural Atlas reconstructs and audits modern model architectures, inference systems, and training methods — grounded in primary source material, preserved losslessly from Markdown, and rendered for careful reading.",
+    "Neural Atlas provides technical analyses of AI model architectures, training systems, inference frameworks, algorithms, and engineering methods, with equations, implementation details, and source-based explanations for rigorous study.",
   origin: resolveOrigin(),
   locale: "en",
   /** Used as both author and publisher in structured data. */

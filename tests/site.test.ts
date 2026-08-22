@@ -35,6 +35,16 @@ function article(overrides: Partial<ArticleMeta> = {}): ArticleMeta {
   };
 }
 
+describe("site copy", () => {
+  it("keeps the homepage description technical and within 35 words", () => {
+    const words = site.longDescription.trim().split(/\s+/);
+
+    assert.ok(words.length <= 35, `description contains ${words.length} words`);
+    assert.match(site.longDescription, /model architectures/);
+    assert.doesNotMatch(site.longDescription, /Markdown|TeX|compil/i);
+  });
+});
+
 describe("withTrailingSlash", () => {
   it("matches what the static export actually serves", () => {
     assert.equal(withTrailingSlash("/models/example"), "/models/example/");
