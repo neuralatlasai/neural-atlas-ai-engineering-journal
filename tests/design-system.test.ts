@@ -8,6 +8,10 @@ const siteHeader = fs.readFileSync(
   path.join("components", "SiteHeader.tsx"),
   "utf8",
 );
+const siteFooter = fs.readFileSync(
+  path.join("components", "SiteFooter.tsx"),
+  "utf8",
+);
 const atlasWorkflow = fs.readFileSync(
   path.join("components", "AtlasWorkflowFigure.tsx"),
   "utf8",
@@ -385,34 +389,46 @@ describe("page composition", () => {
 });
 
 describe("homepage composition", () => {
-  it("keeps the hero full-bleed while constraining its content to the shared shell", () => {
+  it("keeps the field-guide introduction full-bleed and its content bounded", () => {
     assert.match(homePage, /<div className="home-page">/);
-    assert.match(homePage, /<section className="home-hero"/);
-    assert.match(homePage, /<div className="shell home-hero__stage">/);
+    assert.match(homePage, /<section className="home-intro"/);
+    assert.match(homePage, /<div className="shell home-intro__grid">/);
+    assert.doesNotMatch(
+      homePage,
+      /Field coordinates|long-form analyses|system domains|claim states/,
+      "the hero must not expose generic corpus-summary language",
+    );
+    assert.match(homePage, /<section className="home-atlas"/);
+    assert.match(homePage, /<div className="shell home-atlas__grid">/);
   });
 
-  it("bounds the selected-analysis surface independently of corpus growth", () => {
+  it("bounds and diversifies selected analysis in one corpus pass", () => {
     assert.match(
       homePage,
-      /\.filter\([\s\S]*?\)\s*\.slice\(0, 6\)/,
+      /function selectAcrossSections\([\s\S]*?new Set<string>\(\)[\s\S]*?for \(const article of articles\)[\s\S]*?\.slice\(0, limit\)/,
+      "selection must remain linear in corpus size",
+    );
+    assert.match(
+      homePage,
+      /selectAcrossSections\(articles, featured\?\.route, 6\)/,
       "the homepage must not grow linearly with an unbounded article corpus",
     );
-    assert.match(
-      homePage,
-      /const heroSections = sections\.slice\(0, 3\)/,
-      "the immersive hero must not inherit an unbounded corpus navigation list",
-    );
   });
 
-  it("moves the homepage navigation into the shared accessible sheet", () => {
-    assert.match(css, /body:has\(\.home-page\) \.primary-nav\s*\{\s*display:\s*none/);
-    assert.match(
+  it("shows direct navigation on wide screens and uses the shared sheet when constrained", () => {
+    assert.doesNotMatch(
       css,
-      /body:has\(\.home-page\) \.nav-trigger\s*\{[\s\S]*?display:\s*inline-flex/,
+      /body:has\(\.home-page\) \.primary-nav\s*\{\s*display:\s*none/,
+      "the homepage must not hide direct routes on a wide viewport",
     );
     assert.match(
       css,
-      /body:has\(\.home-page\) \.nav-sheet ul\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2/,
+      /@media \(max-width: 76rem\)[\s\S]*?\.primary-nav\s*\{[\s\S]*?display:\s*none[\s\S]*?\.nav-trigger\s*\{[\s\S]*?display:\s*inline-flex/,
+    );
+    assert.match(
+      css,
+      /@media \(max-width: 76rem\)[\s\S]*?\.header-actions\s*\{[\s\S]*?order:\s*3[\s\S]*?\.nav-trigger\s*\{[\s\S]*?order:\s*4/,
+      "the constrained header must keep search and theme controls before the terminal menu trigger",
     );
   });
 
@@ -436,14 +452,18 @@ describe("homepage composition", () => {
     );
   });
 
-  it("stacks the hero and publication facts within narrow viewports", () => {
+  it("stacks the introduction, index, and featured analysis without horizontal overflow", () => {
     assert.match(
       css,
-      /@media \(max-width: 64rem\)[\s\S]*?\.home-hero__stage\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /\.home-intro__grid\s*\{[\s\S]*?display:\s*block/,
     );
     assert.match(
       css,
-      /@media \(max-width: 640px\)[\s\S]*?\.home-hero__facts\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /@media \(max-width: 64rem\)[\s\S]*?\.home-atlas__grid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    assert.match(
+      css,
+      /@media \(max-width: 640px\)[\s\S]*?\.home-featured__grid,[\s\S]*?\.home-featured__grid--without-hero\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
   });
 });
@@ -532,6 +552,13 @@ describe("site identity", () => {
     assert.doesNotMatch(siteHeader, /AtlasMark|wordmark__mark|<svg/);
     assert.match(siteHeader, />Neural Atlas</);
   });
+
+  it("keeps implementation details out of the public footer", () => {
+    assert.doesNotMatch(
+      siteFooter,
+      /static-first|source Markdown|public material|evidence basis/i,
+    );
+  });
 });
 
 describe("editorial typography", () => {
@@ -554,7 +581,7 @@ describe("editorial typography", () => {
   it("keeps editorial and interface roles distinct", () => {
     for (const selector of [
       ".wordmark",
-      ".home-hero h1",
+      ".home-intro h1",
       ".article-title",
       ".article-row__title",
     ]) {
@@ -644,6 +671,11 @@ describe("homepage research figure", () => {
       );
     }
     assert.ok(atlasWorkflow.includes("Documented ≠ inferred ≠ unknown"));
+  });
+
+  it("keeps generic corpus-summary language out of the visual", () => {
+    assert.doesNotMatch(atlasWorkflow, /CORPUS \/ PROVENANCE MAP/);
+    assert.match(atlasWorkflow, />\s*PROVENANCE MAP\s*</);
   });
 });
 

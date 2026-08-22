@@ -57,7 +57,7 @@ const GRAPH_NODES = [
  */
 export function AtlasWorkflowFigure() {
   return (
-    <figure className="home-hero__visual">
+    <figure className="atlas-workflow-figure">
       <svg
         className="atlas-workflow atlas-workflow--desktop"
         viewBox="0 0 760 500"
@@ -88,7 +88,7 @@ export function AtlasWorkflowFigure() {
           EVIDENCE TOPOLOGY
         </text>
         <text className="atlas-workflow__coordinate" x="728" y="45" textAnchor="end">
-          CORPUS / PROVENANCE MAP
+          PROVENANCE MAP
         </text>
 
         <g aria-label="Public evidence">

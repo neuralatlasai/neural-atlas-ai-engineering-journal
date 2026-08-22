@@ -5,9 +5,8 @@ import { site, staticNav, withBasePath } from "@/lib/site";
 /**
  * Site footer (plan §6.3).
  *
- * Carries the publication statement plus a real secondary navigation — the
- * previous single paragraph left the bottom of every long article as a dead
- * end, which matters most on mobile where the header has scrolled far away.
+ * Provides real secondary navigation at the bottom of every long article,
+ * which matters most on mobile where the header has scrolled far away.
  */
 export function SiteFooter() {
   const sections = getSections();
@@ -18,11 +17,6 @@ export function SiteFooter() {
         <div className="site-footer__grid">
           <div className="site-footer__about">
             <p className="site-footer__wordmark">{site.name}</p>
-            <p>
-              An evidence-grounded AI engineering journal, built as a static-first
-              research publication. Content is preserved from source Markdown; every
-              figure and equation is traceable to its origin.
-            </p>
           </div>
 
           <nav className="site-footer__nav" aria-label="Sections">
@@ -58,8 +52,8 @@ export function SiteFooter() {
         {/* No generated year: the build must be reproducible from source alone
             (plan §3.2), and a clock reading would make two builds differ. */}
         <p className="site-footer__legal">
-          © {site.name}. Analysis is reconstructed from public material and labelled
-          with its evidence basis.
+          © {site.name}. AI architecture, training, inference, and systems-engineering
+          analysis.
         </p>
       </div>
     </footer>
