@@ -16,6 +16,7 @@ const articlePage = fs.readFileSync(
   path.join("app", "[...slug]", "page.tsx"),
   "utf8",
 );
+const homePage = fs.readFileSync(path.join("app", "page.tsx"), "utf8");
 const rootLayout = fs.readFileSync(path.join("app", "layout.tsx"), "utf8");
 
 /**
@@ -380,6 +381,70 @@ describe("page composition", () => {
     );
     assert.match(articlePage, /article-layout article-layout--\$\{/);
     assert.match(articlePage, /showOutline\s*\?\s*"with-outline"\s*:\s*"without-outline"/);
+  });
+});
+
+describe("homepage composition", () => {
+  it("keeps the hero full-bleed while constraining its content to the shared shell", () => {
+    assert.match(homePage, /<div className="home-page">/);
+    assert.match(homePage, /<section className="home-hero"/);
+    assert.match(homePage, /<div className="shell home-hero__stage">/);
+  });
+
+  it("bounds the selected-analysis surface independently of corpus growth", () => {
+    assert.match(
+      homePage,
+      /\.filter\([\s\S]*?\)\s*\.slice\(0, 6\)/,
+      "the homepage must not grow linearly with an unbounded article corpus",
+    );
+    assert.match(
+      homePage,
+      /const heroSections = sections\.slice\(0, 3\)/,
+      "the immersive hero must not inherit an unbounded corpus navigation list",
+    );
+  });
+
+  it("moves the homepage navigation into the shared accessible sheet", () => {
+    assert.match(css, /body:has\(\.home-page\) \.primary-nav\s*\{\s*display:\s*none/);
+    assert.match(
+      css,
+      /body:has\(\.home-page\) \.nav-trigger\s*\{[\s\S]*?display:\s*inline-flex/,
+    );
+    assert.match(
+      css,
+      /body:has\(\.home-page\) \.nav-sheet ul\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2/,
+    );
+  });
+
+  it("layers the homepage navigation over a scoped atmospheric backdrop", () => {
+    assert.match(
+      css,
+      /body:has\(\.home-page\) \.overlay:has\(\.nav-sheet\)\s*\{[\s\S]*?backdrop-filter:\s*blur\(8px\) saturate\(72%\) brightness\(0\.66\)/,
+    );
+    assert.match(
+      css,
+      /body:has\(\.home-page\) \.nav-sheet\s*\{[\s\S]*?isolation:\s*isolate[\s\S]*?radial-gradient/,
+      "the effect must remain homepage-scoped and preserve the shared sheet elsewhere",
+    );
+  });
+
+  it("lets header-owned fixed dialogs cover the viewport", () => {
+    assert.match(
+      css,
+      /\.site-header:has\(\.overlay\)\s*\{[\s\S]*?backdrop-filter:\s*none/,
+      "a filtered header becomes the containing block for fixed dialogs",
+    );
+  });
+
+  it("stacks the hero and publication facts within narrow viewports", () => {
+    assert.match(
+      css,
+      /@media \(max-width: 64rem\)[\s\S]*?\.home-hero__stage\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    assert.match(
+      css,
+      /@media \(max-width: 640px\)[\s\S]*?\.home-hero__facts\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
   });
 });
 

@@ -522,6 +522,18 @@ function repairMathFragment(s: string): string {
       // A literal percent sign is a TeX comment and silently eats the rest of
       // the equation.
       .replace(/(?<!\\)%/g, "\\%")
+      // A lossy source conversion can leave a currency dimension as `J_{$}` or
+      // `J_{\$}`. Although the latter is valid TeX, remark-math still sees its
+      // dollar while locating the surrounding Markdown delimiter and can split
+      // the display before KaTeX receives it. Encode the literal by code point
+      // so the intermediate Markdown contains no ambiguous dollar. Restrict the
+      // repair to a complete sub/superscript group so ordinary authored
+      // `$...$` spans remain unchanged.
+      .replace(
+        /([_^]\{\s*)\\?\$(\s*\})/g,
+        (_match, opener: string, closer: string) =>
+          `${opener}\\char"24${closer}`,
+      )
       // A bare `[2mm]` / `[1.5mm]` is a row break whose `\\` and spacing were
       // lost. KaTeX
       // renders the `\\[dimen]` optional argument as literal text, so collapse

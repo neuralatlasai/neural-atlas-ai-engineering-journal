@@ -2,10 +2,12 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   absoluteUrl,
+  composePrimaryNav,
   internalHref,
   SEARCH_PATH,
   searchUrl,
   site,
+  staticNav,
   withTrailingSlash,
 } from "../lib/site";
 import { articleJsonLd, breadcrumbJsonLd, websiteJsonLd } from "../lib/structured-data";
@@ -44,6 +46,39 @@ describe("withTrailingSlash", () => {
     assert.equal(withTrailingSlash("/feed.xml"), "/feed.xml");
     assert.equal(withTrailingSlash("/search-index.json"), "/search-index.json");
     assert.equal(withTrailingSlash("/robots.txt"), "/robots.txt");
+  });
+});
+
+describe("composePrimaryNav", () => {
+  it("keeps every header label and destination unique", () => {
+    const items = composePrimaryNav([
+      { href: "/models", label: "Models" },
+      { href: "/research", label: "Research" },
+      { href: "/models/", label: "Models" },
+    ]);
+    const hrefs = items.map((item) => item.href.replace(/\/+$/, "").toLowerCase());
+    const labels = items.map((item) => item.label.trim().toLowerCase());
+
+    assert.equal(new Set(hrefs).size, hrefs.length);
+    assert.equal(new Set(labels).size, labels.length);
+    assert.ok(labels.includes("research"));
+    assert.ok(labels.includes("library"));
+  });
+
+  it("reserves fixed application labels against future corpus folders", () => {
+    const items = composePrimaryNav([
+      { href: "/topics-from-corpus", label: " Topics " },
+      { href: "/about", label: "Project" },
+      { href: "/training", label: "Training" },
+    ]);
+
+    assert.deepEqual(
+      items.map(({ href, label }) => ({ href, label })),
+      [
+        { href: "/training", label: "Training" },
+        ...staticNav.map(({ href, label }) => ({ href, label })),
+      ],
+    );
   });
 });
 

@@ -82,10 +82,53 @@ export const site = {
 
 /** Routes that exist independently of the discovered corpus. */
 export const staticNav: readonly NavItem[] = [
-  { href: "/library", label: "Research", description: "Browse research by subject area" },
+  { href: "/library", label: "Library", description: "Browse research by subject area" },
   { href: "/topics", label: "Topics", description: "Analysis grouped by subject area" },
   { href: "/about", label: "About", description: "Method, scope, and editorial standards" },
 ] as const;
+
+/**
+ * Compose corpus-derived and fixed navigation without duplicate destinations or
+ * labels. Fixed routes reserve their public labels because they represent
+ * stable application surfaces; a future corpus folder named `Topics`, `About`,
+ * or `Library` remains reachable through the library instead of creating an
+ * ambiguous pair of identically labelled header links.
+ *
+ * Two sets keep the pass O(n + m) for n section links and m fixed links. A
+ * repeated array scan would be O((n + m)²) as the corpus grows.
+ */
+export function composePrimaryNav(
+  sectionItems: readonly NavItem[],
+  fixedItems: readonly NavItem[] = staticNav,
+): NavItem[] {
+  const fixedHrefs = new Set<string>();
+  const fixedLabels = new Set<string>();
+  const uniqueFixed: NavItem[] = [];
+
+  for (const item of fixedItems) {
+    const href = item.href.replace(/\/+$/, "").toLocaleLowerCase("en");
+    const label = item.label.trim().replace(/\s+/g, " ").toLocaleLowerCase("en");
+    if (fixedHrefs.has(href) || fixedLabels.has(label)) continue;
+    fixedHrefs.add(href);
+    fixedLabels.add(label);
+    uniqueFixed.push(item);
+  }
+
+  const seenHrefs = new Set(fixedHrefs);
+  const seenLabels = new Set(fixedLabels);
+  const uniqueSections: NavItem[] = [];
+
+  for (const item of sectionItems) {
+    const href = item.href.replace(/\/+$/, "").toLocaleLowerCase("en");
+    const label = item.label.trim().replace(/\s+/g, " ").toLocaleLowerCase("en");
+    if (seenHrefs.has(href) || seenLabels.has(label)) continue;
+    seenHrefs.add(href);
+    seenLabels.add(label);
+    uniqueSections.push(item);
+  }
+
+  return [...uniqueSections, ...uniqueFixed];
+}
 
 /**
  * Build an absolute URL for a site-relative path.

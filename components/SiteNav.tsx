@@ -84,28 +84,41 @@ export function SiteNav({ items }: { items: readonly NavItem[] }) {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="nav-sheet__head">
-              <span className="nav-sheet__title">Navigate</span>
+              <span className="nav-sheet__title">Menu</span>
               <button
                 type="button"
-                className="icon-button"
+                className="icon-button nav-sheet__close"
                 onClick={close}
                 aria-label="Close navigation menu"
               >
-                <span aria-hidden="true">✕</span>
+                <span className="nav-sheet__close-label" aria-hidden="true">
+                  Close
+                </span>
+                <span className="nav-sheet__close-glyph" aria-hidden="true">
+                  ✕
+                </span>
               </button>
             </div>
             <nav aria-label="Site sections">
               <ul>
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       aria-current={isActive(pathname, item.href) ? "page" : undefined}
                     >
-                      <span className="nav-sheet__label">{item.label}</span>
-                      {item.description && (
-                        <span className="nav-sheet__desc">{item.description}</span>
-                      )}
+                      <span className="nav-sheet__index" aria-hidden="true">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="nav-sheet__copy">
+                        <span className="nav-sheet__label">{item.label}</span>
+                        {item.description && (
+                          <span className="nav-sheet__desc">{item.description}</span>
+                        )}
+                      </span>
+                      <span className="nav-sheet__arrow" aria-hidden="true">
+                        ↗
+                      </span>
                     </Link>
                   </li>
                 ))}

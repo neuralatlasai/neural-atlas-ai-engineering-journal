@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSections } from "@/lib/content/corpus";
-import { staticNav, type NavItem } from "@/lib/site";
+import { composePrimaryNav, staticNav, type NavItem } from "@/lib/site";
 import { SiteNav } from "./SiteNav";
 import { SearchPalette } from "./SearchPalette";
 import { ThemeToggle } from "./ThemeToggle";
@@ -16,7 +16,7 @@ export function navItems(): NavItem[] {
     label: section.label,
     description: `${section.count} ${section.count === 1 ? "article" : "articles"}`,
   }));
-  return [...sections, ...staticNav];
+  return composePrimaryNav(sections, staticNav);
 }
 
 export function SiteHeader() {

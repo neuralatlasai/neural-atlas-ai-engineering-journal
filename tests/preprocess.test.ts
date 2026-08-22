@@ -240,6 +240,41 @@ describe("display-math normalization", () => {
     assert.ok(!markdown.includes("====="), "the scar becomes a single '='");
   });
 
+  it("encodes a literal currency symbol used as a complete script label", () => {
+    const source = String.raw`[
+\mathbf z(\Pi)
+==============
+[
+-Q,
+J_{$},
+L,
+N_{\text{tokens}},
+P_{\text{failure}}
+].
+]`;
+    const { markdown, displayBlocks } = preprocess(source);
+    const block = markdown.match(/\$\$\n([\s\S]*?)\n\$\$/)?.[1] ?? "";
+
+    assert.equal(displayBlocks, 1);
+    assert.ok(block.includes(String.raw`J_{\char"24}`), block);
+    assert.ok(!block.includes(String.raw`J_{$}`), block);
+    assert.ok(!block.includes(String.raw`J_{\$}`), block);
+    assert.doesNotThrow(() =>
+      katex.renderToString(block, { displayMode: true, throwOnError: true }),
+    );
+  });
+
+  it("normalizes escaped currency scripts without changing inline math", () => {
+    const escaped = preprocess(String.raw`[
+J_{\$}+J_{\delta}
+]`).markdown;
+    const inline = "The comparison remains $J_x < J_y$.\n";
+
+    assert.ok(escaped.includes(String.raw`J_{\char"24}+J_{\delta}`), escaped);
+    assert.equal(preprocess(escaped).markdown, escaped);
+    assert.equal(preprocess(inline).markdown, inline);
+  });
+
   it("restores an equality moved ahead of a computed expression", () => {
     const source = String.raw`[
 |I2I|
