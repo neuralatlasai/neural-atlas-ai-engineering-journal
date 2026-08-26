@@ -224,6 +224,25 @@ describe("per-document Markdown", () => {
     }
   });
 
+  it("points every document back to the index and the full corpus", () => {
+    // A document is usually reached on its own, so each must carry the way back
+    // to the whole corpus rather than assuming the reader started at the root.
+    for (const [i, article] of articles.entries()) {
+      const content = files[i].content;
+      assert.ok(
+        content.includes(`> Index: ${absoluteUrl(LLMS_TXT_PATH)}`),
+        `${article.documentId} does not link llms.txt`,
+      );
+      assert.ok(
+        content.includes(`> Full corpus: ${absoluteUrl(LLMS_FULL_TXT_PATH)}`),
+        `${article.documentId} does not link llms-full.txt`,
+      );
+      // The pointers belong to the header block, above the document's own prose.
+      const header = content.slice(0, content.indexOf("\n\n", content.indexOf("> Page:")));
+      assert.ok(header.includes("> Index: "));
+    }
+  });
+
   it("is deterministic", () => {
     assert.deepEqual(buildArticleMarkdownFiles(), files);
   });

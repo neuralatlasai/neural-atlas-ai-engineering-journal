@@ -317,8 +317,10 @@ function dropRedundantLeadHeading(markdown: string, title: string): string {
  *
  * This is the single renderer behind both surfaces — the `.md` file published
  * beside each page and the entry embedded in `llms-full.txt` — so the two can
- * never drift. The metadata block names the rendered page, which is what a
- * reader of an extracted passage needs in order to cite it.
+ * never drift. The metadata block makes the document self-locating: it names the
+ * rendered page, which is what a reader of an extracted passage needs in order
+ * to cite it, and the `llms.txt` index, which is how an agent that arrived at
+ * this one document finds the other thirty-eight.
  */
 export function buildArticleMarkdown(article: ArticleMeta): string {
   const { content } = matter(readSource(article.sourcePath));
@@ -339,6 +341,12 @@ export function buildArticleMarkdown(article: ArticleMeta): string {
   if (article.displayDate) facts.push(`Published: ${article.displayDate}`);
   facts.push(`Source: ${article.documentId}`);
   facts.push(`Publication: ${site.name} — ${site.tagline}`);
+  // A document is usually reached on its own — from a search result, a link, or
+  // an index this publication does not control — so each one carries the way
+  // back to the whole. Without it, `llms.txt` is only discoverable by an agent
+  // that already started at the site root.
+  facts.push(`Index: ${absoluteUrl(LLMS_TXT_PATH)}`);
+  facts.push(`Full corpus: ${absoluteUrl(LLMS_FULL_TXT_PATH)}`);
 
   return [`# ${oneLine(article.title)}`, "", ...facts.map((fact) => `> ${fact}`), "", body].join(
     "\n",
