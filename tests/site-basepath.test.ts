@@ -17,12 +17,15 @@ const PREFIX = "/example-repo";
 const ORIGIN = "https://example.github.io";
 
 type SiteModule = typeof import("../lib/site");
+type LlmsModule = typeof import("../lib/content/llms");
 let site: SiteModule;
+let llms: LlmsModule;
 
 before(async () => {
   process.env.NEXT_PUBLIC_BASE_PATH = PREFIX;
   process.env.NEXT_PUBLIC_SITE_URL = ORIGIN;
   site = await import("../lib/site");
+  llms = await import("../lib/content/llms");
 });
 
 describe("sub-path deployment", () => {
@@ -59,6 +62,19 @@ describe("sub-path deployment", () => {
       !site.absoluteAssetUrl(fromManifest).includes(`${PREFIX}${PREFIX}`),
       "the prefix must not appear twice",
     );
+  });
+
+  it("keeps every llms.txt link inside the deployed sub-path", () => {
+    // The file is read with no page to resolve against, so a link that lost the
+    // prefix is a dead link rather than a cosmetic defect.
+    const index = llms.buildLlmsTxt();
+    const urls = [...index.matchAll(/\]\((\S+?)\)/g)].map((match) => match[1]);
+    assert.ok(urls.length > 0);
+    for (const url of urls) {
+      assert.ok(url.startsWith(`${ORIGIN}${PREFIX}/`), url);
+      assert.ok(!url.includes(`${PREFIX}${PREFIX}`), `prefix applied twice: ${url}`);
+    }
+    assert.ok(index.includes(`${ORIGIN}${PREFIX}${llms.LLMS_FULL_TXT_PATH}`));
   });
 
   it("produces parseable absolute URLs", () => {

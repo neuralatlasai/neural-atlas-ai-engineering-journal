@@ -4,6 +4,7 @@ import "katex/dist/katex.min.css";
 import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { LLMS_FULL_TXT_PATH, LLMS_TXT_PATH } from "@/lib/content/llms";
 import { absoluteUrl, site } from "@/lib/site";
 
 // Subset, swap-loaded, and exposed as CSS variables (plan §7.3).
@@ -59,7 +60,15 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: absoluteUrl("/"),
-    types: { "application/rss+xml": [{ url: absoluteUrl("/feed.xml"), title: `${site.name} — all articles` }] },
+    types: {
+      "application/rss+xml": [{ url: absoluteUrl("/feed.xml"), title: `${site.name} — all articles` }],
+      // Machine-readable entry points, advertised the same way the feed is, so
+      // an agent that lands on any page can find them without guessing at paths.
+      "text/plain": [
+        { url: absoluteUrl(LLMS_TXT_PATH), title: `${site.name} — llms.txt index` },
+        { url: absoluteUrl(LLMS_FULL_TXT_PATH), title: `${site.name} — complete corpus` },
+      ],
+    },
   },
   formatDetection: { telephone: false, address: false, email: false },
 };
