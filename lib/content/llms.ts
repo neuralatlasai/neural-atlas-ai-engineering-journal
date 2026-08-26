@@ -51,6 +51,19 @@ export const LLMS_TXT_PATH = "/llms.txt";
 export const LLMS_FULL_TXT_PATH = "/llms-full.txt";
 
 /**
+ * The Markdown twin of a document's page: `/components/rl-grpo` is published as
+ * a page at `/components/rl-grpo/` and as source at `/components/rl-grpo.md`.
+ *
+ * Appending the extension to the route — rather than nesting an `index.md` — is
+ * what makes the pair guessable in both directions: an agent holding either URL
+ * derives the other by adding or dropping `.md`. Slugs are `[a-z0-9-]` only, so
+ * the extension is always the first dot in the final segment.
+ */
+export function markdownPathFor(article: ArticleMeta): string {
+  return `${article.route}.md`;
+}
+
+/**
  * A list item is one line by definition, so a description that runs long turns
  * the index into prose. Entries are trimmed at a sentence boundary where one is
  * available and hard-truncated otherwise.
@@ -125,16 +138,17 @@ export function buildLlmsTxt(): string {
   blocks.push(`# ${site.name}`);
   blocks.push(`> ${oneLine(`${site.tagline}. ${site.longDescription}`)}`);
   blocks.push(
-    oneLine(`Every link below is a self-contained, statically served document — no
-      JavaScript, login, or API key is required to read one, and each page's URL is
-      its canonical citation. Documents are grouped by the section they are
-      published under, in the same order as the site's own navigation.`),
+    oneLine(`Every document below is linked as Markdown source rather than as a
+      rendered page, so no HTML parsing is required to read one. Documents are
+      grouped by the section they are published under, in the same order as the
+      site's own navigation.`),
   );
   blocks.push(
     [
       `- Corpus: ${documentCount} across ${sectionCount}.`,
-      `- Full text: [${site.name} — complete corpus](${absoluteUrl(LLMS_FULL_TXT_PATH)}) concatenates every document's Markdown source into one file; prefer it over fetching the pages one at a time.`,
-      "- Mathematics is rendered from TeX and preserved as TeX in the source, so equations survive extraction intact.",
+      "- Each `.md` URL has a rendered page at the same path without the extension: `/components/rl-grpo.md` is the source of `/components/rl-grpo/`. Every document names its own page URL in its header; cite that one.",
+      `- Full text: [${site.name} — complete corpus](${absoluteUrl(LLMS_FULL_TXT_PATH)}) concatenates all ${documentCount} into one file; prefer it over fetching them one at a time.`,
+      "- Mathematics is preserved as TeX in `$`/`$$` delimiters, so equations survive extraction intact.",
     ].join("\n"),
   );
 
@@ -148,7 +162,7 @@ export function buildLlmsTxt(): string {
         ...items.map((article) => {
           const trail = folderTrail(article);
           const name = trail ? `${article.title} (${trail})` : article.title;
-          return linkItem(name, absoluteUrl(article.route), articleDetail(article));
+          return linkItem(name, absoluteUrl(markdownPathFor(article)), articleDetail(article));
         }),
       ].join("\n"),
     );
@@ -297,8 +311,16 @@ function dropRedundantLeadHeading(markdown: string, title: string): string {
   return lines.slice(first + 1).join("\n");
 }
 
-/** One document: a heading, a metadata block, then its normalized source. */
-function fullTextEntry(article: ArticleMeta): string {
+/**
+ * One document as standalone Markdown: a heading, a metadata block, then its
+ * normalized source.
+ *
+ * This is the single renderer behind both surfaces — the `.md` file published
+ * beside each page and the entry embedded in `llms-full.txt` — so the two can
+ * never drift. The metadata block names the rendered page, which is what a
+ * reader of an extracted passage needs in order to cite it.
+ */
+export function buildArticleMarkdown(article: ArticleMeta): string {
   const { content } = matter(readSource(article.sourcePath));
   const normalized = preprocess(content).markdown;
   const body = dropRedundantLeadHeading(
@@ -307,7 +329,8 @@ function fullTextEntry(article: ArticleMeta): string {
   ).trim();
 
   const facts = [
-    `URL: ${absoluteUrl(article.route)}`,
+    `Page: ${absoluteUrl(article.route)}`,
+    `Markdown: ${absoluteUrl(markdownPathFor(article))}`,
     `Section: ${[article.sectionLabel, folderTrail(article)].filter(Boolean).join(" / ")}`,
     `Type: ${formatArticleType(article.articleType)}`,
     `Reading time: ${article.readingMinutes} min`,
@@ -315,10 +338,19 @@ function fullTextEntry(article: ArticleMeta): string {
   if (article.topics.length > 0) facts.push(`Topics: ${article.topics.join(", ")}`);
   if (article.displayDate) facts.push(`Published: ${article.displayDate}`);
   facts.push(`Source: ${article.documentId}`);
+  facts.push(`Publication: ${site.name} — ${site.tagline}`);
 
   return [`# ${oneLine(article.title)}`, "", ...facts.map((fact) => `> ${fact}`), "", body].join(
     "\n",
   );
+}
+
+/** Every document's Markdown, keyed by the path it is published at. */
+export function buildArticleMarkdownFiles(): { path: string; content: string }[] {
+  return getAllArticles().map((article) => ({
+    path: markdownPathFor(article),
+    content: `${buildArticleMarkdown(article)}\n`,
+  }));
 }
 
 /** The whole corpus as one Markdown stream. */
@@ -332,12 +364,13 @@ export function buildLlmsFullTxt(): string {
     "",
     oneLine(`This file is the full Markdown source of all ${articles.length} documents published
       at ${absoluteUrl("/")}, in the same order as the index at ${absoluteUrl(LLMS_TXT_PATH)}.
-      Documents are separated by a horizontal rule and introduced by an H1 followed
-      by a metadata block; every heading below that belongs to the document itself.
-      Mathematics is normalized to standard $-delimited TeX and image references are
-      absolute, so any passage can be quoted or fetched without resolving it against
-      a page.`),
+      Each document is also served on its own, at its page URL with a \`.md\`
+      extension, byte for byte as it appears here. Documents are separated by a
+      horizontal rule and introduced by an H1 followed by a metadata block; every
+      heading below that belongs to the document itself. Mathematics is normalized to
+      standard $-delimited TeX and image references are absolute, so any passage can
+      be quoted or fetched without resolving it against a page.`),
   ].join("\n");
 
-  return `${[header, ...articles.map(fullTextEntry)].join("\n\n---\n\n")}\n`;
+  return `${[header, ...articles.map(buildArticleMarkdown)].join("\n\n---\n\n")}\n`;
 }

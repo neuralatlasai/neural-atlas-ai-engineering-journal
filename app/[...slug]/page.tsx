@@ -15,6 +15,7 @@ import {
   type ArticleMeta,
 } from "@/lib/content/corpus";
 import { compileArticle } from "@/lib/content/compile";
+import { markdownPathFor } from "@/lib/content/llms";
 import { absoluteAssetUrl, absoluteUrl, site } from "@/lib/site";
 import { articleJsonLd, breadcrumbJsonLd } from "@/lib/structured-data";
 import { ArticleList } from "@/components/ArticleList";
@@ -100,7 +101,16 @@ export async function generateMetadata({
     return {
       title: article.title,
       description,
-      alternates: { canonical: absoluteUrl(article.route) },
+      alternates: {
+        canonical: absoluteUrl(article.route),
+        // The document's Markdown twin, so an agent that lands on the page can
+        // fetch the source instead of parsing the rendering.
+        types: {
+          "text/markdown": [
+            { url: absoluteUrl(markdownPathFor(article)), title: `${article.title} (Markdown)` },
+          ],
+        },
+      },
       keywords: article.topics.length > 0 ? article.topics : undefined,
       openGraph: {
         type: "article",

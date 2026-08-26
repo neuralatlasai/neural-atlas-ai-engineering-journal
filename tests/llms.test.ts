@@ -1,10 +1,13 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildArticleMarkdown,
+  buildArticleMarkdownFiles,
   buildLlmsFullTxt,
   buildLlmsTxt,
   LLMS_FULL_TXT_PATH,
   LLMS_TXT_PATH,
+  markdownPathFor,
 } from "../lib/content/llms";
 import { assetResolverFor, getAllArticles, getSections, readSource } from "../lib/content/corpus";
 import { absoluteAssetUrl, absoluteUrl, site } from "../lib/site";
@@ -81,14 +84,15 @@ describe("llms.txt format", () => {
     }
   });
 
-  it("lists every article exactly once, under its own section", () => {
+  it("lists every article exactly once, as Markdown", () => {
     const urls = items.map((item) => item.url);
     for (const article of articles) {
-      const url = absoluteUrl(article.route);
+      const url = absoluteUrl(markdownPathFor(article));
+      assert.ok(url.endsWith(".md"), url);
       assert.equal(
         urls.filter((candidate) => candidate === url).length,
         1,
-        `${article.route} is not listed exactly once`,
+        `${article.route} is not listed exactly once as Markdown`,
       );
     }
 
@@ -118,13 +122,13 @@ describe("llms-full.txt", () => {
   it("carries every article's body and canonical URL", () => {
     for (const article of articles) {
       assert.ok(
-        full.includes(`> URL: ${absoluteUrl(article.route)}`),
+        full.includes(`> Page: ${absoluteUrl(article.route)}`),
         `${article.route} is missing from the full text`,
       );
     }
     // One metadata block per document. Bodies contain `---` rules of their own,
     // so the metadata block — not the separator — is what delimits a document.
-    assert.equal((full.match(/^> URL: /gm) ?? []).length, articles.length);
+    assert.equal((full.match(/^> Page: /gm) ?? []).length, articles.length);
   });
 
   it("strips front matter rather than emitting it as content", () => {
@@ -140,7 +144,7 @@ describe("llms-full.txt", () => {
      * way is that a target survives relative exactly when the manifest cannot
      * resolve it, and that a resolvable one is rewritten to its published URL.
      */
-    const starts = [...full.matchAll(/^> URL: .+$/gm)].map((match) => match.index ?? 0);
+    const starts = [...full.matchAll(/^> Page: .+$/gm)].map((match) => match.index ?? 0);
     assert.equal(starts.length, articles.length);
 
     for (const [i, article] of articles.entries()) {
@@ -172,5 +176,55 @@ describe("llms-full.txt", () => {
 
   it("is deterministic", () => {
     assert.equal(buildLlmsFullTxt(), full);
+  });
+
+  it("embeds each document exactly as its own `.md` file serves it", () => {
+    // The drift guard: one renderer feeds both surfaces, and a passage quoted
+    // from either must be findable in the other.
+    for (const article of articles) {
+      assert.ok(
+        full.includes(buildArticleMarkdown(article)),
+        `${article.documentId} differs between its .md file and the full text`,
+      );
+    }
+  });
+});
+
+describe("per-document Markdown", () => {
+  const files = buildArticleMarkdownFiles();
+
+  it("publishes one file per document, at its page path plus `.md`", () => {
+    assert.equal(files.length, articles.length);
+    for (const [i, article] of articles.entries()) {
+      assert.equal(files[i].path, `${article.route}.md`);
+    }
+    assert.equal(new Set(files.map((file) => file.path)).size, files.length);
+  });
+
+  it("keeps the pairing derivable in both directions", () => {
+    for (const article of articles) {
+      const md = markdownPathFor(article);
+      assert.ok(md.endsWith(".md"));
+      // Dropping the extension must land back on the page route exactly — the
+      // property an agent relies on when it rewrites one URL into the other.
+      assert.equal(md.slice(0, -".md".length), article.route);
+      // A dot in a route segment would make the extension ambiguous.
+      assert.ok(!article.route.includes("."), article.route);
+    }
+  });
+
+  it("names its own page and Markdown URLs in every document", () => {
+    for (const [i, article] of articles.entries()) {
+      const content = files[i].content;
+      assert.ok(content.startsWith(`# `));
+      assert.ok(content.includes(`> Page: ${absoluteUrl(article.route)}`));
+      assert.ok(content.includes(`> Markdown: ${absoluteUrl(markdownPathFor(article))}`));
+      assert.ok(content.includes(`> Source: ${article.documentId}`));
+      assert.ok(content.endsWith("\n"));
+    }
+  });
+
+  it("is deterministic", () => {
+    assert.deepEqual(buildArticleMarkdownFiles(), files);
   });
 });

@@ -7,7 +7,7 @@
     "dev": "node scripts/dev-server.mjs",
     "prebuild": "node scripts/optimize-images.mjs",
     "build": "next build",
-    "postbuild": "node scripts/verify-math.mjs && node scripts/audit-html.mjs",
+    "postbuild": "node --import tsx scripts/emit-markdown.ts && node scripts/verify-math.mjs && node scripts/audit-html.mjs",
     "verify:math": "node scripts/verify-math.mjs",
     "verify:html": "node scripts/audit-html.mjs",
     "images": "node scripts/optimize-images.mjs",
