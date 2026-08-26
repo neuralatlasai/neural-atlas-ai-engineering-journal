@@ -18,6 +18,37 @@ describe("display-math normalization", () => {
     assert.ok(!markdown.includes("\\]"));
   });
 
+  it("leaves an authored $$ display block exactly as written", () => {
+    // Regression: the inline pass read the parenthesised TeX inside the fence as
+    // the corpus's lossy inline form and wrapped it in `$…$`. Those dollars
+    // closed the display early, so remark-math saw no math block and the
+    // equation reached the page as raw source.
+    const source = [
+      "$$",
+      "q\\notin\\operatorname{Support}(\\mathcal S)",
+      "\\Longrightarrow",
+      "z_t=E_\\theta(o_t)",
+      "$$",
+      "",
+    ].join("\n");
+    const { markdown, displayBlocks } = preprocess(source);
+    assert.equal(displayBlocks, 1);
+    assert.equal(markdown.trimEnd(), source.trimEnd());
+  });
+
+  it("requires a closing fence before treating $$ as display math", () => {
+    // A lone `$$` must not turn the rest of the document into mathematics.
+    const { markdown } = preprocess("$$\ncost is (n^2) here\n");
+    assert.match(markdown, /\$n\^2\$/);
+  });
+
+  it("does not read a $$ inside a code fence as display math", () => {
+    const source = ["```text", "$$", "(x^2)", "$$", "```", ""].join("\n");
+    const { markdown, displayBlocks } = preprocess(source);
+    assert.equal(displayBlocks, 0);
+    assert.equal(markdown.trimEnd(), source.trimEnd());
+  });
+
   it("tolerates a stray heading marker on the opening bracket", () => {
     // Regression: `# [` was parsed as a heading whose text is a bracket, so the
     // equation rendered as literal TeX in a paragraph, an empty-id <h2>[</h2>

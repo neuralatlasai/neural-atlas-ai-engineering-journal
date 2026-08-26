@@ -145,6 +145,20 @@ function scanDelimiters(line: string, state: DelimiterState): DelimiterState {
   }
   return { brackets, parens };
 }
+/**
+ * A line that is nothing but the standard display-math fence `$$`.
+ *
+ * A document may already be authored in the delimiters remark-math understands
+ * rather than in the lossy `[` / `]` convention this module repairs. Its
+ * contents are then valid TeX that needs no repair — and must receive none:
+ * `convertInlineMath` reads a parenthesised TeX group inside the fence, such as
+ * `E_\theta(o_t)` or `\left( \bar z_i \right)`, as the corpus's lossy *inline*
+ * form and wraps it in `$…$`. Those injected dollars close the display early,
+ * so remark-math never sees a math block at all and the whole equation is
+ * published to the page as raw source.
+ */
+const DOLLAR_FENCE = /^\s*\$\$\s*$/;
+
 const SETEXT_SCAR = /^\s*[=]{3,}\s*$/; // a lone `=======` line inside math
 const HR_SCAR = /^\s*[-]{3,}\s*$/;
 
@@ -1135,6 +1149,28 @@ export function preprocess(source: string): PreprocessResult {
     if (inFence) {
       out.push(authoredLine);
       continue;
+    }
+
+    // An authored `$$` display block is already in remark-math's own
+    // delimiters: emit it verbatim. The closer is required — a lone `$$` in
+    // prose must not silently turn the rest of the document into mathematics —
+    // and the search for it stops at a code fence, whose `$$` belongs to the
+    // listing rather than to this block.
+    if (DOLLAR_FENCE.test(authoredLine)) {
+      let close = -1;
+      for (let k = i + 1; k < lines.length; k++) {
+        if (/^\s*(?:```+|~~~+)/.test(lines[k])) break;
+        if (DOLLAR_FENCE.test(lines[k])) {
+          close = k;
+          break;
+        }
+      }
+      if (close !== -1) {
+        for (let k = i; k <= close; k++) out.push(lines[k]);
+        displayBlocks++;
+        i = close;
+        continue;
+      }
     }
 
     const line = stripInternalCitationTokens(authoredLine);
