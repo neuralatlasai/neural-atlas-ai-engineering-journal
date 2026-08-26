@@ -39,6 +39,21 @@ export function SiteNav({ items }: { items: readonly NavItem[] }) {
     setOpen(false);
   }, [pathname]);
 
+  /* Responsive state must follow responsive geometry. A sheet opened below the
+     navigation breakpoint can otherwise remain mounted after rotation,
+     docking, or desktop resize even though its trigger has disappeared and
+     the inline navigation is visible again. */
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 76.01rem)");
+    const closeWhenInlineNavigationReturns = (event: MediaQueryListEvent | MediaQueryList) => {
+      if (event.matches) setOpen(false);
+    };
+
+    closeWhenInlineNavigationReturns(desktop);
+    desktop.addEventListener("change", closeWhenInlineNavigationReturns);
+    return () => desktop.removeEventListener("change", closeWhenInlineNavigationReturns);
+  }, []);
+
   useDialogBehavior({ open, onClose: close, panelRef, returnFocusRef: triggerRef });
 
   return (

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Libre_Franklin, Newsreader } from "next/font/google";
+import { IBM_Plex_Mono, Inter, Newsreader } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -7,11 +7,11 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { absoluteUrl, site } from "@/lib/site";
 
 // Subset, swap-loaded, and exposed as CSS variables (plan §7.3).
-const franklin = Libre_Franklin({
+const inter = Inter({
   subsets: ["latin"],
   weight: "variable",
   display: "swap",
-  variable: "--font-franklin",
+  variable: "--font-inter",
 });
 const newsreader = Newsreader({
   subsets: ["latin"],
@@ -91,7 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang={site.locale}
       suppressHydrationWarning
-      className={`${franklin.variable} ${newsreader.variable} ${mono.variable}`}
+      className={`${inter.variable} ${newsreader.variable} ${mono.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

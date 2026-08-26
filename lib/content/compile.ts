@@ -1204,6 +1204,85 @@ function markMathProvenance() {
   };
 }
 
+const COMPACT_FLOW_ARROW = /^\s*\\(?:downarrow|uparrow|leftarrow|rightarrow)\s*$/u;
+const COMPACT_FLOW_LABEL =
+  /^\s*(?:\\boxed\s*\{\s*)?\\text(?:bf)?\s*\{[^{}]{1,180}\}\s*\}?\s*$/u;
+
+/** Return the source TeX retained by KaTeX's accessible MathML branch. */
+function mathAnnotation(display: Element): string | null {
+  let tex: string | null = null;
+  visit(display, "element", (node: Element) => {
+    if (node.tagName !== "annotation") return;
+    tex = hastToString(node);
+    return SKIP;
+  });
+  return tex;
+}
+
+/**
+ * Rehype plugin: compact vertical flow diagrams authored as display-math runs.
+ *
+ * Converted documents sometimes encode a simple architecture flow as one
+ * display block per text label and one per arrow. Applying ordinary equation
+ * padding to every atom multiplies whitespace across the complete flow. A run
+ * is classified only when it contains at least three labels, alternates label
+ * and arrow nodes, and every label is a bounded text-only TeX command. General
+ * equations, derivations, matrices, and mixed runs remain untouched.
+ *
+ * Each parent is scanned once and every KaTeX subtree is inspected at most
+ * once, so runtime is O(n) in the rendered HAST size.
+ */
+function markCompactMathFlows() {
+  type Parent = Root | Element;
+  type FlowItem = { element: Element; arrow: boolean };
+
+  const markRun = (run: FlowItem[]) => {
+    if (run.length < 5) return;
+    const startsWithArrow = run[0]?.arrow ?? false;
+    const alternates = run.every((item, index) =>
+      index % 2 === 0 ? item.arrow === startsWithArrow : item.arrow !== startsWithArrow,
+    );
+    const arrows = run.filter((item) => item.arrow).length;
+    const labels = run.length - arrows;
+    if (!alternates || arrows < 2 || labels < 3) return;
+
+    for (const item of run) {
+      item.element.properties ??= {};
+      item.element.properties.className = [
+        ...elementClassNames(item.element),
+        "math-flow",
+        ...(item.arrow ? ["math-flow--arrow"] : []),
+      ];
+    }
+  };
+
+  const scan = (parent: Parent): void => {
+    let run: FlowItem[] = [];
+    const flush = () => {
+      markRun(run);
+      run = [];
+    };
+
+    for (const child of parent.children) {
+      if (child.type === "text" && child.value.trim().length === 0) continue;
+      if (child.type === "element" && hasElementClass(child, "katex-display")) {
+        const tex = mathAnnotation(child);
+        if (tex && (COMPACT_FLOW_ARROW.test(tex) || COMPACT_FLOW_LABEL.test(tex))) {
+          run.push({ element: child, arrow: COMPACT_FLOW_ARROW.test(tex) });
+          continue;
+        }
+      }
+      flush();
+      if (child.type === "element" && !hasElementClass(child, "katex-display")) {
+        scan(child);
+      }
+    }
+    flush();
+  };
+
+  return (tree: Root) => scan(tree);
+}
+
 /** Opening fence of a code block, capturing its info-string language. */
 const CODE_FENCE = /^[ \t]{0,3}(?:```+|~~~+)[ \t]*([A-Za-z0-9_+#.-]*)/gm;
 
@@ -1256,6 +1335,41 @@ function hardenLinks() {
         node.properties.rel = ["noopener", "noreferrer"];
         node.properties["data-external"] = "true";
       }
+    });
+  };
+}
+
+/**
+ * Rehype plugin: present ar5iv mirrors under the canonical arXiv identity.
+ *
+ * ar5iv is an HTML mirror of arXiv rather than a separate publisher. Some
+ * converted sources therefore carry `[ar5iv]` as their visible provider name,
+ * which reads like a corrupted `arXiv` label in publication copy. Canonicalize
+ * only a single exact label whose URL belongs to a known ar5iv mirror; the
+ * destination remains unchanged and descriptive labels remain author-owned.
+ * The traversal is O(n) in the rendered element count with constant work per
+ * anchor.
+ */
+function canonicalizeCitationProviderLabels() {
+  const ar5ivHosts = new Set(["ar5iv.org", "www.ar5iv.org", "ar5iv.labs.arxiv.org"]);
+
+  return (tree: Root) => {
+    visit(tree, "element", (node: Element) => {
+      if (node.tagName !== "a") return;
+      const href = node.properties?.href;
+      if (typeof href !== "string") return;
+
+      let hostname: string;
+      try {
+        hostname = new URL(href).hostname.toLowerCase();
+      } catch {
+        return;
+      }
+      if (!ar5ivHosts.has(hostname)) return;
+      if (node.children.length !== 1 || node.children[0]?.type !== "text") return;
+      if (!/^ar5iv$/i.test(node.children[0].value.trim())) return;
+
+      node.children[0].value = "arXiv";
     });
   };
 }
@@ -1483,6 +1597,7 @@ async function compileArticleUncached(
   const processor = structuralStages(title, headings, searchSegments, {
     repairMath: true,
   })
+    .use(canonicalizeCitationProviderLabels)
     .use(markStandaloneCitations)
     .use(hardenLinks)
     .use(removeLeadingThematicBreaks)
@@ -1496,6 +1611,7 @@ async function compileArticleUncached(
       throwOnError: false,
       errorColor: "var(--color-danger)",
     })
+    .use(markCompactMathFlows)
     .use(markMathProvenance);
 
   // Only pay for the highlighter when the document has code to highlight, and

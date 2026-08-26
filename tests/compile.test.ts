@@ -310,6 +310,24 @@ describe("rendering contract", () => {
     );
   });
 
+  it("presents ar5iv mirror citations with the canonical arXiv identity", async () => {
+    const { html } = await compileArticle(
+      [
+        "[ar5iv](https://ar5iv.org/html/2505.09388v1)",
+        "[AR5IV](https://ar5iv.labs.arxiv.org/html/2210.02747)",
+        "[ar5iv mirror](https://ar5iv.org/html/2505.09388v1)",
+        "[ar5iv](https://example.com/ar5iv)",
+      ].join("\n\n"),
+      "Title",
+    );
+
+    assert.match(html, />arXiv<\/a>/);
+    assert.equal((html.match(/>arXiv<\/a>/g) ?? []).length, 2);
+    assert.match(html, /href="https:\/\/ar5iv\.org\/html\/2505\.09388v1"/);
+    assert.match(html, />ar5iv mirror<\/a>/);
+    assert.match(html, /href="https:\/\/example\.com\/ar5iv"[^>]*>ar5iv<\/a>/);
+  });
+
   it("classifies standalone citations without capturing linked prose", async () => {
     const { html } = await compileArticle(
       [
@@ -339,6 +357,36 @@ describe("rendering contract", () => {
       html.includes("<math"),
       "MathML is required for assistive technology",
     );
+  });
+
+  it("classifies alternating text-and-arrow math runs as compact flows", async () => {
+    const source = [
+      "[", "\\boxed{\\text{Request}}", "]", "",
+      "[", "\\downarrow", "]", "",
+      "[", "\\text{Router}", "]", "",
+      "[", "\\downarrow", "]", "",
+      "[", "\\text{Executor}", "]",
+    ].join("\n");
+    const { html } = await compileArticle(source, "Flow");
+
+    assert.equal(
+      (html.match(/class="katex-display math-flow(?: math-flow--arrow)?"/g) ?? []).length,
+      5,
+    );
+    assert.equal((html.match(/math-flow--arrow/g) ?? []).length, 2);
+  });
+
+  it("does not compact an ordinary multi-step derivation", async () => {
+    const source = [
+      "$$", "x_0 = 0", "$$", "",
+      "$$", "x_1 = x_0 + 1", "$$", "",
+      "$$", "x_2 = x_1 + 1", "$$", "",
+      "$$", "x_3 = x_2 + 1", "$$", "",
+      "$$", "x_4 = x_3 + 1", "$$",
+    ].join("\n");
+    const { html } = await compileArticle(source, "Derivation");
+
+    assert.doesNotMatch(html, /math-flow/);
   });
 
   it("renders LaTeX mbox content without exposing an unsupported command", async () => {

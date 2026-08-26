@@ -8,6 +8,10 @@ const siteHeader = fs.readFileSync(
   path.join("components", "SiteHeader.tsx"),
   "utf8",
 );
+const siteNav = fs.readFileSync(
+  path.join("components", "SiteNav.tsx"),
+  "utf8",
+);
 const siteFooter = fs.readFileSync(
   path.join("components", "SiteFooter.tsx"),
   "utf8",
@@ -184,7 +188,7 @@ describe("display mathematics rhythm", () => {
   it("uses compact tokens for equation padding and derivation gaps", () => {
     assert.match(css, /--math-space-block:\s*0\.5rem/);
     assert.match(css, /--math-space-run:\s*0\.125rem/);
-    assert.match(css, /--math-padding-block:\s*0\.1875rem/);
+    assert.match(css, /--math-padding-block:\s*0\.5rem/);
     assert.match(
       ruleFor(".article-body .katex-display"),
       /padding-block:\s*var\(--math-padding-block\)/,
@@ -225,6 +229,14 @@ describe("display mathematics rhythm", () => {
       css,
       /> \.tag\.equation-provenance\s*> \.strut\s*\{\s*display:\s*none/s,
     );
+  });
+
+  it("contains intrinsically wide inline mathematics inside prose", () => {
+    const inlineMath = ruleFor('.article-body :is(p, li) > .katex');
+    assert.match(inlineMath, /display:\s*inline-block/);
+    assert.match(inlineMath, /max-inline-size:\s*100%/);
+    assert.match(inlineMath, /overflow-x:\s*auto/);
+    assert.match(inlineMath, /scrollbar-width:\s*none/);
   });
 });
 
@@ -569,13 +581,20 @@ describe("editorial typography", () => {
     return stripped.slice(index, stripped.indexOf("}", index));
   }
 
-  it("self-hosts a newspaper display face and a publication UI face", () => {
-    assert.match(rootLayout, /Libre_Franklin/);
+  it("self-hosts an optical editorial face and a neutral technical UI face", () => {
+    assert.match(rootLayout, /\bInter\b/);
     assert.match(rootLayout, /Newsreader/);
-    assert.doesNotMatch(rootLayout, /\bInter\b|Source_Serif_4/);
+    assert.doesNotMatch(rootLayout, /Libre_Franklin|Source_Serif_4/);
     assert.match(css, /--font-display:\s*var\(--font-newsreader\)/);
     assert.match(css, /--font-reader:\s*var\(--font-newsreader\)/);
-    assert.match(css, /--font-ui:\s*var\(--font-franklin\)/);
+    assert.match(css, /--font-ui:\s*var\(--font-inter\)/);
+  });
+
+  it("applies publication-grade OpenType features to every article", () => {
+    assert.match(ruleFor(".article-title"), /font-kerning:\s*normal/);
+    assert.match(ruleFor(".article-title"), /font-feature-settings:\s*"kern" 1, "liga" 1, "clig" 1/);
+    assert.match(ruleFor(".article-body"), /font-variant-numeric:\s*lining-nums proportional-nums/);
+    assert.match(ruleFor(".article-body"), /text-rendering:\s*optimizeLegibility/);
   });
 
   it("keeps editorial and interface roles distinct", () => {
@@ -611,7 +630,7 @@ describe("editorial typography", () => {
     ];
     const sizes = headingTokens.map(remValue);
 
-    assert.equal(remValue("--text-body"), 0.9375, "reader copy must remain 15px");
+    assert.equal(remValue("--text-body"), 1, "reader copy must remain 16px");
     for (let index = 1; index < sizes.length; index += 1) {
       assert.ok(sizes[index] > sizes[index - 1], "heading sizes must increase monotonically");
       assert.ok(
@@ -716,5 +735,87 @@ describe("article editorial hierarchy", () => {
       ruleFor(".article-body > :first-child"),
       /margin-block-start:\s*0/,
     );
+  });
+});
+
+describe("article material polish", () => {
+  function ruleFor(selector: string): string {
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const index = stripped.indexOf(`${selector} {`);
+    if (index === -1) return "";
+    return stripped.slice(index, stripped.indexOf("}", index));
+  }
+
+  it("derives the article atmosphere from semantic theme tokens", () => {
+    assert.match(css, /--article-glow-primary:\s*color-mix\(/);
+    assert.match(css, /--article-material:\s*color-mix\(/);
+    assert.match(
+      css,
+      /main:has\(\.article-page\)\s*\{[\s\S]*?radial-gradient[\s\S]*?linear-gradient/,
+    );
+  });
+
+  it("uses one shared material language for technical evidence", () => {
+    for (const selector of [
+      ".article-body figure.code-block",
+      ".outline--inline",
+      ".prev-next__link",
+    ]) {
+      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      assert.match(
+        css,
+        new RegExp(`${escaped}\\s*\\{[\\s\\S]*?background:\\s*linear-gradient`),
+        `${selector} must use the shared gradient material`,
+      );
+    }
+  });
+
+  it("keeps display mathematics cardless with a local scrollbar", () => {
+    const equationRule = ruleFor(".article-body .katex-display");
+    assert.match(equationRule, /overflow-x:\s*auto/);
+    assert.doesNotMatch(equationRule, /(?:background|border|box-shadow):/);
+    assert.match(
+      css,
+      /\.article-body \.katex-display::\-webkit-scrollbar-thumb\s*\{[\s\S]*?border-radius:\s*999px/,
+    );
+  });
+
+  it("compacts renderer-classified label and arrow flows without shrinking derivations", () => {
+    const flowRule = ruleFor(".article-body .katex-display.math-flow");
+    assert.match(flowRule, /margin-block:\s*0\.0625rem/);
+    assert.match(flowRule, /padding-block:\s*0\.125rem/);
+    assert.match(
+      ruleFor(".article-body .katex-display.math-flow--arrow > .katex"),
+      /font-size:\s*0\.88em/,
+    );
+  });
+
+  it("keeps decorative atmosphere out of print and forced colours", () => {
+    assert.match(
+      css,
+      /@media \(forced-colors: active\)[\s\S]*?main:has\(\.article-page\)[\s\S]*?background:\s*Canvas/,
+    );
+    assert.match(
+      css,
+      /@media print[\s\S]*?main:has\(\.article-page\)[\s\S]*?background:\s*none/,
+    );
+  });
+
+  it("does not constrain fixed dialogs to the filtered article header", () => {
+    assert.match(
+      css,
+      /body:has\(\.article-page\) \.site-header:not\(:has\(\.overlay\)\)/,
+    );
+    assert.doesNotMatch(
+      css,
+      /body:has\(\.article-page\) \.site-header\s*\{[\s\S]*?backdrop-filter/,
+    );
+  });
+
+  it("dismisses the compact sheet when inline navigation returns", () => {
+    assert.match(siteNav, /matchMedia\("\(min-width: 76\.01rem\)"\)/);
+    assert.match(siteNav, /if \(event\.matches\) setOpen\(false\)/);
+    assert.match(siteNav, /addEventListener\("change"/);
+    assert.match(siteNav, /removeEventListener\("change"/);
   });
 });
