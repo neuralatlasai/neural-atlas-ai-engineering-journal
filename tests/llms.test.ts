@@ -6,8 +6,8 @@ import {
   LLMS_FULL_TXT_PATH,
   LLMS_TXT_PATH,
 } from "../lib/content/llms";
-import { getAllArticles, getSections } from "../lib/content/corpus";
-import { absoluteUrl, site } from "../lib/site";
+import { assetResolverFor, getAllArticles, getSections, readSource } from "../lib/content/corpus";
+import { absoluteAssetUrl, absoluteUrl, site } from "../lib/site";
 
 /**
  * These run against the real corpus, so they assert what the llmstxt.org format
@@ -132,8 +132,36 @@ describe("llms-full.txt", () => {
   });
 
   it("resolves document-relative image references to absolute URLs", () => {
-    const relative = full.match(/!\[[^\]]*\]\(\.{1,2}\//g) ?? [];
-    assert.deepEqual(relative, [], "found unresolved relative image targets");
+    /**
+     * The rule, not the artifact. `build/image-manifest.json` is written by the
+     * prebuild step, and `npm test` runs before it on a fresh checkout — so an
+     * assertion that *no* relative target survives only passes on a machine
+     * that happens to have built before, and fails in CI. What must hold either
+     * way is that a target survives relative exactly when the manifest cannot
+     * resolve it, and that a resolvable one is rewritten to its published URL.
+     */
+    const starts = [...full.matchAll(/^> URL: .+$/gm)].map((match) => match.index ?? 0);
+    assert.equal(starts.length, articles.length);
+
+    for (const [i, article] of articles.entries()) {
+      const body = full.slice(starts[i], starts[i + 1] ?? full.length);
+      const resolve = assetResolverFor(article.sourcePath);
+
+      for (const [, target] of body.matchAll(/!\[[^\]]*\]\((\.{1,2}\/[^)\s]*)\)/g)) {
+        assert.equal(resolve(target), null, `${article.documentId}: ${target} was resolvable`);
+      }
+
+      for (const [, target] of readSource(article.sourcePath).matchAll(
+        /!\[[^\]]*\]\((\.{1,2}\/[^)\s]*)\)/g,
+      )) {
+        const resolved = resolve(target);
+        if (!resolved) continue;
+        assert.ok(
+          body.includes(absoluteAssetUrl(resolved.src)),
+          `${article.documentId}: ${target} was not rewritten`,
+        );
+      }
+    }
   });
 
   it("normalizes mathematics into remark-math delimiters", () => {
