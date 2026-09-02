@@ -3686,6 +3686,425 @@ mark {
   }
 }
 
+/* ----- Anthropic-inspired editorial blogs ---------------------------------
+   Only documents discovered under `docs/Blogs/` receive this masthead and
+   long-form rhythm. The route component emits the modifier from corpus
+   structure, so ordinary Components, Models, Training, and Research articles
+   retain the established Neural Atlas treatment. */
+.article-shell--anthropic {
+  max-inline-size: none;
+  padding-block-start: 0;
+  padding-inline: 0;
+}
+main:has(.article-page--anthropic) {
+  background-image: none;
+}
+.article-page--anthropic {
+  --article-stage: 40rem;
+}
+.article-page--anthropic .article-header {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: clamp(36rem, 70vh, 46rem);
+  margin: 0;
+  padding:
+    clamp(5.5rem, 10vh, 8rem)
+    max(var(--page-gutter), env(safe-area-inset-right))
+    clamp(4.5rem, 8vh, 6.5rem)
+    max(var(--page-gutter), env(safe-area-inset-left));
+  overflow: hidden;
+  color: #fffdf8;
+  text-align: center;
+  background-color: #5f86bd;
+  background-image: var(--article-atmosphere-image);
+  background-position: center;
+  background-size: cover;
+}
+.article-page--anthropic .article-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgb(20 44 78 / 18%);
+}
+.article-page--anthropic .article-header > * {
+  position: relative;
+  z-index: 1;
+}
+.article-page--anthropic .breadcrumb {
+  display: none;
+}
+.article-page--anthropic .article-kicker {
+  margin-block-end: 1.25rem;
+  color: #fffdf8;
+  font-size: 0.72rem;
+  font-weight: 680;
+  letter-spacing: 0.14em;
+}
+.article-page--anthropic .article-title {
+  max-inline-size: 70rem;
+  margin-block-end: 1.35rem;
+  color: #fffdf8;
+  font-size: clamp(3.25rem, 5.7vw, 5.8rem);
+  font-weight: 560;
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+  text-shadow: 0 1px 18px rgb(19 43 77 / 12%);
+}
+.article-page--anthropic .article-deck {
+  max-inline-size: 47rem;
+  margin-block-end: 1.6rem;
+  color: rgb(255 253 248 / 92%);
+  font-size: clamp(1.05rem, 1.5vw, 1.3rem);
+  line-height: 1.38;
+}
+.article-page--anthropic .article-meta {
+  justify-content: center;
+  gap: 0.6rem 1.25rem;
+  padding-block-start: 0;
+  color: rgb(255 253 248 / 90%);
+  background-image: none;
+  font-size: 0.78rem;
+  font-weight: 570;
+}
+.article-page--anthropic .article-meta__item + .article-meta__item::before {
+  background: rgb(255 253 248 / 62%);
+}
+.article-page--anthropic .article-meta__topic {
+  color: inherit;
+  text-decoration-color: rgb(255 253 248 / 66%);
+}
+.article-page--anthropic .article-meta__topic:hover {
+  color: #fff;
+  text-decoration-color: currentColor;
+}
+.article-page--anthropic .article-hero-contents {
+  inline-size: min(100%, 35rem);
+  margin-block-start: clamp(2.1rem, 5vh, 3.5rem);
+  color: #fffdf8;
+  font-family: var(--font-reader);
+  font-size: 0.9rem;
+  line-height: 1.25;
+  text-align: start;
+}
+.article-page--anthropic .article-hero-contents ol {
+  display: grid;
+  gap: 0.32rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.article-page--anthropic .article-hero-contents li {
+  display: grid;
+  grid-template-columns: auto minmax(1.5rem, 1fr) minmax(0, auto);
+  align-items: baseline;
+  gap: 0.35rem;
+  min-inline-size: 0;
+}
+.article-hero-contents__index {
+  font-variant-numeric: tabular-nums;
+}
+.article-hero-contents__leader {
+  min-inline-size: 1.5rem;
+  border-block-end: 1px dotted rgb(255 253 248 / 74%);
+  transform: translateY(-0.18em);
+}
+.article-page--anthropic .article-hero-contents a {
+  min-inline-size: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.article-page--anthropic .article-hero-contents a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+.article-page--anthropic > .article-hero {
+  inline-size: min(calc(100% - 2 * var(--page-gutter)), 72rem);
+  margin-block: clamp(3rem, 6vw, 5rem);
+}
+.article-page--anthropic .article-layout {
+  inline-size: min(100%, var(--shell-max));
+  margin-inline: auto;
+  padding:
+    clamp(4.5rem, 8vw, 7rem)
+    max(var(--page-gutter), env(safe-area-inset-right))
+    0
+    max(var(--page-gutter), env(safe-area-inset-left));
+  box-sizing: border-box;
+}
+.article-page--anthropic .article-rail {
+  padding-block: 0.25rem;
+  padding-inline: 1.35rem 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.article-page--anthropic .outline__label {
+  color: var(--color-text-tertiary);
+  letter-spacing: 0.11em;
+}
+.article-page--anthropic .outline li a {
+  border-radius: 0;
+}
+.article-page--anthropic .article-body {
+  font-size: clamp(1.0625rem, 0.35vw + 0.98rem, 1.1875rem);
+  line-height: 1.46;
+  letter-spacing: -0.009em;
+}
+.article-page--anthropic .article-body p {
+  margin-block-end: 1.08em;
+}
+.article-page--anthropic .article-body h2 {
+  margin-block: clamp(4.5rem, 8vw, 6.5rem) 1.45rem;
+  font-size: clamp(2.35rem, 4vw, 3.5rem);
+  font-weight: 560;
+  line-height: 1.02;
+  letter-spacing: -0.042em;
+}
+.article-page--anthropic .article-body h3 {
+  margin-block: 3.25rem 1rem;
+  font-size: clamp(1.65rem, 2.4vw, 2.25rem);
+  font-weight: 580;
+  line-height: 1.08;
+  letter-spacing: -0.032em;
+}
+.article-page--anthropic .article-body h4 {
+  margin-block: 2.15rem 0.65rem;
+  font-size: clamp(1.2rem, 1.3vw, 1.45rem);
+  line-height: 1.22;
+}
+.article-page--anthropic .article-body h5,
+.article-page--anthropic .article-body h6 {
+  margin-block-start: 1.75rem;
+}
+.article-page--anthropic .article-body blockquote {
+  margin-block: 2rem;
+  padding: 0.2rem 0 0.2rem 1.5rem;
+  border-radius: 0;
+  background: none;
+  color: var(--color-text);
+}
+.article-page--anthropic .article-body hr {
+  margin-block: clamp(3.5rem, 7vw, 5.5rem);
+  background: var(--color-border);
+}
+.article-page--anthropic .article-body picture.content-image img,
+.article-page--anthropic .article-hero img {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Anthropic's long-form composition keeps an unobtrusive progress index in a
+   dedicated left field while the article follows a stable reading axis. The
+   source order remains main content then navigation; only the wide-screen grid
+   placement changes, preserving logical and keyboard order. */
+@media (min-width: 64.01rem) {
+  .article-page--anthropic .article-layout {
+    grid-template-columns: minmax(7rem, 14rem) minmax(0, var(--article-stage));
+    justify-content: start;
+  }
+  .article-page--anthropic .article-main {
+    grid-column: 2;
+  }
+  .article-page--anthropic .article-rail {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    inline-size: 3rem;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+  }
+  .article-page--anthropic .outline__label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .article-page--anthropic .outline nav ol {
+    gap: 0;
+  }
+  .article-page--anthropic .outline li a {
+    display: grid;
+    place-items: center start;
+    inline-size: 3rem;
+    min-block-size: 1.5rem;
+    padding: 0;
+    border: 0;
+    color: transparent;
+    font-size: 0;
+  }
+  .article-page--anthropic .outline li a::before {
+    content: "";
+    display: block;
+    inline-size: 1rem;
+    block-size: 1px;
+    background: var(--color-text-tertiary);
+    transition:
+      inline-size var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+  .article-page--anthropic .outline li a[data-depth="3"]::before {
+    inline-size: 0.65rem;
+    opacity: 0.65;
+  }
+  .article-page--anthropic .outline li a:hover::before,
+  .article-page--anthropic .outline li a:focus-visible::before,
+  .article-page--anthropic .outline li a[aria-current="true"]::before {
+    inline-size: 2.5rem;
+    background: var(--color-text);
+    opacity: 1;
+  }
+}
+
+/* Mermaid is progressive enhancement: the authored source remains the static,
+   copyable fallback, and the canvas replaces it only after a successful strict
+   render. Dense left-to-right graphs scroll inside this figure, never the page. */
+.article-body figure.mermaid-diagram {
+  container-type: inline-size;
+  margin-block: clamp(2.25rem, 5vw, 4rem);
+  border: 0;
+  border-block: 1px solid var(--color-border-strong);
+  border-radius: 0;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+}
+.article-body .mermaid-diagram__bar {
+  justify-content: flex-start;
+  padding-block: 0.65rem;
+  padding-inline: 0;
+  background: transparent;
+}
+.article-body .mermaid-diagram__source {
+  max-block-size: 28rem;
+  background: var(--color-code-bg);
+}
+/* The before-paint script marks JavaScript availability. Hide source while the
+   vector renderer starts, but leave it immediately readable when JavaScript is
+   unavailable and restore it if rendering fails. Visibility preserves the
+   fallback's intrinsic height, preventing layout shift during initialization. */
+html[data-js="true"]
+  .article-body
+  .mermaid-diagram[data-mermaid-state="pending"]
+  .mermaid-diagram__source {
+  visibility: hidden;
+}
+html[data-js="true"]
+  .article-body
+  .mermaid-diagram[data-mermaid-state="source"]
+  .mermaid-diagram__source {
+  visibility: visible;
+}
+.article-body .mermaid-diagram__canvas {
+  inline-size: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(0.25rem, 2vw, 1.25rem);
+  overscroll-behavior-inline: contain;
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+.article-body .mermaid-diagram__canvas svg {
+  display: block;
+  inline-size: max(100%, 42rem) !important;
+  max-inline-size: none !important;
+  block-size: auto;
+  margin-inline: auto;
+  font-family: var(--font-ui) !important;
+}
+.article-body .mermaid-diagram[data-mermaid-direction="horizontal"]
+  .mermaid-diagram__canvas svg {
+  /* Horizontal system graphs become unreadable when their entire viewBox is
+     compressed into the prose measure. Scale by height and keep the resulting
+     width inside the local scroller instead of widening the document. */
+  inline-size: auto !important;
+  min-inline-size: 62rem;
+  block-size: clamp(21rem, 35vw, 29rem) !important;
+}
+.article-body .mermaid-diagram__canvas :is(.node rect, .node circle, .node ellipse, .node polygon) {
+  fill: var(--color-surface) !important;
+  stroke: var(--color-border-strong) !important;
+  stroke-width: 1.2px !important;
+}
+.article-body .mermaid-diagram__canvas .cluster rect {
+  fill: color-mix(in srgb, var(--color-surface-subtle) 82%, transparent) !important;
+  stroke: var(--color-border-strong) !important;
+  stroke-dasharray: 4 5 !important;
+}
+.article-body .mermaid-diagram__canvas :is(.label text, .nodeLabel, .cluster-label text) {
+  fill: var(--color-text) !important;
+  color: var(--color-text) !important;
+  font-family: var(--font-ui) !important;
+  font-weight: 560 !important;
+}
+.article-body .mermaid-diagram__canvas :is(.flowchart-link, .edgePath path.path) {
+  stroke: var(--color-text-tertiary) !important;
+  stroke-width: 1.35px !important;
+}
+.article-body .mermaid-diagram__canvas marker path {
+  fill: var(--color-text-tertiary) !important;
+  stroke: var(--color-text-tertiary) !important;
+}
+.article-body .mermaid-diagram__canvas .edgeLabel {
+  color: var(--color-text-secondary) !important;
+  background: var(--color-canvas) !important;
+}
+
+@media (max-width: 64rem) {
+  .article-page--anthropic .article-layout {
+    inline-size: min(100%, 44rem);
+  }
+}
+
+@media (max-width: 40rem) {
+  .article-page--anthropic .article-header {
+    min-block-size: 31rem;
+    padding-block: 4.5rem 3.75rem;
+  }
+  .article-page--anthropic .article-title {
+    font-size: clamp(2.45rem, 12vw, 3.5rem);
+    line-height: 0.96;
+  }
+  .article-page--anthropic .article-deck {
+    font-size: 1rem;
+  }
+  .article-page--anthropic .article-hero-contents {
+    display: none;
+  }
+  .article-page--anthropic .article-layout {
+    padding-block-start: 3.25rem;
+  }
+  .article-page--anthropic .article-body {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .article-page--anthropic .article-body h2 {
+    margin-block: 3.5rem 1rem;
+    font-size: clamp(2rem, 10vw, 2.65rem);
+  }
+  .article-page--anthropic .article-body h3 {
+    margin-block-start: 2.5rem;
+    font-size: clamp(1.5rem, 7vw, 1.9rem);
+  }
+  .article-body .mermaid-diagram__canvas {
+    margin-inline: calc(-1 * var(--page-gutter));
+    inline-size: calc(100% + 2 * var(--page-gutter));
+    padding-inline: var(--page-gutter);
+  }
+}
+
 /* ----- Reduced motion ----------------------------------------------------
    The global reduced-motion block neutralizes durations, but a keyframe that
    starts at `opacity: 0` would still flash. Remove the animations outright. */
@@ -3704,6 +4123,13 @@ mark {
 @media (forced-colors: active) {
   main:has(.article-page) {
     background: Canvas;
+  }
+  .article-page--anthropic .article-header {
+    background: Canvas;
+    color: CanvasText;
+  }
+  .article-page--anthropic :is(.article-title, .article-kicker, .article-deck, .article-meta) {
+    color: CanvasText;
   }
   .home-intro,
   .home-featured,
@@ -3751,6 +4177,7 @@ mark {
   .breadcrumb,
   .reading-progress,
   .code-copy,
+  .article-hero-contents,
   .only-narrow {
     display: none !important;
   }
@@ -3763,6 +4190,16 @@ mark {
   }
   main:has(.article-page) {
     background: none;
+  }
+  .article-page--anthropic .article-header {
+    min-block-size: 0;
+    padding: 0 0 2rem;
+    color: #000;
+    text-align: start;
+    background: none;
+  }
+  .article-page--anthropic :is(.article-title, .article-kicker, .article-deck, .article-meta) {
+    color: #000;
   }
   .home-intro,
   .home-featured {

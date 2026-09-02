@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import {
   getAllArticles,
   getArticleByRoute,
@@ -14,7 +15,7 @@ import {
   assetResolverFor,
   type ArticleMeta,
 } from "@/lib/content/corpus";
-import { compileArticle } from "@/lib/content/compile";
+import { compileArticle, type HeadingRecord } from "@/lib/content/compile";
 import { markdownPathFor } from "@/lib/content/llms";
 import { absoluteAssetUrl, absoluteUrl, site } from "@/lib/site";
 import { articleJsonLd, breadcrumbJsonLd } from "@/lib/structured-data";
@@ -26,6 +27,7 @@ import { HeroFigure } from "@/components/HeroFigure";
 import { FolderPage } from "@/components/FolderPage";
 import { JsonLd } from "@/components/JsonLd";
 import { ReadingProgress } from "@/components/ReadingProgress";
+import articleAtmosphere from "@/app/assets/article-atmosphere.webp";
 
 /**
  * Fully static: every section index and article route is prerendered, and a
@@ -195,9 +197,27 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
   // rail and the collapsible mobile block use the same threshold so a reader
   // never sees one form of the outline appear where the other did not.
   const showOutline = compiled.headings.length > 2;
+  const isEditorialBlog = article.section === "blogs";
+  const articleOutlineHeadings = isEditorialBlog
+    ? compiled.headings.filter((heading) => heading.depth === 2)
+    : compiled.headings;
+  // A blog's own resolved lead figure is its masthead identity. The shared
+  // atmosphere is intentionally only a fallback for sources with no image, so
+  // newly added illustrated blogs do not inherit a repeated global cover.
+  const articleAtmosphereSrc = article.hero?.src ?? articleAtmosphere.src;
+  const articleStyle = isEditorialBlog
+    ? ({
+        "--article-atmosphere-image": `url("${articleAtmosphereSrc}")`,
+      } as CSSProperties)
+    : undefined;
 
   return (
-    <div className="shell article-shell">
+    <div
+      className={`shell article-shell${
+        isEditorialBlog ? " article-shell--anthropic" : ""
+      }`}
+      style={articleStyle}
+    >
       <ReadingProgress />
       <ArticleEnhancements />
       <JsonLd data={articleJsonLd(article)} />
@@ -209,7 +229,11 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
         ])}
       />
 
-      <article className="article-page">
+      <article
+        className={`article-page${
+          isEditorialBlog ? " article-page--anthropic" : ""
+        }`}
+      >
         <header className="article-header">
           <nav className="breadcrumb" aria-label="Breadcrumb">
             <Link href="/">Home</Link>
@@ -252,6 +276,10 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
               </span>
             )}
           </div>
+
+          {isEditorialBlog && showOutline && (
+            <ArticleHeroContents headings={compiled.headings} />
+          )}
         </header>
 
         {/* A lead figure belongs to the centred editorial opening. If the body
@@ -274,7 +302,7 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
           <div className="article-main">
             {/* Outline lives before the body on narrow viewports, where the sticky
               rail cannot fit (plan §18.2). */}
-            {showOutline && (
+            {showOutline && !isEditorialBlog && (
               <div className="only-narrow">
                 <ArticleOutline headings={compiled.headings} variant="inline" />
               </div>
@@ -346,11 +374,41 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
 
           {showOutline && (
             <aside className="article-rail" aria-label="Article outline">
-              <ArticleOutline headings={compiled.headings} variant="rail" />
+              <ArticleOutline headings={articleOutlineHeadings} variant="rail" />
             </aside>
           )}
         </div>
       </article>
     </div>
+  );
+}
+
+/**
+ * A short, scan-first contents index for the editorial blog masthead.
+ *
+ * The complete document remains addressable through its heading anchors. On
+ * wide screens the quiet rail indexes top-level sections; the labelled mobile
+ * disclosure is intentionally absent for Blogs so it does not repeat this
+ * masthead index. Limiting the masthead to five entries keeps its height
+ * bounded while preserving deterministic O(n) selection.
+ */
+function ArticleHeroContents({ headings }: { headings: HeadingRecord[] }) {
+  const entries = headings.filter((heading) => heading.depth === 2).slice(0, 5);
+  if (entries.length === 0) return null;
+
+  return (
+    <nav className="article-hero-contents" aria-label="Article contents">
+      <ol>
+        {entries.map((heading, index) => (
+          <li key={heading.id}>
+            <span className="article-hero-contents__index" aria-hidden="true">
+              [{index + 1}]
+            </span>
+            <span className="article-hero-contents__leader" aria-hidden="true" />
+            <a href={`#${heading.id}`}>{heading.text}</a>
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }

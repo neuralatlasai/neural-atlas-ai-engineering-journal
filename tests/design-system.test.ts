@@ -24,6 +24,10 @@ const articlePage = fs.readFileSync(
   path.join("app", "[...slug]", "page.tsx"),
   "utf8",
 );
+const articleEnhancements = fs.readFileSync(
+  path.join("components", "ArticleEnhancements.tsx"),
+  "utf8",
+);
 const homePage = fs.readFileSync(path.join("app", "page.tsx"), "utf8");
 const rootLayout = fs.readFileSync(path.join("app", "layout.tsx"), "utf8");
 
@@ -817,5 +821,80 @@ describe("article material polish", () => {
     assert.match(siteNav, /if \(event\.matches\) setOpen\(false\)/);
     assert.match(siteNav, /addEventListener\("change"/);
     assert.match(siteNav, /removeEventListener\("change"/);
+  });
+});
+
+describe("editorial blog specialization", () => {
+  it("derives the visual modifier from the Blogs corpus section", () => {
+    assert.match(articlePage, /const isEditorialBlog = article\.section === "blogs"/);
+    assert.match(articlePage, /article-page--anthropic/);
+    assert.match(articlePage, /article-shell--anthropic/);
+    assert.match(articlePage, /article\.hero\?\.src \?\? articleAtmosphere\.src/);
+  });
+
+  it("keeps the immersive masthead scoped away from non-blog articles", () => {
+    assert.match(
+      css,
+      /\.article-page--anthropic \.article-header\s*\{[\s\S]*?background-image:\s*var\(--article-atmosphere-image\)/,
+    );
+    assert.doesNotMatch(
+      css,
+      /(?<!\.article-page--anthropic )\.article-header\s*\{[^}]*--article-atmosphere-image/,
+    );
+  });
+
+  it("adds a bounded masthead index without replacing the complete outline", () => {
+    assert.match(articlePage, /function ArticleHeroContents/);
+    assert.match(articlePage, /heading\.depth === 2/);
+    assert.match(articlePage, /\.slice\(0, 5\)/);
+    assert.match(articlePage, /aria-label="Article contents"/);
+    assert.match(
+      articlePage,
+      /<ArticleOutline headings=\{articleOutlineHeadings\} variant="rail" \/>/,
+    );
+    assert.match(articlePage, /showOutline && !isEditorialBlog/);
+  });
+
+  it("places the wide-screen blog index in the reference's quiet left field", () => {
+    assert.match(
+      css,
+      /@media \(min-width: 64\.01rem\)\s*\{[\s\S]*?\.article-page--anthropic \.article-main\s*\{[\s\S]*?grid-column:\s*2/,
+    );
+    assert.match(
+      css,
+      /\.article-page--anthropic \.article-rail\s*\{[\s\S]*?grid-column:\s*1/,
+    );
+    assert.match(css, /\.article-page--anthropic \.outline li a::before/);
+  });
+});
+
+describe("Mermaid progressive diagrams", () => {
+  it("loads Mermaid only when a compiled diagram exists and uses strict mode", () => {
+    assert.match(articleEnhancements, /figure\.mermaid-diagram/);
+    assert.match(articleEnhancements, /import\("mermaid"\)/);
+    assert.match(articleEnhancements, /layout:\s*"dagre"/);
+    assert.match(articleEnhancements, /securityLevel:\s*"strict"/);
+    assert.match(articleEnhancements, /await document\.fonts\?\.ready/);
+    assert.match(articleEnhancements, /suppressErrorRendering:\s*true/);
+  });
+
+  it("preserves source as the failure and no-JavaScript fallback", () => {
+    assert.match(articleEnhancements, /source\.hidden = true/);
+    assert.match(articleEnhancements, /source\.hidden = false/);
+    assert.match(
+      articleEnhancements,
+      /catch\s*(?:\([^)]*\))?\s*\{[\s\S]*?mermaidState = "source"/,
+    );
+  });
+
+  it("contains wide diagrams without exposing source controls", () => {
+    assert.match(
+      css,
+      /\.article-body \.mermaid-diagram__canvas\s*\{[\s\S]*?overflow-x:\s*auto/,
+    );
+    assert.match(articleEnhancements, /classList\.contains\("mermaid-diagram"\)/);
+    assert.doesNotMatch(articleEnhancements, /mermaid-source-toggle/);
+    assert.match(css, /data-mermaid-state="pending"/);
+    assert.match(css, /data-mermaid-direction="horizontal"/);
   });
 });

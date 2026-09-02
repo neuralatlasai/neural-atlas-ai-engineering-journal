@@ -93,7 +93,7 @@ export const viewport: Viewport = {
  * wrong scheme. It also records the *mode* (`system` | `light` | `dark`) so the
  * theme control can paint the right icon server-side (see `ThemeToggle`).
  */
-const themeScript = `(function(){var r=document.documentElement;var m="system";try{var s=localStorage.getItem("na-theme");if(s==="dark"||s==="light")m=s;}catch(e){}r.setAttribute("data-theme-mode",m);if(m!=="system")r.setAttribute("data-theme",m);})();`;
+const themeScript = `(function(){var r=document.documentElement;r.setAttribute("data-js","true");var m="system";try{var s=localStorage.getItem("na-theme");if(s==="dark"||s==="light")m=s;}catch(e){}r.setAttribute("data-theme-mode",m);if(m!=="system")r.setAttribute("data-theme",m);})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

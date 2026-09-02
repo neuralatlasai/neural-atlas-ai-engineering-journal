@@ -390,28 +390,95 @@ function diagramMetrics(code: Element | undefined): {
  *  language, so the UI can render a header bar and copy affordance (plan §13.3). */
 function frameCodeBlocks() {
   return (tree: Root) => {
+    let mermaidIndex = 0;
     visit(tree, "element", (node: Element, index, parent) => {
       if (node.tagName !== "pre" || !parent || index === undefined) return;
       const code = node.children.find(
         (c): c is Element => c.type === "element" && c.tagName === "code",
       );
       const lang = languageOf(code);
-      const layout = isTextDiagram(code, lang) ? "diagram" : "code";
+      const isMermaid = lang === "mermaid";
+      const mermaidDirection =
+        isMermaid &&
+        code !== undefined &&
+        /^\s*(?:flowchart|graph)\s+(?:LR|RL)\b/im.test(hastToString(code))
+          ? "horizontal"
+          : "vertical";
+      const layout = isMermaid
+        ? "mermaid"
+        : isTextDiagram(code, lang)
+          ? "diagram"
+          : "code";
       const metrics = layout === "diagram" ? diagramMetrics(code) : null;
-      if (metrics) {
+      if (metrics || isMermaid) {
         node.properties = {
           ...node.properties,
           tabIndex: 0,
-          "aria-label": "Scrollable architecture diagram",
+          className: [
+            ...elementClassNames(node),
+            ...(isMermaid ? ["mermaid-diagram__source"] : []),
+          ],
+          "aria-label": isMermaid
+            ? "Mermaid diagram source"
+            : "Scrollable architecture diagram",
         };
       }
+      const bar: Element = {
+        type: "element",
+        tagName: "figcaption",
+        properties: {
+          className: [
+            "code-block__bar",
+            ...(isMermaid ? ["mermaid-diagram__bar"] : []),
+          ],
+        },
+        children: [
+          {
+            type: "element",
+            tagName: "span",
+            properties: { className: ["code-block__lang"] },
+            children: [
+              {
+                type: "text",
+                value: isMermaid
+                  ? "system diagram"
+                  : layout === "diagram"
+                    ? "diagram"
+                    : lang,
+              },
+            ],
+          },
+        ],
+      };
+      const children: Element["children"] = [bar];
+      if (isMermaid) {
+        children.push({
+          type: "element",
+          tagName: "div",
+          properties: {
+            className: ["mermaid-diagram__canvas"],
+            "data-mermaid-index": mermaidIndex++,
+            hidden: true,
+            role: "img",
+            "aria-label": "Rendered system architecture diagram",
+          },
+          children: [],
+        });
+      }
+      children.push(node);
       const figure: Element = {
         type: "element",
         tagName: "figure",
         properties: {
-          className: ["code-block"],
+          className: ["code-block", ...(isMermaid ? ["mermaid-diagram"] : [])],
           "data-lang": lang,
           "data-layout": layout,
+          ...(isMermaid
+            ? {
+                "data-mermaid-direction": mermaidDirection,
+                "data-mermaid-state": "pending",
+              }
+            : {}),
           ...(metrics
             ? {
                 "data-columns": metrics.columns,
@@ -419,27 +486,7 @@ function frameCodeBlocks() {
               }
             : {}),
         },
-        children: [
-          {
-            type: "element",
-            tagName: "figcaption",
-            properties: { className: ["code-block__bar"] },
-            children: [
-              {
-                type: "element",
-                tagName: "span",
-                properties: { className: ["code-block__lang"] },
-                children: [
-                  {
-                    type: "text",
-                    value: layout === "diagram" ? "diagram" : lang,
-                  },
-                ],
-              },
-            ],
-          },
-          node,
-        ],
+        children,
       };
       (parent.children as unknown[])[index] = figure;
       return [SKIP, index + 1];
@@ -1315,6 +1362,11 @@ function codeLanguages(markdown: string): BundledLanguage[] {
     open = !open;
     if (!open) continue; // this match closed the block
     const language = match[1].toLowerCase();
+    // Mermaid is a diagram grammar, not source code. It keeps its authored
+    // source as the no-JavaScript fallback and is progressively rendered by
+    // `ArticleEnhancements`; syntax highlighting would only add spans that the
+    // diagram parser then has to discard.
+    if (language === "mermaid") continue;
     // An unrecognized info-string is not an error: the block renders as plain
     // code (plan §13.2), and asking Shiki to load a grammar that does not exist
     // would fail the build over a typo in a fence.

@@ -230,6 +230,40 @@ describe("rendering contract", () => {
     assert.ok(html.includes("code-block__lang"));
   });
 
+  it("emits an accessible Mermaid canvas while retaining exact source fallback", async () => {
+    const diagram = [
+      "flowchart LR",
+      "  A[Threat Objective] --> B{Validated?}",
+      "  B -->|Yes| C[Deploy]",
+    ].join("\n");
+    const { html } = await compileArticle(
+      `\`\`\`mermaid\n${diagram}\n\`\`\`\n`,
+      "System graph",
+    );
+
+    assert.match(html, /class="code-block mermaid-diagram"/);
+    assert.match(html, /data-layout="mermaid"/);
+    assert.match(html, /data-mermaid-direction="horizontal"/);
+    assert.match(html, /data-mermaid-state="pending"/);
+    assert.match(html, /class="mermaid-diagram__canvas"[^>]*hidden/);
+    assert.match(html, /role="img"/);
+    assert.match(html, /class="mermaid-diagram__source"/);
+    assert.match(html, /aria-label="Mermaid diagram source"/);
+    assert.match(html, />system diagram<\/span>/);
+    assert.ok(html.includes(diagram), "the no-JavaScript fallback must be lossless");
+    assert.doesNotMatch(html, /class="shiki/);
+  });
+
+  it("does not classify ordinary fenced code as Mermaid", async () => {
+    const { html } = await compileArticle(
+      "```text\nflowchart LR is documentation, not a diagram fence\n```\n",
+      "Counterexample",
+    );
+
+    assert.match(html, /data-layout="code"/);
+    assert.doesNotMatch(html, /mermaid-diagram/);
+  });
+
   it("classifies box-drawing text as a diagram without changing its source", async () => {
     const source = "```text\nSOURCE\n  │\n  ▼\nTARGET\n```\n";
     const { html } = await compileArticle(source, "Title");
