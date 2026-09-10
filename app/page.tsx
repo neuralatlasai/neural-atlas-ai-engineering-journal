@@ -8,14 +8,13 @@ import {
 import { site } from "@/lib/site";
 import { websiteJsonLd } from "@/lib/structured-data";
 import { ArticleLink } from "@/components/ArticleLink";
-import { ArticleList } from "@/components/ArticleList";
-import { AtlasWorkflowFigure } from "@/components/AtlasWorkflowFigure";
-import { HeroFigure } from "@/components/HeroFigure";
+import { HomeArtwork } from "@/components/HomeArtwork";
 import { JsonLd } from "@/components/JsonLd";
 
 type SectionSummary = ReturnType<typeof getSections>[number];
 
 const SECTION_SCOPE: Readonly<Record<string, string>> = {
+  blogs: "Technical field notes, system reconstructions, and applied analysis",
   components: "Building blocks, layers, modules, and interfaces",
   engineering: "Systems methods, tooling, and implementation",
   models: "Architectures, scaling laws, and design patterns",
@@ -27,9 +26,10 @@ function sectionScope(section: SectionSummary): string {
   return SECTION_SCOPE[section.section] ?? `Technical analyses in ${section.label}`;
 }
 
-/** Choose a stable feature with enough authored material to carry the wide row. */
+/** Prefer the authored field note, then fall back to the strongest described item. */
 function pickFeatured(articles: readonly ArticleMeta[]): ArticleMeta | undefined {
   return (
+    articles.find((article) => article.section === "blogs" && article.description) ??
     articles.find((article) => article.description && article.hero) ??
     articles.find((article) => article.description) ??
     articles[0]
@@ -71,122 +71,139 @@ export default function HomePage() {
     <div className="home-page">
       <JsonLd data={websiteJsonLd()} />
 
-      <section className="home-intro" aria-labelledby="home-hero-title">
-        <div className="shell home-intro__grid">
-          <div className="home-intro__copy">
-            <p className="home-label">Technical field guide</p>
-            <h1 id="home-hero-title">
-              <span>Trace the evidence.</span>
-              <span>Understand the system.</span>
-            </h1>
-            <p className="home-intro__deck">{site.longDescription}</p>
+      <section className="home-hero" aria-labelledby="home-hero-title">
+        <div className="shell home-hero__inner">
+          <p className="home-eyebrow">{site.tagline}</p>
+          <h1 id="home-hero-title">Reconstruct the system. Audit the mechanism.</h1>
+          <p className="home-hero__deck">{site.longDescription}</p>
+          <div className="home-hero__actions">
+            <Link className="home-action home-action--primary" href="/library">
+              Explore the library <span aria-hidden="true">&rarr;</span>
+            </Link>
+            <Link className="home-action" href="/about">
+              Review the method
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="home-atlas" aria-labelledby="research-index-heading">
-        <div className="shell home-atlas__grid">
-          <div className="home-research-index">
-            <div className="home-research-index__head">
-              <h2 id="research-index-heading">Research index</h2>
-              <span>Scope</span>
-              <span>Analyses</span>
-            </div>
-            <ol>
-              {sections.map((section) => (
-                <li key={section.section}>
-                  <Link href={`/${section.section}`}>
-                    <span className="home-research-index__label">{section.label}</span>
-                    <span className="home-research-index__scope">
-                      {sectionScope(section)}
-                    </span>
-                    <span className="home-research-index__count">
-                      {String(section.count).padStart(2, "0")}
-                    </span>
-                    <span className="home-research-index__arrow" aria-hidden="true">
-                      &rarr;
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
+      <section className="shell home-section" aria-labelledby="research-domains-heading">
+        <div className="home-section__head">
+          <div>
+            <p className="home-eyebrow">Technical index</p>
+            <h2 id="research-domains-heading">Research domains</h2>
           </div>
-
-          <div className="home-topology">
-            <AtlasWorkflowFigure />
-          </div>
+          <Link className="home-section__more" href="/library">
+            View all analysis <span aria-hidden="true">&rarr;</span>
+          </Link>
         </div>
+
+        <ol className="home-domain-grid">
+          {sections.map((section, index) => (
+            <li key={section.section}>
+              <Link className="home-domain-card" href={`/${section.section}`}>
+                <HomeArtwork
+                  section={section.section}
+                  className="home-domain-card__visual"
+                  priority={index < 3}
+                />
+                <span className="home-domain-card__body">
+                  <span className="home-domain-card__meta">
+                    {String(index + 1).padStart(2, "0")} / {section.count}{" "}
+                    {section.count === 1 ? "analysis" : "analyses"}
+                  </span>
+                  <span className="home-domain-card__title">{section.label}</span>
+                  <span className="home-domain-card__scope">{sectionScope(section)}</span>
+                  <span className="home-domain-card__link">
+                    Open domain <span aria-hidden="true">&rarr;</span>
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {featured && (
         <section
           id="featured-analysis"
-          className="home-featured"
+          className="shell home-section home-feature-section"
           aria-labelledby="featured-heading"
         >
-          <div
-            className={`shell home-featured__grid${
-              featured.hero ? "" : " home-featured__grid--without-hero"
-            }`}
-          >
-            <p className="home-label home-featured__label">Featured analysis</p>
-            {featured.hero && (
-              <HeroFigure
-                hero={featured.hero}
-                className="home-featured__hero"
-                sizes="(max-width: 48rem) calc(100vw - 2rem), 18rem"
-                priority
-              />
-            )}
-            <div className="home-featured__body">
-              <p className="home-featured__kicker">
-                {featured.sectionLabel} <span aria-hidden="true">/</span>{" "}
-                {formatArticleType(featured.articleType)}
-              </p>
-              <h2 id="featured-heading">
-                <ArticleLink href={featured.route}>{featured.title}</ArticleLink>
-              </h2>
-              {featured.description && (
-                <p className="home-featured__desc">{featured.description}</p>
-              )}
+          <div className="home-section__head">
+            <div>
+              <p className="home-eyebrow">Featured analysis</p>
+              <h2 id="featured-heading">Current field note</h2>
             </div>
-            <dl className="home-featured__meta">
-              <div>
-                <dt>Read time</dt>
-                <dd>{featured.readingMinutes} min</dd>
-              </div>
-              <div>
-                <dt>Section</dt>
-                <dd>{featured.sectionLabel}</dd>
-              </div>
-              <div>
-                <dt>Format</dt>
-                <dd>{formatArticleType(featured.articleType)}</dd>
-              </div>
-            </dl>
-            <ArticleLink className="button home-featured__action" href={featured.route}>
-              Read analysis <span aria-hidden="true">&rarr;</span>
-            </ArticleLink>
           </div>
+
+          <article className="home-feature-card">
+            <HomeArtwork
+              section={featured.section}
+              className="home-feature-card__visual"
+              variant="featured"
+            />
+            <div className="home-feature-card__body">
+              <p className="home-card-meta">
+                {featured.sectionLabel} <span aria-hidden="true">&middot;</span>{" "}
+                {formatArticleType(featured.articleType)}{" "}
+                <span aria-hidden="true">&middot;</span> {featured.readingMinutes} min
+              </p>
+              <h3>
+                <ArticleLink href={featured.route}>{featured.title}</ArticleLink>
+              </h3>
+              {featured.description && <p>{featured.description}</p>}
+              <ArticleLink className="home-card-link" href={featured.route}>
+                Read analysis <span aria-hidden="true">&rarr;</span>
+              </ArticleLink>
+            </div>
+          </article>
         </section>
       )}
 
       {selected.length > 0 && (
         <section
           id="selected-analysis"
-          className="shell section-block home-index"
+          className="shell home-section home-latest"
           aria-labelledby="latest-heading"
         >
-          <div className="section-block__head">
+          <div className="home-section__head">
             <div>
-              <p className="home-label">Across the stack</p>
-              <h2 id="latest-heading">Selected analysis</h2>
+              <p className="home-eyebrow">Across the stack</p>
+              <h2 id="latest-heading">Latest technical analyses</h2>
             </div>
-            <Link className="section-block__more" href="/library">
+            <Link className="home-section__more" href="/library">
               Research library <span aria-hidden="true">&rarr;</span>
             </Link>
           </div>
-          <ArticleList articles={selected} headingLevel="h3" />
+
+          <ul className="home-analysis-grid">
+            {selected.map((article) => (
+              <li key={article.documentId}>
+                <article className="home-analysis-card">
+                  <HomeArtwork
+                    section={article.section}
+                    articleRoute={article.route}
+                    hero={article.hero}
+                    className="home-analysis-card__visual"
+                  />
+                  <div className="home-analysis-card__body">
+                    <p className="home-card-meta">
+                      {article.sectionLabel} <span aria-hidden="true">&middot;</span>{" "}
+                      {article.readingMinutes} min
+                    </p>
+                    <h3>
+                      <ArticleLink href={article.route}>{article.title}</ArticleLink>
+                    </h3>
+                    {article.description && <p>{article.description}</p>}
+                    <ArticleLink className="home-card-link" href={article.route}>
+                      Open analysis <span aria-hidden="true">&rarr;</span>
+                    </ArticleLink>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
     </div>

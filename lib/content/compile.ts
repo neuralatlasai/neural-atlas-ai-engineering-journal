@@ -1198,6 +1198,24 @@ function repairMathNodes() {
   };
 }
 
+const BOXED_TEXT_ATOM = String.raw`\\(?:text|textrm|textbf|textit|textsf|texttt)\{[^{}]*\}`;
+const BOXED_TEXT_ROWS = new RegExp(String.raw`^\s*\\boxed\{\s*(${BOXED_TEXT_ATOM}(?:\s*\\\\\s*${BOXED_TEXT_ATOM})+)\s*\}\s*$`);
+
+/**
+ * A display containing only a box of text rows has an unambiguous alignment
+ * intent. KaTeX otherwise ignores bare row breaks inside the box and reports
+ * newLineInDisplayMode. Supply a gathered environment only for this complete
+ * grammar: two or more non-nested text atoms separated by explicit row breaks.
+ * General formulas, existing environments, inline math, and nested text remain
+ * untouched. Anchored atoms have disjoint delimiters; the bounded scan is O(n).
+ */
+function repairBoxedTextRows(tex: string, displayMode: boolean): string {
+  if (!displayMode || tex.length > 16_384) return tex;
+  const match = BOXED_TEXT_ROWS.exec(tex);
+  if (!match) return tex;
+  return `\\boxed{\\begin{gathered}\n${match[1]}\n\\end{gathered}}`;
+}
+
 /**
  * Apply the exact parser-validated repair sequence used before KaTeX rendering.
  * Exported so the corpus integrity test can audit production-equivalent TeX
@@ -1211,7 +1229,8 @@ export function prepareMathForRendering(
   const repairedRows = repairCollapsedRowBreaks(repairedBraces, displayMode);
   const repairedScripts = repairRepeatedScripts(repairedRows, displayMode);
   const repairedMiddle = repairOrphanedMiddleBars(repairedScripts, displayMode);
-  return repairMathCommandsInsideText(repairedMiddle, displayMode);
+  const repairedText = repairMathCommandsInsideText(repairedMiddle, displayMode);
+  return repairBoxedTextRows(repairedText, displayMode);
 }
 
 /** Classes emitted by HAST processors can be arrays or whitespace strings. */

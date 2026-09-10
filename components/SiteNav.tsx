@@ -25,7 +25,13 @@ export function isActive(pathname: string, href: string): boolean {
  * Both variants render real anchors to the same routes, so navigation degrades
  * to a plain list of links without JavaScript.
  */
-export function SiteNav({ items }: { items: readonly NavItem[] }) {
+export function SiteNav({
+  items,
+  primaryItems = items,
+}: {
+  items: readonly NavItem[];
+  primaryItems?: readonly NavItem[];
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -59,7 +65,7 @@ export function SiteNav({ items }: { items: readonly NavItem[] }) {
   return (
     <>
       <nav className="primary-nav" aria-label="Primary">
-        {items.map((item) => (
+        {primaryItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}

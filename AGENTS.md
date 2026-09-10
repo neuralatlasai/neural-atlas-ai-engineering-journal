@@ -277,6 +277,27 @@ color, semantic typography, borders before shadows, and no decorative card
 grid around every paragraph. Light and dark themes use semantic tokens rather
 than article-specific colors.
 
+### Article graphical abstracts
+
+Every current non-empty article has a curated conceptual figure in
+`lib/visuals/catalog.ts`, mapped by repository-relative source identity. The
+figure introduces the article's main mechanism before its technical body;
+authored body figures retain their existing positions. These are explanatory
+schematics, not measured charts or assertions of undisclosed model internals.
+
+`components/visuals/DiagramArtwork.tsx` renders accessible inline SVG during
+static export. `ArticleVisualFigure.tsx` supplies a caption, a native explanation
+disclosure, and an optional checkbox-controlled CSS flow animation. Comparison
+figures are static. Motion starts only on reader request, respects reduced-motion
+preferences, and is disabled in print. No client JavaScript is required.
+
+Standalone SVG copies live in `public/figures/`. After editing the visual catalog
+or artwork renderer, run `node --import tsx scripts/generate-article-visuals.ts`.
+`tests/article-visuals.test.ts` checks complete corpus coverage, unique mappings,
+source existence, accessible markup, and exact agreement between the shared
+renderer and checked-in exports. Adding an article requires an editorial figure
+entry to satisfy that coverage gate; route discovery remains automatic.
+
 ## 6. Search, navigation, and metadata
 
 - Search data is generated statically at `/search-index.json`.

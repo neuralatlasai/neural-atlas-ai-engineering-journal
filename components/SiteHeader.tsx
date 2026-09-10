@@ -20,13 +20,15 @@ export function navItems(): NavItem[] {
 }
 
 export function SiteHeader() {
+  const items = navItems();
+
   return (
     <header className="site-header">
       <div className="shell site-header__inner">
         <Link href="/" className="wordmark">
           <span className="wordmark__text">Neural Atlas</span>
         </Link>
-        <SiteNav items={navItems()} />
+        <SiteNav items={items} primaryItems={staticNav} />
         <div className="header-spacer" />
         <div className="header-actions">
           <SearchPalette />

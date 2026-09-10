@@ -29,6 +29,10 @@ const articleEnhancements = fs.readFileSync(
   "utf8",
 );
 const homePage = fs.readFileSync(path.join("app", "page.tsx"), "utf8");
+const homeArtwork = fs.readFileSync(
+  path.join("components", "HomeArtwork.tsx"),
+  "utf8",
+);
 const rootLayout = fs.readFileSync(path.join("app", "layout.tsx"), "utf8");
 
 /**
@@ -400,22 +404,24 @@ describe("page composition", () => {
       "layout geometry must not depend on a trailing streamed descendant",
     );
     assert.match(articlePage, /article-layout article-layout--\$\{/);
-    assert.match(articlePage, /showOutline\s*\?\s*"with-outline"\s*:\s*"without-outline"/);
+    assert.match(articlePage, /showRailOutline\s*\?\s*"with-outline"\s*:\s*"without-outline"/);
+    assert.match(articlePage, /const showRailOutline = showOutline && !isEditorialBlog/);
+    assert.match(articlePage, /\{showRailOutline && \(/);
   });
 });
 
 describe("homepage composition", () => {
-  it("keeps the field-guide introduction full-bleed and its content bounded", () => {
+  it("keeps the editorial introduction full-bleed and its content bounded", () => {
     assert.match(homePage, /<div className="home-page">/);
-    assert.match(homePage, /<section className="home-intro"/);
-    assert.match(homePage, /<div className="shell home-intro__grid">/);
+    assert.match(homePage, /<section className="home-hero"/);
+    assert.match(homePage, /<div className="shell home-hero__inner">/);
     assert.doesNotMatch(
       homePage,
       /Field coordinates|long-form analyses|system domains|claim states/,
       "the hero must not expose generic corpus-summary language",
     );
-    assert.match(homePage, /<section className="home-atlas"/);
-    assert.match(homePage, /<div className="shell home-atlas__grid">/);
+    assert.match(homePage, /className="home-domain-grid"/);
+    assert.match(homePage, /className="home-feature-card"/);
   });
 
   it("bounds and diversifies selected analysis in one corpus pass", () => {
@@ -431,7 +437,11 @@ describe("homepage composition", () => {
     );
   });
 
-  it("shows direct navigation on wide screens and uses the shared sheet when constrained", () => {
+  it("keeps stable discovery routes visible while the complete index stays in the sheet", () => {
+    assert.match(siteHeader, /primaryItems=\{staticNav\}/);
+    assert.match(siteNav, /primaryItems = items/);
+    assert.match(siteNav, /primaryItems\.map/);
+    assert.match(siteNav, /items\.map/);
     assert.doesNotMatch(
       css,
       /body:has\(\.home-page\) \.primary-nav\s*\{\s*display:\s*none/,
@@ -448,16 +458,47 @@ describe("homepage composition", () => {
     );
   });
 
-  it("layers the homepage navigation over a scoped atmospheric backdrop", () => {
-    assert.match(
-      css,
-      /body:has\(\.home-page\) \.overlay:has\(\.nav-sheet\)\s*\{[\s\S]*?backdrop-filter:\s*blur\(8px\) saturate\(72%\) brightness\(0\.66\)/,
-    );
-    assert.match(
-      css,
-      /body:has\(\.home-page\) \.nav-sheet\s*\{[\s\S]*?isolation:\s*isolate[\s\S]*?radial-gradient/,
-      "the effect must remain homepage-scoped and preserve the shared sheet elsewhere",
-    );
+  it("uses real optimized artwork rather than CSS stand-ins", () => {
+    for (const section of [
+      "blogs",
+      "components",
+      "engineering",
+      "models",
+      "research",
+      "training",
+    ]) {
+      assert.ok(
+        fs.existsSync(path.join("public", "images", "home", `${section}.avif`)),
+        `missing AVIF artwork for ${section}`,
+      );
+      assert.ok(
+        fs.existsSync(path.join("public", "images", "home", `${section}.webp`)),
+        `missing WebP artwork for ${section}`,
+      );
+    }
+    for (const artwork of [
+      "featured-agentic-cyber-defense",
+      "article-ai-capabilities",
+    ]) {
+      assert.ok(
+        fs.existsSync(path.join("public", "images", "home", `${artwork}.avif`)),
+        `missing AVIF artwork for ${artwork}`,
+      );
+      assert.ok(
+        fs.existsSync(path.join("public", "images", "home", `${artwork}.webp`)),
+        `missing WebP artwork for ${artwork}`,
+      );
+    }
+    assert.match(homeArtwork, /<picture>/);
+    assert.match(homeArtwork, /width=\{1440\}/);
+    assert.match(homeArtwork, /height=\{480\}/);
+    assert.match(homeArtwork, /withBasePath/);
+    assert.match(homeArtwork, /variant === "featured"/);
+    assert.match(homeArtwork, /ARTICLE_ARTWORK\[articleRoute\]/);
+    assert.match(homeArtwork, /if \(hero\)/);
+    assert.match(homePage, /articleRoute=\{article\.route\}/);
+    assert.match(homePage, /hero=\{article\.hero\}/);
+    assert.match(homePage, /variant="featured"/);
   });
 
   it("lets header-owned fixed dialogs cover the viewport", () => {
@@ -468,19 +509,20 @@ describe("homepage composition", () => {
     );
   });
 
-  it("stacks the introduction, index, and featured analysis without horizontal overflow", () => {
+  it("moves the card system from three columns to two and then one", () => {
     assert.match(
       css,
-      /\.home-intro__grid\s*\{[\s\S]*?display:\s*block/,
+      /\.home-domain-grid,[\s\S]*?\.home-analysis-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/,
     );
     assert.match(
       css,
-      /@media \(max-width: 64rem\)[\s\S]*?\.home-atlas__grid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /@media \(max-width: 68rem\)[\s\S]*?\.home-domain-grid,[\s\S]*?\.home-analysis-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
     );
     assert.match(
       css,
-      /@media \(max-width: 640px\)[\s\S]*?\.home-featured__grid,[\s\S]*?\.home-featured__grid--without-hero\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /@media \(max-width: 48rem\)[\s\S]*?\.home-domain-grid,[\s\S]*?\.home-analysis-grid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
+    assert.match(css, /\.home-feature-card\s*\{[\s\S]*?overflow:\s*hidden/);
   });
 });
 
@@ -661,7 +703,7 @@ describe("editorial typography", () => {
   });
 });
 
-describe("homepage research figure", () => {
+describe("standalone research figure", () => {
   it("uses deterministic vector geometry rather than a generated raster", () => {
     assert.match(atlasWorkflow, /<svg/);
     assert.match(atlasWorkflow, /<title/);
@@ -843,28 +885,13 @@ describe("editorial blog specialization", () => {
     );
   });
 
-  it("adds a bounded masthead index without replacing the complete outline", () => {
+  it("uses one bounded masthead index instead of a duplicate blog rail", () => {
     assert.match(articlePage, /function ArticleHeroContents/);
     assert.match(articlePage, /heading\.depth === 2/);
     assert.match(articlePage, /\.slice\(0, 5\)/);
     assert.match(articlePage, /aria-label="Article contents"/);
-    assert.match(
-      articlePage,
-      /<ArticleOutline headings=\{articleOutlineHeadings\} variant="rail" \/>/,
-    );
-    assert.match(articlePage, /showOutline && !isEditorialBlog/);
-  });
-
-  it("places the wide-screen blog index in the reference's quiet left field", () => {
-    assert.match(
-      css,
-      /@media \(min-width: 64\.01rem\)\s*\{[\s\S]*?\.article-page--anthropic \.article-main\s*\{[\s\S]*?grid-column:\s*2/,
-    );
-    assert.match(
-      css,
-      /\.article-page--anthropic \.article-rail\s*\{[\s\S]*?grid-column:\s*1/,
-    );
-    assert.match(css, /\.article-page--anthropic \.outline li a::before/);
+    assert.match(articlePage, /const showRailOutline = showOutline && !isEditorialBlog/);
+    assert.doesNotMatch(css, /\.article-page--anthropic \.outline li a::before/);
   });
 });
 

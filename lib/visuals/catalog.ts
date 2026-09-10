@@ -1,0 +1,331 @@
+import path from "node:path";
+import type { ArticleVisual, VisualLayout, VisualGlyph, VisualNode } from "./types";
+
+type NodeInput = readonly [label: string, detail: string, glyph: VisualGlyph, explanation: string];
+
+/**
+ * Curated graphical abstracts, grounded in each article's opening thesis and
+ * mechanism sections. Explicit editorial mapping avoids keyword-based figures
+ * that conflate related papers. This catalog never changes Markdown parsing.
+ * Four/five bounded nodes keep figure construction O(1); catalog indexing is
+ * O(n), followed by O(1) lookups rather than a corpus scan on every page.
+ */
+function visual(source: string, id: string, title: string, thesis: string,
+  layout: VisualLayout, relation: string, nodes: readonly NodeInput[],
+  note = "Conceptual schematic · Read the article for evidence and implementation details.",
+): ArticleVisual {
+  return { source: `docs/${source}.md`, id, title, thesis, layout, relation, note,
+    nodes: nodes.map(([label, detail, glyph, explanation]): VisualNode => ({ label, detail, glyph, explanation })) };
+}
+
+export const articleVisuals: readonly ArticleVisual[] = [
+  visual("Blogs/Adaptive Agentic Cyber Defense with NVIDIA Nemotron", "cyber-defense", "A detection earns its way into production",
+    "Observed behavior becomes an executable detection; validation closes the loop.", "cycle", "Retest against independent attacks", [
+      ["Execute", "Controlled attack", "network", "A controlled attack produces observable behavior rather than a model's self-reported success."],
+      ["Observe", "Traces + telemetry", "spectrum", "Execution traces and telemetry provide the evidence used to reconstruct behavior."],
+      ["Generate", "Detection candidate", "tokens", "The defensive agent produces a query artifact that remains untrusted until checked."],
+      ["Verify", "Syntax · replay · retest", "check", "Syntax checks, telemetry replay, and independently seeded retesting govern promotion and further adaptation."],
+    ]),
+  visual("Blogs/AI Capabilities and Limitations in 2026", "ai-boundaries", "Four properties. Four engineering boundaries.",
+    "Fluency, knowledge, context, and instruction following require different forms of control.", "compare", "Complementary boundaries, not a sequence", [
+      ["Prediction", "Generation ≠ truth", "tokens", "Next-token prediction produces plausible continuations; external verification establishes correctness."],
+      ["Knowledge", "Weights + retrieval", "network", "Model knowledge and external sources differ in freshness, coverage, and provenance."],
+      ["Working memory", "A bounded active set", "memory", "The current context is a selected working set, distinct from persistent history and memory."],
+      ["Steerability", "Policy + execution", "filter", "Instructions need compatible permissions, tool boundaries, and outcome checks."],
+    ]),
+  visual("Blogs/Inference-First Accelerator Architecture", "inference-locality", "Keep useful work close to its state",
+    "Interactive inference depends on the balance between compute, memory movement, and communication.", "sequence", "Optimize useful work under latency and power constraints", [
+      ["Prefill", "Process the prompt", "matrix", "Prompt processing exposes parallel compute work and establishes the initial KV state."],
+      ["Local state", "Weights + KV", "memory", "Locality reduces repeated transfers and the time accelerators spend waiting for operands."],
+      ["Decode", "Incremental tokens", "tokens", "Token generation repeatedly consumes model and cache state within a per-user latency budget."],
+      ["Interconnect", "Coordinate devices", "network", "Communication is part of the execution architecture, especially for distributed and agentic workloads."],
+    ]),
+  visual("Components/Algorithm/RL_GRPO", "grpo", "Learn from a group, relative to itself",
+    "Multiple answers to one prompt provide the reward baseline for a policy update.", "fork", "Same prompt → grouped rewards → policy update", [
+      ["One prompt", "Old-policy rollout", "tokens", "Sample a group of responses for the same prompt using a rollout policy snapshot."],
+      ["Response A", "Evaluate reward", "check", "Score each response using the reward construction appropriate to the training stage."],
+      ["Response B", "Evaluate reward", "check", "Responses share a prompt, making within-group reward comparison meaningful."],
+      ["Response C", "Evaluate reward", "check", "Three branches illustrate a group; they do not assert the actual training group size."],
+      ["Relative update", "Group-normalized signal", "model", "Group statistics form relative advantages used in the constrained policy objective; exact variants are distinguished in the article."],
+    ]),
+  visual("Components/Algorithm/RL_PPO", "ppo", "Improve the policy without an uncontrolled jump",
+    "Rollouts, reward and value estimates feed a clipped policy update.", "cycle", "Refresh the rollout snapshot for the next iteration", [
+      ["Roll out", "Old policy snapshot", "tokens", "Generate trajectories from a frozen snapshot of the current policy."],
+      ["Score", "Reward + reference", "check", "The preference reward and reference-policy penalty supply learning signals; the reference is distinct from the old policy."],
+      ["Estimate", "Critic + advantages", "spectrum", "Value estimates and returns determine advantages for the policy update."],
+      ["Update", "Clipped objective", "model", "Optimize the policy with PPO clipping and train the critic before collecting the next rollout batch."],
+    ]),
+  visual("Components/Attention/attention", "attention-families", "Different ways to remember the same sequence",
+    "Attention architectures reorganize query heads and stored key–value information.", "compare", "Schematic mechanisms; no quantitative memory comparison", [
+      ["MHA", "Independent KV heads", "matrix", "Multi-head attention supplies each query head with its own key and value projections."],
+      ["GQA", "Shared KV groups", "layers", "Grouped-query attention shares key and value heads across groups of query heads."],
+      ["RoPE", "Relative position", "wave", "Rotary position embeddings rotate query and key components to encode positional relationships."],
+      ["MLA", "Compressed KV latent", "memory", "Multi-head latent attention stores a compressed representation used to reconstruct attention information."],
+    ]),
+  visual("Components/Attention/Glm_5.2_attention", "glm-attention", "Compress the state. Reuse the selection.",
+    "Latent KV storage and sparse position selection solve different parts of the attention cost.", "sequence", "Index sharing reuses selections across eligible layers", [
+      ["Queries", "Normalized hidden state", "tokens", "The normalized decoder state produces compressed queries and their head-specific projections."],
+      ["Latent KV", "Compact stored state", "memory", "MLA keeps latent key–value information and positional components."],
+      ["Sparse index", "Selected positions", "sparse", "DSA selects relevant positions; index sharing reuses selected indices across configured layers."],
+      ["Attend", "Weighted aggregation", "matrix", "Attention aggregates selected values and projects the result back into the decoder stream."],
+    ]),
+  visual("Components/Audio Preprocessing", "audio-representations", "Turn pressure over time into useful structure",
+    "Windowing and frequency analysis reveal acoustic patterns before learned representation.", "sequence", "MFCC is a derived branch, not a universal model input", [
+      ["Waveform", "Sampled amplitude", "wave", "Sampling, channel handling, and resampling establish the waveform's physical and numerical contract."],
+      ["Spectrum", "Windowed transform", "spectrum", "Short-time frequency analysis preserves local temporal structure while separating frequency components."],
+      ["Log-Mel", "Perceptual frequency", "matrix", "Mel filterbanks aggregate spectral energy before logarithmic scaling."],
+      ["Representation", "MFCC or learned input", "layers", "A cosine transform can produce MFCCs; modern models may instead consume log-Mel or other representations."],
+    ]),
+  visual("Components/Conv2d Forward Process", "convolution", "Local evidence becomes a new channel basis",
+    "A shared spatial operator changes resolution, receptive field, and channel representation together.", "sequence", "Cross-correlation · shared weights across spatial positions", [
+      ["Input field", "Channels × height × width", "grid", "Input channels contain spatial features on a sampling lattice."],
+      ["Receptive field", "Stride · dilation · padding", "filter", "A local support region is sampled according to the operator's stride, dilation, and boundary rules."],
+      ["Contraction", "Across space + channels", "matrix", "Each output channel combines kernel weights with the sampled input patch; the kernel is not mathematically flipped."],
+      ["Feature maps", "New spatial representation", "layers", "Shared weights produce output maps with a new channel basis and spatial resolution."],
+    ]),
+  visual("Components/FFN/moe_Glm5.2/MOE_5.2", "glm-experts", "Large capacity, selective computation",
+    "A token activates selected routed experts while a shared expert contributes alongside them.", "fork", "Illustrative branches; not the actual expert count", [
+      ["Token state", "Router scores", "tokens", "The router computes scores from the token's decoder representation."],
+      ["Routed expert A", "Selected by router", "model", "A selected expert applies its own gated feed-forward transformation."],
+      ["Shared expert", "Always contributes", "layers", "The shared expert participates independently of routed top-k selection."],
+      ["Routed expert B", "Selected by router", "model", "Only selected routed experts are executed for this token; actual configuration is specified in the article."],
+      ["Combine", "Weighted routed + shared", "matrix", "Weighted routed outputs are combined with the shared-expert result."],
+    ]),
+  visual("Components/model_efficiency_evolution_2023_2026", "efficiency-codesign", "Compression is only the first agreement",
+    "A smaller representation becomes useful when encoding, kernels, and serving behavior agree.", "sequence", "Evaluate end-to-end quality, latency, and cost", [
+      ["Transform", "Quantize · prune · distill", "sparse", "Compression and distillation change model representation or behavior."],
+      ["Represent", "Format + checkpoint", "memory", "Numeric precision, grouping, scales, and serialization specify what is actually stored."],
+      ["Execute", "Kernel + accelerator", "matrix", "Hardware-supported kernels determine whether the representation becomes faster in practice."],
+      ["Serve", "Scheduler + evaluation", "network", "Batching, speculative decoding, output length, and quality evaluation govern realized efficiency."],
+    ]),
+  visual("Engineering/corpus_technical", "versioned-corpus", "Preserve evidence before deriving knowledge",
+    "Versioned source evidence supports replaceable indexes and reproducible downstream views.", "sequence", "Provenance, structure, time, and access travel with the data", [
+      ["Sources", "Native information", "layers", "Documents, records, conversations, and media carry different source semantics."],
+      ["Evidence", "Immutable revisions", "memory", "Capture source revisions with provenance rather than treating generated interpretation as original evidence."],
+      ["Knowledge", "Canonical objects", "network", "Structural representations and canonical objects preserve relationships, access rules, and time."],
+      ["Projections", "Search · graph · training", "sparse", "Indexes and datasets are derived from a versioned substrate and can be rebuilt."],
+    ]),
+  visual("Engineering/Knowledge-Graph", "knowledge-algorithms", "Trace an answer back to executable evidence",
+    "A knowledge-agent stack connects provenance-aware retrieval with bounded execution and verification.", "cycle", "Verified outcomes inform later retrieval and evaluation", [
+      ["Construct", "Temporal knowledge graph", "network", "Source revisions become graph facts, relationships, communities, and provenance-aware representations."],
+      ["Retrieve", "Authorized evidence", "sparse", "Retrieval chooses relevant evidence within access and temporal constraints."],
+      ["Execute", "Negotiated capabilities", "model", "The agent resolves tools and capabilities under explicit execution and authorization contracts."],
+      ["Verify", "Traceable outcome", "check", "Verification links conclusions and effects to supporting evidence and execution traces."],
+    ]),
+  visual("Engineering/Knowlegge_execution", "knowledge-execution", "Knowledge and action have different owners",
+    "Source state, retrieval projections, agent execution, and verification form a governed system.", "sequence", "Preserve native semantics across every boundary", [
+      ["Observe", "Authoritative sources", "layers", "Change capture maintains versioned knowledge without flattening every source into text chunks."],
+      ["Construct context", "Specialized retrieval", "network", "Adaptive query execution selects evidence from projections suited to each source type."],
+      ["Act", "Bounded capabilities", "model", "The agent executes with resolved skills, explicit state, and capability boundaries."],
+      ["Verify", "Typed evidence", "check", "Typed verification and production evidence support evaluation-gated improvement."],
+    ]),
+  visual("Engineering/Managed Agents/Advanced Orchestration", "agent-orchestration", "Delegate work. Keep accountability.",
+    "A coordinator distributes bounded work and consolidates results against a shared objective.", "fork", "Delegated execution → independent results → consolidation", [
+      ["Coordinator", "Objective + budget", "network", "The parent runtime determines task decomposition, delegation constraints, and the available budget."],
+      ["Worker A", "Independent task", "model", "A delegated worker owns a bounded subtask and its local execution context."],
+      ["Worker B", "Independent task", "model", "Parallel work is useful when dependencies and result contracts are explicit."],
+      ["Worker C", "Independent task", "model", "Three workers illustrate topology, not a prescribed team size or vendor concurrency limit."],
+      ["Consolidate", "Evaluate + reconcile", "check", "The coordinator evaluates outcomes and integrates compatible results into the overall task."],
+    ]),
+  visual("Engineering/Managed Agents/Configure Agent Environment_ Execution Boundary, Sandbox Runtime, Isolation, and Self-Hosted Worker Architecture", "agent-environment", "One configuration, isolated execution state",
+    "Environment configuration determines execution conditions; each session owns its runtime instance.", "fork", "Configuration is reusable; session state remains isolated", [
+      ["Environment", "Runtime specification", "layers", "The environment declares packages, resources, network policy, mounts, and execution limits."],
+      ["Session A", "Isolated sandbox", "filter", "A cloud session receives a fresh runtime even when it shares an environment configuration."],
+      ["Session B", "Isolated sandbox", "filter", "Reusing a definition does not imply reusing another session's filesystem or process state."],
+      ["Worker runtime", "Cloud or self-hosted", "model", "Execution topology differs between managed cloud sandboxes and self-hosted workers."],
+      ["Outcomes", "Explicit artifacts", "check", "Artifacts and events cross the execution boundary through declared interfaces."],
+    ]),
+  visual("Engineering/Managed Agents/Define Your Agent_ Control-Plane Specification for a Versioned Agent Runtime", "agent-definition", "Define a runtime contract before a session exists",
+    "A versioned agent definition binds behavior, capabilities, and execution policy.", "compare", "Four views of one versioned specification", [
+      ["Behavior", "Instructions + identity", "tokens", "Persistent instructions and identity establish the agent's behavioral contract."],
+      ["Model policy", "Execution configuration", "model", "Model selection and execution policy belong to the agent definition."],
+      ["Capabilities", "Tools + skills + services", "network", "Tool declarations, external protocols, and skill resources define the executable surface."],
+      ["Governance", "Version + authority", "filter", "Versioning, delegation topology, and authorization defaults constrain future sessions."],
+    ]),
+  visual("Engineering/Managed Agents/Delegate Work to Your Agent_ Session Instantiation, Task Admission, Outcome Evaluation, Budget Control, Credentials, and Runtime Lifecycl", "agent-delegation", "A task becomes a stateful execution instance",
+    "Delegation binds a configuration snapshot to an environment, authority, and budget.", "sequence", "Quiescence describes runtime activity; success requires evaluation", [
+      ["Instantiate", "Definition + environment", "layers", "Session construction resolves the agent configuration and binds an execution environment."],
+      ["Admit work", "Ordered task events", "tokens", "Work enters through session events under credential, authority, and cost boundaries."],
+      ["Execute", "Persistent runtime state", "model", "The session evolves conversation history, sandbox state, outputs, and lifecycle status."],
+      ["Evaluate", "Outcome + remaining budget", "check", "A quiet runtime is not by itself proof of task success; inspect outcomes and constraints."],
+    ]),
+  visual("Engineering/Managed Agents/Manage Agent Context", "agent-context", "Context is a working set, not a warehouse",
+    "Persistent resources and session history are selectively rendered into the active model context.", "fork", "Sources are selected and consolidated; they are not copied wholesale", [
+      ["Context policy", "Select + consolidate", "filter", "Context construction decides what to expose, retain, summarize, or retrieve."],
+      ["Files + repos", "Mounted resources", "layers", "Mounted resources retain their own ownership, revision, and access semantics."],
+      ["Memory", "Cross-session state", "memory", "Persistent memory is distinct from a session's transient interaction window."],
+      ["History", "Session-local events", "tokens", "Event history and execution state can inform future context without all being rendered at once."],
+      ["Active context", "Bounded working set", "sparse", "The model receives a selected working set subject to context size, relevance, and trust constraints."],
+    ]),
+  visual("Engineering/Managed Agents/Managed Agents", "managed-runtime", "From a model call to a persistent runtime",
+    "Definitions, environments, sessions, and event streams own different parts of agent execution.", "sequence", "Events expose a session's evolving execution state", [
+      ["Definition", "What executes", "layers", "The definition specifies intelligence, behavior, and capabilities."],
+      ["Environment", "Where it executes", "filter", "The environment specifies the resources and boundary of execution."],
+      ["Session", "A stateful instance", "model", "The session materializes work and owns evolving runtime state."],
+      ["Events", "Observable progress", "tokens", "An event stream records work admission, interaction, outputs, and lifecycle transitions."],
+    ]),
+  visual("Models/autoregressive_language_model/deepseek/deepseek-v4-pro", "deepseek-architecture", "Sparse computation across sequence and experts",
+    "Hybrid attention and expert routing operate within a structured residual topology.", "sequence", "Conceptual block organization; consult the source for the layer schedule", [
+      ["Token stream", "Embedded sequence", "tokens", "Token embeddings enter a decoder-only language model."],
+      ["Hybrid attention", "CSA + HCA", "sparse", "Compressed and selected context paths organize the hybrid sequence mixer."],
+      ["Sparse experts", "Selected feed-forward paths", "network", "DeepSeekMoE activates a limited subset of expert capacity for each token."],
+      ["Residual streams", "mHC topology", "layers", "Manifold-constrained hyper-connections organize information flow across blocks; this view is not an exact per-layer execution trace."],
+    ]),
+  visual("Models/autoregressive_language_model/glm/GLM_5.2", "glm-architecture", "Extend context by changing how work is reused",
+    "Sparse attention, shared index selection, and expert computation cooperate in the decoder.", "sequence", "A conceptual view of the article's source-audited decoder", [
+      ["Token state", "Decoder representation", "tokens", "The decoder transforms input tokens through its configured block sequence."],
+      ["Latent attention", "MLA + DSA", "sparse", "Latent KV storage and sparse attention selection reduce different costs of long-context processing."],
+      ["Index sharing", "Reuse selected positions", "memory", "Full-indexer layers construct selections that eligible following layers reuse."],
+      ["Expert compute", "Sparse MoE", "network", "Shared and selected routed experts supply feed-forward capacity without activating all parameters per token."],
+    ]),
+  visual("Models/Diffusion/Flow_matching/flow_matching", "flow-matching", "Learn a velocity field. Transport a distribution.",
+    "Training fits velocities along sampled paths; generation integrates a learned field from a base distribution.", "transport", "Base distribution → continuous transport → target distribution", [
+      ["Base samples", "Initial distribution", "sparse", "Draw starting samples from the chosen base distribution."],
+      ["Conditional paths", "Training supervision", "wave", "A coupling and interpolation define conditional paths and target velocities."],
+      ["Velocity field", "Learned dynamics", "network", "Regression learns a velocity field whose integration transports probability mass."],
+      ["Target samples", "Integrated trajectories", "grid", "Generation numerically integrates the learned field. Curves here illustrate transport, not measured trajectories."],
+    ]),
+  visual("Models/Diffusion/Flow_matching/MM_DiT", "mmdit-editing", "Edit the interaction, keep the model frozen",
+    "Training-free attention intervention steers a pretrained multimodal diffusion transformer.", "sequence", "Inference-time intervention · no parameter optimization", [
+      ["Source + prompt", "Image and text conditions", "grid", "The source image and target prompt establish the editing conditions."],
+      ["Joint attention", "Image ↔ text interaction", "matrix", "A pretrained MM-DiT exchanges information between image and text token streams."],
+      ["Intervene", "Attention control", "filter", "The editor changes selected attention behavior at inference time while keeping model parameters frozen."],
+      ["Edited sample", "Flow-based generation", "layers", "The intervened generation process produces an edited image; original model pretraining is a separate process."],
+    ]),
+  visual("Models/Vision_model/Vision-Model Architecture Reconstruction", "vision-encoders", "Pixels become tokens at an explicit interface",
+    "Image preprocessing and visual encoding determine what the language model can receive.", "sequence", "Shared abstraction; model-specific implementations remain distinct", [
+      ["Image", "Native spatial input", "grid", "Each model defines its own resizing, cropping, normalization, and image or video input rules."],
+      ["Patch sequence", "Spatial tensorization", "filter", "Patch construction turns the input into local visual units with positional structure."],
+      ["Visual encoder", "Representation learning", "matrix", "A model-specific encoder transforms visual units into contextual features."],
+      ["Language interface", "Projected visual tokens", "tokens", "Projection or compression bridges visual features to the language backbone under a tensor contract."],
+    ]),
+  visual("Models/Voxtral/Vortral", "voxtral-tts", "Text and reference voice become speech",
+    "Voxtral TTS conditions speech generation on target text and a reference voice.", "sequence", "TTS is one component of a possible speech-to-speech application", [
+      ["Conditions", "Text + reference speech", "tokens", "Target text specifies what to say; reference speech supplies voice-conditioning information."],
+      ["Backbone", "Autoregressive state", "model", "The released decoder backbone constructs representations for speech generation."],
+      ["Audio generation", "Acoustic representation", "spectrum", "The acoustic generation path converts conditioned model state into a speech representation."],
+      ["Speech", "Output waveform", "wave", "The output is generated speech; recognition and conversational reasoning belong to a larger composed application."],
+    ]),
+  visual("Models/Voxtral/Voxtral_realtime", "voxtral-realtime", "Align acoustic time with incremental text",
+    "Streaming audio representation and causal decoding share a timing contract.", "sequence", "Streaming transcription · timing and look-ahead are explicit", [
+      ["Audio stream", "Incoming waveform", "wave", "Audio arrives incrementally rather than as a completed recording."],
+      ["Acoustic frames", "Log-Mel observations", "spectrum", "Windowed log-Mel features convert waveform samples into timed acoustic observations."],
+      ["Encode + align", "Causal representation", "matrix", "The acoustic encoder and alignment mechanism respect the model's frame and token clocks."],
+      ["Text stream", "Incremental decoding", "tokens", "The decoder emits text under the streaming architecture's latency and context constraints."],
+    ]),
+  visual("Research/Frontier Reasoning-Agent Systems", "reasoning-systems", "Capability lives in the whole system",
+    "Reasoning quality depends on policies for compute, state, tools, and verification as well as weights.", "cycle", "Observe → reason → act → verify → update state", [
+      ["Construct state", "Context + memory", "memory", "Persistent state and selected context determine the evidence available for reasoning."],
+      ["Reason", "Adaptive compute", "network", "Reasoning policy allocates inference effort to the current task."],
+      ["Act", "Tools + environment", "model", "Tool execution connects model decisions to external state under runtime control."],
+      ["Verify", "Evaluation + monitoring", "check", "Outcome evaluation, monitoring, and access policy govern feedback and deployment."],
+    ]),
+  visual("Research/JEPA Architecture Reconstruction", "jepa", "Predict representations, not every pixel",
+    "A context representation predicts a target representation under an explicit learning contract.", "prediction", "Compare latent representations under the source-specific objective", [
+      ["Context view", "Observed information", "grid", "The context branch receives observed spatial or temporal information."],
+      ["Predictor", "Predicted representation", "model", "A predictor maps context features toward a representation of the target."],
+      ["Target view", "Learning target", "filter", "The target branch supplies the representation to be predicted, with training rules specific to each JEPA system."],
+      ["Latent objective", "Representation agreement", "check", "The objective compares representations. Target-encoder updates and regularization differ between V-JEPA and LeWorldModel."],
+    ]),
+  visual("Training/DeepSeek, Qwen, and GLM Training Systems", "training-state", "A training step moves more than gradients",
+    "Distributed training is a coordinated transition of tensors, optimizer state, and execution ownership.", "cycle", "A common state model; disclosures differ by model generation", [
+      ["Place state", "Ranks + tensor ownership", "layers", "Parallel topology determines where parameters, activations, and optimizer state reside."],
+      ["Forward", "Model + loss", "matrix", "The model consumes a distributed batch and constructs the stage-specific objective."],
+      ["Backward", "Gradients + communication", "network", "Backpropagation and collectives propagate and aggregate required derivatives."],
+      ["Commit step", "Optimizer + checkpoint", "memory", "Optimizer and checkpoint semantics determine the next recoverable training state."],
+    ]),
+  visual("Training/Hardware/kernal", "kernel-ecosystem", "Kernel tooling occupies different boundaries",
+    "Languages, kernel libraries, collectives, and domain kernels contribute different execution capabilities.", "compare", "A taxonomy of repository roles, not a ranking", [
+      ["Authoring", "DSLs + compilers", "tokens", "Kernel languages and compilers express and lower hardware-oriented programs."],
+      ["Primitives", "GEMM + tensor operations", "matrix", "Linear algebra libraries supply optimized contractions and architecture-specific building blocks."],
+      ["Communication", "Collectives + transport", "network", "Communication libraries coordinate data movement between execution devices."],
+      ["Specialization", "Attention + sparse compute", "sparse", "Domain-specific kernels optimize particular model operations and memory patterns."],
+    ]),
+  visual("Training/Hardware/Modern_AI_Execution_System", "execution-ownership", "Follow ownership through the execution graph",
+    "The modern AI system is a dependency graph of state owners, not a single vertical stack.", "fork", "Edges carry data, execution, control, state, or trust", [
+      ["Work request", "Intent + constraints", "tokens", "A request introduces work whose execution depends on several distinct control and state owners."],
+      ["Serving runtime", "Scheduling + KV state", "memory", "Inference runtimes own token scheduling and key–value state transitions."],
+      ["Compute runtime", "Kernels + communication", "matrix", "Device execution and communication own low-level tensor movement and computation."],
+      ["Agent control", "Tools + authority", "filter", "Agent policy and capability boundaries govern permitted external effects."],
+      ["World state", "Outputs + side effects", "network", "Verified outputs and authorized actions can affect state beyond the model process."],
+    ]),
+  visual("Training/Inference/VLLM Inference Pseudo Algorithm", "vllm-scheduling", "One request is not one GPU batch",
+    "The scheduler repeatedly assembles token work from evolving request and cache state.", "cycle", "Reschedule unfinished work; release state for completed requests", [
+      ["Admit", "Waiting + running queues", "tokens", "API input becomes engine requests, which enter the scheduler's state."],
+      ["Schedule", "Token + cache budget", "memory", "The scheduler chooses work from multiple requests under resource constraints."],
+      ["Execute", "Worker batch", "matrix", "Workers perform the scheduled model computation and sampling."],
+      ["Advance", "Stream + update state", "network", "Outputs update request and KV state, stream to clients, and determine subsequent scheduling."],
+    ]),
+  visual("Training/Inference/vllm", "vllm-memory", "A sequence sees continuity. Memory sees blocks.",
+    "Logical token positions map to physical KV blocks while the runtime schedules dynamic workloads.", "sequence", "Paged allocation supports flexible growth and cache sharing", [
+      ["Requests", "Variable sequence lengths", "tokens", "Requests arrive and finish at different times, with unknown final sequence lengths."],
+      ["Block table", "Logical → physical", "sparse", "A per-sequence mapping resolves logical token blocks to physical KV storage."],
+      ["KV pool", "Reusable physical blocks", "memory", "Fixed-size blocks support dynamic allocation and eligible sharing rather than contiguous reservations."],
+      ["Model execution", "Scheduled token work", "matrix", "The execution runtime combines paged state with scheduling, kernels, and streaming."],
+    ]),
+  visual("Training/Resources/inference_framework", "inference-ecosystem", "Choose the system that owns your bottleneck",
+    "Fleet routing, distributed KV, model execution, and kernels solve different inference problems.", "compare", "Complementary responsibilities; products can span boundaries", [
+      ["Control plane", "Route + admit requests", "network", "Cluster-level systems coordinate replicas, routing, and admission."],
+      ["KV plane", "Store + move context", "memory", "Cache infrastructure owns distributed KV placement and transfer."],
+      ["Execution engine", "Schedule + run models", "model", "Model engines schedule token work, execute the model, and sample outputs."],
+      ["Device runtime", "Kernels + accelerators", "matrix", "Device runtimes and kernels realize tensor operations on the available hardware."],
+    ]),
+  visual("Training/Resources/train_framework", "training-ecosystem", "Compare training systems by the state they own",
+    "Distributed training frameworks differ in tensor placement, execution, recovery, and orchestration.", "compare", "Architectural responsibilities, not a universal ordering", [
+      ["Placement", "Topology + tensor shards", "layers", "A training system must specify which ranks own each tensor and state partition."],
+      ["Execution", "Microbatches + collectives", "matrix", "Runtime mechanisms coordinate activation movement, gradients, and expert dispatch."],
+      ["Recovery", "Checkpoint + restore", "memory", "Recovery semantics define which state can be committed and restored under a changed topology."],
+      ["Orchestration", "Workers + lifecycle", "network", "Worker construction, launch, and failure handling surround the training execution loop."],
+    ]),
+  visual("Training/Train/deepseek/Deepseek_Training", "deepseek-pretraining", "Build the batch before optimizing the model",
+    "Corpus construction, transformation, and packing establish the learning problem for each update.", "sequence", "Outer optimization program; model internals are intentionally opaque", [
+      ["Curate", "Raw → selected corpus", "filter", "Source selection and curation establish the pretraining data mixture."],
+      ["Transform", "Documents → token streams", "tokens", "Document transformations and tokenization construct the training representation."],
+      ["Pack", "Masks + labels + batches", "layers", "Source-aware packing, attention isolation, and target construction define valid supervised positions."],
+      ["Optimize", "Loss → next state", "model", "The opaque causal model consumes batches; losses, gradients, and optimizer state determine the next update."],
+    ]),
+  visual("Training/Train/deepseek_qwen_kimi", "training-objectives", "Training stages change the optimization problem",
+    "Pretraining, supervised adaptation, and reinforcement learning operate on changing distributions and state.", "sequence", "Stage-specific objectives; not one global sum of losses", [
+      ["Pretrain", "Foundation distribution", "matrix", "Foundation optimization learns from the chosen token and multimodal data distributions."],
+      ["Supervise", "Selected demonstrations", "tokens", "Supervised fine-tuning changes the data distribution and behavioral target."],
+      ["Reinforce", "Rollouts + rewards", "network", "Reinforcement learning introduces policy snapshots, rollout state, and reward-based objectives."],
+      ["Consolidate", "Lineage-specific transition", "layers", "Specialist merging or distillation is model-lineage dependent; the article preserves those differences."],
+    ]),
+  visual("Training/Train/Kimi/kimi_family", "kimi-training", "Specialize policies, then consolidate behavior",
+    "The reconstructed program branches into domain and effort policies before multi-policy distillation.", "fork", "Three domains shown; effort levels create further specialist branches", [
+      ["Foundation + SFT", "Initial trained policy", "model", "Pretraining and supervised adaptation establish the policy used for specialist training."],
+      ["General", "Domain-specific RL", "network", "The general domain is trained under the source-defined effort configurations."],
+      ["General agent", "Domain-specific RL", "network", "Agentic tasks add environment and rollout state to the optimization program."],
+      ["Coding agent", "Domain-specific RL", "tokens", "Coding tasks form another specialist domain; effort settings further distinguish policies."],
+      ["Distill", "Multi-policy consolidation", "layers", "Multi-policy on-policy distillation consolidates specialist behavior into the final program endpoint."],
+    ]),
+  visual("Training/Train/Qwen/Qwen_training", "qwen-training", "Track the external training state at every stage",
+    "An opaque trainable model participates in explicit data, objective, and policy transitions.", "cycle", "Qwen3 evidence base; transfer to other generations is not assumed", [
+      ["Prepare", "Tokenize + construct batches", "tokens", "Input text becomes token, mask, and position tensors under the external model interface."],
+      ["Evaluate", "Forward + stage objective", "matrix", "The model supplies logits used by the objective for the current training stage."],
+      ["Differentiate", "Accumulate + distribute", "network", "Gradient computation and distributed accumulation follow the disclosed execution contract."],
+      ["Advance state", "Optimizer + sampler + RNG", "memory", "The next training state includes parameters and non-gradient state; undisclosed choices stay unspecified."],
+    ]),
+  visual("Training/Train/Training/MM_training", "multimodal-training", "Different modalities meet at a tensor contract",
+    "Text, visual, and acoustic inputs become a unified sequence with explicit placement and gradient semantics.", "fork", "Shape · dtype · placement · autograd", [
+      ["Raw sample", "Heterogeneous inputs", "layers", "A training sample can contain text, images, audio, and video."],
+      ["Text", "Tokenization", "tokens", "Text becomes token identifiers and position information."],
+      ["Image + video", "Visual representation", "grid", "Visual inputs use model-specific patch and temporal representation pathways."],
+      ["Audio", "Acoustic representation", "wave", "The audio pathway preserves its own time, shape, and representation contract."],
+      ["Training sequence", "Pack + mask + distribute", "matrix", "Unified sequences carry labels, masks, tensor placement, and gradient ownership into distributed training."],
+    ]),
+  visual("Training/Train/Training/Multi_model_trainer", "multimodel-trainer", "The trainer owns the full state transition",
+    "A reusable training loop coordinates preprocessing, differentiation, distribution, and stage policy.", "cycle", "Stage policy selects pretraining, SFT, or RL behavior", [
+      ["Prepare", "Inputs + state", "layers", "Initialize model, optimizer, random state, and modality-specific input processing."],
+      ["Forward + loss", "Stage-specific objective", "matrix", "Run the model and construct the objective appropriate to the current stage."],
+      ["Backward", "Gradients + collectives", "network", "Differentiate the objective and distribute gradients according to ownership and parallel topology."],
+      ["Optimize", "Schedule + next state", "memory", "Update parameters and scheduling state; reinforcement learning also manages policy and rollout transitions."],
+    ]),
+];
+
+const visualsBySource = new Map(articleVisuals.map((entry) => [entry.source, entry]));
+
+export function getArticleVisual(sourcePath: string): ArticleVisual | undefined {
+  const source = path.isAbsolute(sourcePath) ? path.relative(process.cwd(), sourcePath) : sourcePath;
+  return visualsBySource.get(source.replaceAll("\\", "/"));
+}

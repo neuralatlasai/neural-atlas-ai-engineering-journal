@@ -27,6 +27,8 @@ import { HeroFigure } from "@/components/HeroFigure";
 import { FolderPage } from "@/components/FolderPage";
 import { JsonLd } from "@/components/JsonLd";
 import { ReadingProgress } from "@/components/ReadingProgress";
+import { ArticleVisualFigure } from "@/components/visuals/ArticleVisualFigure";
+import { getArticleVisual } from "@/lib/visuals/catalog";
 import articleAtmosphere from "@/app/assets/article-atmosphere.webp";
 
 /**
@@ -179,6 +181,7 @@ function SectionIndex({ section }: { section: string }) {
 }
 
 async function ArticlePage({ article }: { article: ArticleMeta }) {
+  const visual = getArticleVisual(article.sourcePath);
   const compiled = await compileArticle(
     readSource(article.sourcePath),
     article.title,
@@ -198,9 +201,11 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
   // never sees one form of the outline appear where the other did not.
   const showOutline = compiled.headings.length > 2;
   const isEditorialBlog = article.section === "blogs";
-  const articleOutlineHeadings = isEditorialBlog
-    ? compiled.headings.filter((heading) => heading.depth === 2)
-    : compiled.headings;
+  // Editorial blogs expose their compact section index in the masthead. A
+  // second desktop rail duplicates that navigation, leaves an empty column,
+  // and can degrade into a stack of unexplained ticks when its labels are
+  // visually hidden. Non-blog articles retain the full outline rail.
+  const showRailOutline = showOutline && !isEditorialBlog;
   // A blog's own resolved lead figure is its masthead identity. The shared
   // atmosphere is intentionally only a fallback for sources with no image, so
   // newly added illustrated blogs do not inherit a repeated global cover.
@@ -296,10 +301,13 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
 
         <div
           className={`article-layout article-layout--${
-            showOutline ? "with-outline" : "without-outline"
+            showRailOutline ? "with-outline" : "without-outline"
           }`}
         >
           <div className="article-main">
+            {/* Graphical abstracts introduce the central mechanism before the
+                technical body. Existing authored figures retain their context. */}
+            {visual && <ArticleVisualFigure visual={visual} />}
             {/* Outline lives before the body on narrow viewports, where the sticky
               rail cannot fit (plan §18.2). */}
             {showOutline && !isEditorialBlog && (
@@ -372,9 +380,9 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
             )}
           </div>
 
-          {showOutline && (
+          {showRailOutline && (
             <aside className="article-rail" aria-label="Article outline">
-              <ArticleOutline headings={articleOutlineHeadings} variant="rail" />
+              <ArticleOutline headings={compiled.headings} variant="rail" />
             </aside>
           )}
         </div>
@@ -386,11 +394,10 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
 /**
  * A short, scan-first contents index for the editorial blog masthead.
  *
- * The complete document remains addressable through its heading anchors. On
- * wide screens the quiet rail indexes top-level sections; the labelled mobile
- * disclosure is intentionally absent for Blogs so it does not repeat this
- * masthead index. Limiting the masthead to five entries keeps its height
- * bounded while preserving deterministic O(n) selection.
+ * The complete document remains addressable through its heading anchors. Blogs
+ * intentionally use this one index instead of repeating the same navigation in
+ * a desktop rail or labelled mobile disclosure. Limiting it to five entries
+ * keeps the masthead bounded while preserving deterministic O(n) selection.
  */
 function ArticleHeroContents({ headings }: { headings: HeadingRecord[] }) {
   const entries = headings.filter((heading) => heading.depth === 2).slice(0, 5);
