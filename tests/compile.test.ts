@@ -26,6 +26,29 @@ function assertNoHeadingJumps(html: string): void {
   }
 }
 
+describe("TeX export metadata", () => {
+  it("renders citation-adjacent displays separately and preserves equation tags", async () => {
+    const { html } = await compileArticle(String.raw`% ========
+% Export metadata: \mathsf{N}: native
+% ========
+
+\[
+\boxed{C_{\mathrm{nominal}}\uparrow\;\not\Rightarrow\;M_{KV}\downarrow}\tag{A}
+\] :chatgpt-content-reference{index="42"}
+
+[DERIVED]
+
+\[
+y^2
+\]`, "Fixture");
+    assert.equal((html.match(/class="katex-display"/g) ?? []).length, 2);
+    assert.match(html, /\\boxed\{C_\{\\mathrm\{nominal\}\}/);
+    assert.match(html, /\\tag\{A\}/);
+    assert.match(html, /DERIVED/);
+    assert.doesNotMatch(html, /katex-error|chatgpt-content-reference|Export metadata|========/);
+  });
+});
+
 describe("heading normalization", () => {
   it("starts a document whose shallowest heading is ## at h2, not h3", async () => {
     // The page renders the title as <h1>; starting the body at <h3> would leave

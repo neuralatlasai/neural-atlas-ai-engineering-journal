@@ -4,6 +4,66 @@ import katex from "katex";
 import { preprocess } from "../lib/content/preprocess";
 
 describe("display-math normalization", () => {
+  it("recognizes closers followed by serialized citations without consuming the next block", () => {
+    const source = String.raw`\[
+\boxed{x^2}\tag{A}
+\] :chatgpt-content-reference{index="17"}
+
+[DERIVED]
+
+\[
+y^2
+\]`;
+    const result = preprocess(source);
+    assert.equal(result.displayBlocks, 2);
+    assert.match(result.markdown, /\\boxed\{x\^2\}\\tag\{A\}/);
+    assert.match(result.markdown, /\[DERIVED\]/);
+    assert.doesNotMatch(result.markdown, /chatgpt-content-reference|\\\]/);
+    assert.equal(preprocess(result.markdown).markdown, result.markdown);
+  });
+
+  it("recognizes TeX comment headers only next to an explicit display", () => {
+    const source = String.raw`% ========
+% Equation reconstruction
+% \mathsf{N}: native; \mathsf{D}: derived
+% ========
+
+\[
+\mathsf{N}=1
+\]`;
+    const result = preprocess(source);
+    assert.doesNotMatch(result.markdown, /%|Equation reconstruction/);
+    assert.match(result.markdown, /\\mathsf\{N\}=1/);
+    assert.equal(preprocess(result.markdown).markdown, result.markdown);
+    for (const text of ["% ordinary percent text\n\n\\[\nx^2\n\\]", "% ========\n% prose\n\nAn ordinary paragraph.", "\\% escaped percent", "```tex\n" + source + "\n```", '```text\n:chatgpt-content-reference{index="0"}\n```']) {
+      if (text.startsWith("% ordinary")) assert.match(preprocess(text).markdown, /% ordinary percent text/);
+      else assert.equal(preprocess(text).markdown, text);
+    }
+  });
+
+  it("bounds an unrecognized closer at the next explicit display or code fence", () => {
+    for (const boundary of ["\\[\ny^2\n\\]", "```tex\n\\]\n```", "~~~tex\n\\]\n~~~"]) {
+      const prefix = '\\[\n\\boxed{x^2}\n\\] :chatgpt-content-reference{index="bad"}\n\n';
+      const result = preprocess(prefix + boundary);
+      assert.ok(result.markdown.startsWith(prefix));
+      assert.equal(result.displayBlocks, boundary.startsWith("\\[") ? 1 : 0);
+    }
+  });
+
+  it("treats standalone comments between explicit TeX displays as metadata", () => {
+    const result = preprocess(String.raw`\[
+x=1
+\]
+
+% Single vs multiple components
+
+\[
+\mathbfcal A=\mathcal A^1\times\mathcal A^N
+\]`);
+    assert.equal(result.displayBlocks, 2);
+    assert.doesNotMatch(result.markdown, /%|Single vs/);
+    assert.match(result.markdown, /\\mathbfcal A/);
+  });
   it("converts a lone-bracket block into $$ delimiters", () => {
     const { markdown, displayBlocks } = preprocess("[\nx^2\n]\n");
     assert.equal(displayBlocks, 1);

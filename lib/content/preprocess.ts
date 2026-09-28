@@ -1151,6 +1151,45 @@ export function preprocess(source: string): PreprocessResult {
       continue;
     }
 
+    // Exported TeX headers use consecutive percent-prefixed comment lines and
+    // a separator, immediately before an explicit display. Comments between
+    // two explicit TeX displays also have an unambiguous source context. Treat
+    // those signatures (or a citation-only comment) as TeX metadata. A
+    // percent in ordinary Markdown is literal, so stripping all such lines
+    // would lose prose. Consume each run once: O(source bytes), including runs
+    // rejected as Markdown, rather than rescanning every suffix of a run.
+    if (/^\s*%/.test(authoredLine)) {
+      let end = i;
+      let separator = false;
+      let citationOnly = true;
+      while (end < lines.length && /^\s*%/.test(lines[end])) {
+        separator ||= /^\s*%\s*[=-]{3,}\s*$/.test(lines[end]);
+        const comment = lines[end].replace(/^\s*%\s*/, "");
+        citationOnly &&=
+          comment.trim() !== "" && stripInternalCitationTokens(comment).trim() === "";
+        end++;
+      }
+      let next = end;
+      while (next < lines.length && lines[next].trim() === "") next++;
+      let previous = i - 1;
+      while (previous >= 0 && lines[previous].trim() === "") previous--;
+      const followsTeX = /^\s*\\\]\s*$/.test(
+        stripInternalCitationTokens(lines[previous] ?? ""),
+      );
+      if (
+        (separator || citationOnly || followsTeX) &&
+        /^\s*\\\[\s*$/.test(lines[next] ?? "")
+      ) {
+        out.push("");
+      } else {
+        for (let k = i; k < end; k++) {
+          out.push(convertInlineMath(stripInternalCitationTokens(lines[k])));
+        }
+      }
+      i = end - 1;
+      continue;
+    }
+
     // An authored `$$` display block is already in remark-math's own
     // delimiters: emit it verbatim. The closer is required — a lone `$$` in
     // prose must not silently turn the rest of the document into mathematics —
@@ -1203,6 +1242,10 @@ export function preprocess(source: string): PreprocessResult {
       }
       while (j < lines.length) {
         const current = stripInternalCitationTokens(lines[j]);
+        // A missing/contaminated closer must never capture a subsequent
+        // display or code listing. These are structural boundaries even for
+        // the standalone opener, not just the ambiguous prose-attached form.
+        if (/^\s*(?:\\\[|```+.*|~~~+.*)\s*$/.test(current)) break;
         if (DISPLAY_CLOSE.test(current) && openGroups === 0 && delimiters.brackets === 0) {
           matched = true;
           break;

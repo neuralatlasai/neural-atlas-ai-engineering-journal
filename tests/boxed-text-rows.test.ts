@@ -3,6 +3,30 @@ import assert from "node:assert/strict";
 import katex from "katex";
 import { compileArticle, prepareMathForRendering } from "../lib/content/compile";
 
+it("repairs repeated text-only infix stacks without changing valid binomials", () => {
+  const tex = String.raw`\boxed{\textbf{Summary: }\text{First}\atop\text{Second}\atop\text{Third}}`;
+  const repaired = prepareMathForRendering(tex, true);
+  assert.match(repaired, /\\begin\{gathered\}/);
+  assert.doesNotMatch(repaired, /\\atop/);
+  assert.equal(prepareMathForRendering(repaired, true), repaired);
+  assert.doesNotThrow(() => katex.renderToString(repaired, { displayMode: true, strict: "error", throwOnError: true }));
+  for (const valid of [String.raw`\boxed{\text{First}\atop\text{Second}}`, String.raw`\boxed{a\atop b}`, String.raw`\boxed{a\atop b\atop c}`]) {
+    assert.equal(prepareMathForRendering(valid, true), valid);
+  }
+});
+
+it("normalizes font aliases and text arrows with strict renderable semantics", () => {
+  for (const tex of [String.raw`\mathbfcal A=\mathcal A`, String.raw`\mathbfcal{AB}`, String.raw`\text{learn block→memento format}`]) {
+    const repaired = prepareMathForRendering(tex, true);
+    assert.equal(prepareMathForRendering(repaired, true), repaired);
+    assert.doesNotThrow(() => katex.renderToString(repaired, { displayMode: true, strict: "error", throwOnError: true }));
+  }
+  assert.equal(prepareMathForRendering(String.raw`\mathbfcal A`, true), String.raw`\boldsymbol{\mathcal{A}}`);
+  for (const tex of [String.raw`\mathcal A`, String.raw`\mathbfcalculus A`, String.raw`\mathbfcal{A`, String.raw`\newcommand{\mathbfcal}[1]{\mathcal{#1}}\mathbfcal A`]) {
+    assert.equal(prepareMathForRendering(tex, true), tex);
+  }
+});
+
 it("preserves boxed statement rows in a strict display alignment", async () => {
   const tex = String.raw`\boxed{\textbf{Local computation}\\\textbf{Bounded communication}}`;
   const repaired = prepareMathForRendering(tex, true);

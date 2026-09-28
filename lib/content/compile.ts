@@ -1212,8 +1212,55 @@ const BOXED_TEXT_ROWS = new RegExp(String.raw`^\s*\\boxed\{\s*(${BOXED_TEXT_ATOM
 function repairBoxedTextRows(tex: string, displayMode: boolean): string {
   if (!displayMode || tex.length > 16_384) return tex;
   const match = BOXED_TEXT_ROWS.exec(tex);
-  if (!match) return tex;
-  return `\\boxed{\\begin{gathered}\n${match[1]}\n\\end{gathered}}`;
+  if (match) return `\\boxed{\\begin{gathered}\n${match[1]}\n\\end{gathered}}`;
+  // Repeated infix \atop is invalid within one group. Only a complete box of
+  // three or more text-only rows proves stacking intent; a valid two-operand
+  // binomial or any mathematical operand must retain its authored semantics.
+  const box = /^\s*\\boxed\{([\s\S]*)\}\s*$/.exec(tex);
+  if (!box) return tex;
+  const rows = box[1].split(/\\atop\b/);
+  const atoms = new RegExp(BOXED_TEXT_ATOM, "g");
+  if (
+    rows.length < 3 ||
+    rows.some((row) => !row.trim() || row.replace(atoms, "").trim() !== "")
+  ) return tex;
+  return `\\boxed{\\begin{gathered}\n${rows.map((row) => row.trim()).join("\\\\\n")}\n\\end{gathered}}`;
+}
+
+/**
+ * Expand the bold-calligraphic font alias over exactly one TeX argument.
+ * Consume complete arguments once in O(n); unknown commands and malformed
+ * arguments remain diagnostic source rather than receiving guessed operands.
+ */
+function normalizeMathFontAlias(tex: string, displayMode: boolean): string {
+  if (!tex.includes("\\mathbfcal")) return tex;
+  // An authored macro definition or literal command example may already be
+  // valid. Expand only an otherwise unsupported alias, never override it.
+  try {
+    katex.renderToString(tex, { displayMode, throwOnError: true });
+    return tex;
+  } catch {
+    // Continue with the known font alias; unrelated failures remain errors.
+  }
+  const alias = /(?<!\\)\\mathbfcal\b\s*/g;
+  const argumentToken = /(?:\\[A-Za-z]+|[A-Za-z0-9])/y;
+  const parts: string[] = [];
+  let cursor = 0;
+  for (let match = alias.exec(tex); match; match = alias.exec(tex)) {
+    const start = alias.lastIndex;
+    const close = tex[start] === "{" ? matchingGroupClose(tex, start) : -1;
+    if (tex[start] === "{" && close < 0) break;
+    argumentToken.lastIndex = start;
+    const atom = argumentToken.exec(tex);
+    const end = close >= 0 ? close + 1 : atom ? start + atom[0].length : start;
+    if (end === start) continue;
+    const argument = close >= 0 ? tex.slice(start + 1, close) : tex.slice(start, end);
+    parts.push(tex.slice(cursor, match.index), `\\boldsymbol{\\mathcal{${argument}}}`);
+    cursor = end;
+    alias.lastIndex = end;
+  }
+  parts.push(tex.slice(cursor));
+  return parts.join("");
 }
 
 /**
@@ -1225,7 +1272,11 @@ export function prepareMathForRendering(
   tex: string,
   displayMode: boolean,
 ): string {
-  const repairedBraces = repairUnescapedLiteralClosers(tex, displayMode);
+  // Unicode arrows have the same math meaning as their control sequences.
+  // Canonicalizing first also lets the text-wrapper repair move them into
+  // math mode, where strict KaTeX supports them without an unknown glyph.
+  const compatible = normalizeMathFontAlias(tex, displayMode).replace(/→/g, "\\rightarrow{}");
+  const repairedBraces = repairUnescapedLiteralClosers(compatible, displayMode);
   const repairedRows = repairCollapsedRowBreaks(repairedBraces, displayMode);
   const repairedScripts = repairRepeatedScripts(repairedRows, displayMode);
   const repairedMiddle = repairOrphanedMiddleBars(repairedScripts, displayMode);

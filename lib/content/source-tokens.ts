@@ -7,7 +7,10 @@
  * valid links are never changed.
  */
 const INTERNAL_CITATION = /\uE200cite(?:\uE202[^\uE201\r\n]*)?\uE201/gu;
+// Require the complete transport grammar; authored links, provenance labels,
+// and incomplete or unrelated directives are not private citation envelopes.
+const SERIALIZED_CONTENT_REFERENCE = /:chatgpt-content-reference\{index="[0-9]+"\}/g;
 
 export function stripInternalCitationTokens(input: string): string {
-  return input.replace(INTERNAL_CITATION, "");
+  return input.replace(INTERNAL_CITATION, "").replace(SERIALIZED_CONTENT_REFERENCE, "");
 }
