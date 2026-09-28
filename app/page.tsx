@@ -140,6 +140,7 @@ export default function HomePage() {
           <article className="home-feature-card">
             <HomeArtwork
               section={featured.section}
+              articleRoute={featured.route}
               className="home-feature-card__visual"
               variant="featured"
             />

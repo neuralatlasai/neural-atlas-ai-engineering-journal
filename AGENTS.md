@@ -279,6 +279,14 @@ than article-specific colors.
 
 ### Article graphical abstracts
 
+Homepage artwork is a separate raster asset set in `public/images/home/`.
+It uses source-grounded technical diagrams with descriptive alt text and
+uncropped 2:1 frames. Original PNGs and their source-specific generation prompts
+are retained in `public/images/home/sources/`; AVIF and WebP serve the page.
+`components/HomeArtwork.tsx` gives exact article mappings priority over legacy
+hero images. Diagram labels must remain legible in both themes, and decorative
+filters or hover zoom must not obscure labels or connector endpoints.
+
 Every current non-empty article has a curated conceptual figure in
 `lib/visuals/catalog.ts`, mapped by repository-relative source identity. The
 figure introduces the article's main mechanism before its technical body;

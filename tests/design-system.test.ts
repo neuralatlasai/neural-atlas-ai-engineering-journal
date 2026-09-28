@@ -491,11 +491,12 @@ describe("homepage composition", () => {
     }
     assert.match(homeArtwork, /<picture>/);
     assert.match(homeArtwork, /width=\{1440\}/);
-    assert.match(homeArtwork, /height=\{480\}/);
+    assert.match(homeArtwork, /height=\{720\}/);
+    assert.match(homeArtwork, /alt=\{artwork.alt\}/);
     assert.match(homeArtwork, /withBasePath/);
     assert.match(homeArtwork, /variant === "featured"/);
     assert.match(homeArtwork, /ARTICLE_ARTWORK\[articleRoute\]/);
-    assert.match(homeArtwork, /if \(hero\)/);
+    assert.match(homeArtwork, /if \(hero && !hasArticleArtwork\)/);
     assert.match(homePage, /articleRoute=\{article\.route\}/);
     assert.match(homePage, /hero=\{article\.hero\}/);
     assert.match(homePage, /variant="featured"/);

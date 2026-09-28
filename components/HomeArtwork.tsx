@@ -4,45 +4,61 @@ import { withBasePath } from "@/lib/site";
 interface HomeArtworkAsset {
   readonly avif: string;
   readonly fallback: string;
+  readonly alt: string;
 }
 
 const HOME_ARTWORK: Readonly<Record<string, HomeArtworkAsset>> = {
   blogs: {
     avif: "/images/home/blogs.avif",
     fallback: "/images/home/blogs.webp",
+    alt: "Cyber-defense loop: attack execution, telemetry, detection synthesis, validation, deployment, and fresh attack.",
   },
   components: {
     avif: "/images/home/components.avif",
     fallback: "/images/home/components.webp",
+    alt: "GRPO: response-group rewards produce relative advantages for a policy update.",
   },
   engineering: {
     avif: "/images/home/engineering.avif",
     fallback: "/images/home/engineering.webp",
+    alt: "Immutable evidence becomes structural IR, a versioned knowledge fabric, and derived projections.",
   },
   models: {
     avif: "/images/home/models.avif",
     fallback: "/images/home/models.webp",
+    alt: "Routed MoE path: token state, router, selected experts, and weighted sum.",
   },
   research: {
     avif: "/images/home/research.avif",
     fallback: "/images/home/research.webp",
+    alt: "An agent uses interaction history to select actions; the environment returns observations and rewards.",
   },
   training: {
     avif: "/images/home/training.avif",
     fallback: "/images/home/training.webp",
+    alt: "A forward pass produces a loss and gradients for an optimizer update.",
   },
 };
 
 const FEATURED_ARTWORK: HomeArtworkAsset = {
   avif: "/images/home/featured-agentic-cyber-defense.avif",
   fallback: "/images/home/featured-agentic-cyber-defense.webp",
+  alt: HOME_ARTWORK.blogs.alt,
 };
 
 const ARTICLE_ARTWORK: Readonly<Record<string, HomeArtworkAsset>> = {
   "/blogs/ai-capabilities-and-limitations-in-2026": {
     avif: "/images/home/article-ai-capabilities.avif",
     fallback: "/images/home/article-ai-capabilities.webp",
+    alt: "Model output and evidence enter verification; supported output is accepted, otherwise retried or escalated.",
   },
+  "/blogs/adaptive-agentic-cyber-defense-with-nvidia-nemotron": FEATURED_ARTWORK,
+  "/components/rl-grpo": HOME_ARTWORK.components,
+  "/engineering/corpus-technical": HOME_ARTWORK.engineering,
+  "/models/deepseek-v4-pro": HOME_ARTWORK.models,
+  "/research/agentic-environment-engineering-for-large-language-models": HOME_ARTWORK.research,
+  "/research/frontier-reasoning-agent-systems": HOME_ARTWORK.research,
+  "/training/deepseek-qwen-and-glm-training-systems": HOME_ARTWORK.training,
 };
 
 const DEFAULT_ARTWORK = HOME_ARTWORK.research;
@@ -56,7 +72,8 @@ function responsiveSrcSet(
 }
 
 /**
- * Category artwork is decorative because the adjacent heading names the domain.
+ * These source-grounded diagrams carry information, so their mechanisms need
+ * accessible alternatives rather than decorative, empty-alt treatment.
  * A syntax-level fallback keeps newly discovered corpus sections renderable
  * without coupling homepage correctness to a route registry update.
  */
@@ -82,7 +99,11 @@ export function HomeArtwork({
         HOME_ARTWORK[section] ??
         DEFAULT_ARTWORK;
 
-  if (hero) {
+  // An exact article mapping takes precedence over legacy hero artwork. Other
+  // articles retain their own authored figure instead of receiving a false
+  // article-specific diagram merely because they share a section.
+  const hasArticleArtwork = articleRoute !== undefined && ARTICLE_ARTWORK[articleRoute] !== undefined;
+  if (hero && !hasArticleArtwork) {
     return (
       <figure className={className} aria-hidden="true">
         <picture>
@@ -116,15 +137,15 @@ export function HomeArtwork({
   }
 
   return (
-    <figure className={className} aria-hidden="true">
+    <figure className={className}>
       <picture>
         <source type="image/avif" srcSet={withBasePath(artwork.avif)} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={withBasePath(artwork.fallback)}
-          alt=""
+          alt={artwork.alt}
           width={1440}
-          height={480}
+          height={720}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
           fetchPriority={priority ? "high" : "auto"}
