@@ -18,7 +18,7 @@ const SVG_STYLE = `
 `;
 
 /** All glyphs have a fixed primitive budget; no randomness or runtime sampling. */
-function Glyph({ kind }: { kind: VisualGlyph }) {
+export function Glyph({ kind }: { kind: VisualGlyph }) {
   switch (kind) {
     case "tokens":
       return <g>{[0, 1, 2].map((row) => <g key={row}>{[0, 1, 2, 3].map((column) =>

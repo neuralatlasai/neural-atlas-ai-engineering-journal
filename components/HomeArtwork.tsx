@@ -1,5 +1,16 @@
+import React from "react";
 import type { HeroImage } from "@/lib/content/corpus";
 import { withBasePath } from "@/lib/site";
+import { articleVisuals } from "@/lib/visuals/catalog";
+import type { ArticleVisual } from "@/lib/visuals/types";
+import { CoverArtwork } from "@/components/visuals/CoverArtwork";
+
+// One O(n) catalog pass provides O(1) section previews, including future sections.
+const domainVisuals = new Map<string, ArticleVisual>();
+for (const visual of articleVisuals) {
+  const section = visual.source.split("/")[1].toLowerCase();
+  if (!domainVisuals.has(section)) domainVisuals.set(section, visual);
+}
 
 interface HomeArtworkAsset {
   readonly avif: string;
@@ -84,6 +95,7 @@ export function HomeArtwork({
   className,
   priority = false,
   variant = "section",
+  visual,
 }: {
   section: string;
   articleRoute?: string;
@@ -91,7 +103,15 @@ export function HomeArtwork({
   className?: string;
   priority?: boolean;
   variant?: "section" | "featured";
+  visual?: ArticleVisual;
 }) {
+  const preview = visual ?? (!articleRoute ? domainVisuals.get(section) : undefined);
+  if (preview) {
+    return <figure className={className}>
+      <CoverArtwork visual={preview} idPrefix={articleRoute
+        ? `${variant}-${preview.id}` : `domain-${section}`} />
+    </figure>;
+  }
   const artwork =
     variant === "featured"
       ? FEATURED_ARTWORK

@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { compileArticle } from "../lib/content/compile";
 import { interactiveFigureUrl } from "../lib/content/interactive-figures";
+import { figureTheme } from "../lib/interactive-figures";
 
 describe("progressive interactive figures", () => {
   it("keeps authored content readable and isolates the interactive document", async () => {
@@ -17,6 +18,7 @@ describe("progressive interactive figures", () => {
     assert.match(html, /interactive-figure__fallback/);
     assert.match(html, /alt="A request passes through two stages\."/);
     assert.match(html, /title="A request passes through two stages\."/);
+    assert.match(html, /href="\/interactive\/example\/flow\.html"[^>]*target="_blank"[^>]*rel="noopener"/);
   });
 
   it("does not turn remote, escaped, or malformed paths into executable embeds", () => {
@@ -31,5 +33,13 @@ describe("progressive interactive figures", () => {
     const { html } = await compileArticle('<figure><figcaption>Authored caption</figcaption></figure>');
     assert.doesNotMatch(html, /iframe|interactive-figure/);
     assert.match(html, /Authored caption/);
+  });
+
+  it("follows the system theme unless the reader selected a specific palette", () => {
+    assert.equal(figureTheme(undefined, true), "dark");
+    assert.equal(figureTheme("system", true), "dark");
+    assert.equal(figureTheme("system", false), "light");
+    assert.equal(figureTheme("light", true), "light");
+    assert.equal(figureTheme("dark", false), "dark");
   });
 });

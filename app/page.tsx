@@ -10,6 +10,7 @@ import { websiteJsonLd } from "@/lib/structured-data";
 import { ArticleLink } from "@/components/ArticleLink";
 import { HomeArtwork } from "@/components/HomeArtwork";
 import { JsonLd } from "@/components/JsonLd";
+import { getArticleVisual } from "@/lib/visuals/catalog";
 
 type SectionSummary = ReturnType<typeof getSections>[number];
 
@@ -143,6 +144,7 @@ export default function HomePage() {
               articleRoute={featured.route}
               className="home-feature-card__visual"
               variant="featured"
+              visual={getArticleVisual(featured.sourcePath)}
             />
             <div className="home-feature-card__body">
               <p className="home-card-meta">
@@ -186,6 +188,7 @@ export default function HomePage() {
                     section={article.section}
                     articleRoute={article.route}
                     hero={article.hero}
+                    visual={getArticleVisual(article.sourcePath)}
                     className="home-analysis-card__visual"
                   />
                   <div className="home-analysis-card__body">

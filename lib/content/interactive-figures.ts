@@ -33,6 +33,19 @@ export function frameInteractiveFigures() {
       node.children = [
         {
           type: "element",
+          tagName: "div",
+          properties: { className: ["interactive-figure__toolbar"] },
+          children: [
+            { type: "element", tagName: "span", properties: { className: ["interactive-figure__badge"] },
+              children: [{ type: "text", value: "Interactive diagram" }] },
+            { type: "element", tagName: "a", properties: {
+              href: src, target: "_blank", rel: ["noopener"],
+              ariaLabel: "Open interactive diagram at full width in a new tab",
+            }, children: [{ type: "text", value: "Open full view ↗" }] },
+          ],
+        },
+        {
+          type: "element",
           tagName: "iframe",
           properties: {
             className: ["interactive-figure__frame"],

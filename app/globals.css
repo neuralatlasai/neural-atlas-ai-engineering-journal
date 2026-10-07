@@ -4245,7 +4245,7 @@ body:has(.home-page) .site-footer {
   color: var(--color-text);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 1.625rem;
+  border-radius: 1.125rem;
   box-shadow: 0 1px 1px rgba(29, 27, 21, 0.04), 0 2px 8px rgba(29, 27, 21, 0.025);
   text-decoration: none;
   transition:
@@ -4266,7 +4266,7 @@ body:has(.home-page) .site-footer {
   min-width: 0;
   margin: 0;
   overflow: hidden;
-  background: #fff;
+  background: var(--color-surface-subtle);
 }
 .home-domain-card__visual,
 .home-analysis-card__visual {
@@ -4292,8 +4292,8 @@ body:has(.home-page) .site-footer {
 .home-domain-card__body {
   display: flex;
   flex-direction: column;
-  min-height: 15.5rem;
-  padding: clamp(1.35rem, 2.25vw, 2.15rem);
+  min-height: 13.5rem;
+  padding: clamp(1.25rem, 1.8vw, 1.65rem);
 }
 .home-domain-card__meta {
   color: var(--color-text-tertiary);
@@ -4350,7 +4350,7 @@ body:has(.home-page) .site-footer {
   overflow: hidden;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 1.75rem;
+  border-radius: 1.25rem;
   box-shadow: 0 1px 1px rgba(29, 27, 21, 0.04), 0 2px 10px rgba(29, 27, 21, 0.03);
 }
 .home-feature-card__visual {
@@ -4799,18 +4799,82 @@ body:has(.home-page) .site-footer {
 }
 
 /* Local figure documents enhance authored fallback images without affecting prose. */
-.article-body .interactive-figure { margin-block: var(--space-8); }
+.article-body .interactive-figure {
+  min-inline-size: 0;
+  margin: var(--space-8) 0;
+  overflow: clip;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.article-body .interactive-figure__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  font: 550 var(--text-xs)/1.5 var(--font-ui);
+}
+.article-body .interactive-figure__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+.article-body .interactive-figure__badge::before {
+  content: "";
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+.article-body .interactive-figure__toolbar a {
+  padding-block: var(--space-2);
+  color: var(--color-accent);
+  text-decoration: none;
+}
+.article-body .interactive-figure__toolbar a:hover { text-decoration: underline; }
 .article-body .interactive-figure__frame {
   display: block;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: 600px;
   border: 0;
-  border-radius: var(--radius-sm);
   background: var(--color-surface);
 }
 .article-body .interactive-figure [hidden] { display: none; }
 .article-body .interactive-figure__fallback > .content-figure { margin: 0; }
 @media print {
-  .article-body .interactive-figure__frame { display: none !important; }
+  .article-body .interactive-figure__frame,
+  .article-body .interactive-figure__toolbar { display: none !important; }
   .article-body .interactive-figure__fallback[hidden] { display: block !important; }
+}
+
+/* Source-curated SVG covers retain sharp mechanism glyphs in both palettes. */
+.home-cover {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  font-family: var(--font-ui);
+  color: var(--color-text);
+}
+.home-cover__paper {
+  fill: color-mix(in srgb, var(--color-accent) 4%, var(--color-surface));
+}
+.home-cover__grid { fill: none; stroke: var(--color-accent); stroke-width: 0.7; opacity: 0.04; }
+.home-cover__field { fill: none; stroke: var(--color-accent); stroke-width: 1; opacity: 0.12; }
+.home-cover__halo, .home-cover .dv-soft { fill: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface)); }
+.home-cover__satellite { fill: var(--color-surface); stroke: var(--color-border); }
+.home-cover .dv-fill { fill: var(--color-accent); }
+.home-cover__connectors { fill: none; stroke: var(--color-accent); stroke-width: 1.5; opacity: 0.4; }
+.home-cover .dv-paper { fill: var(--color-surface); }
+.home-cover .dv-line { fill: none; stroke: var(--color-accent); stroke-width: 2.5; opacity: 0.45; }
+.home-cover .dv-strong { fill: none; stroke: var(--color-accent); stroke-width: 3.5; }
+.home-cover .dv-secondary { fill: var(--color-text-secondary); }
+.home-domain-card:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 4px;
 }

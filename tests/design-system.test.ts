@@ -459,7 +459,7 @@ describe("homepage composition", () => {
     );
   });
 
-  it("uses real optimized artwork rather than CSS stand-ins", () => {
+  it("retains optimized raster artwork for legacy and authored-image fallbacks", () => {
     for (const section of [
       "blogs",
       "components",

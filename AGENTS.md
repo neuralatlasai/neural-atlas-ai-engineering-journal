@@ -279,13 +279,14 @@ than article-specific colors.
 
 ### Article graphical abstracts
 
-Homepage artwork is a separate raster asset set in `public/images/home/`.
-It uses source-grounded technical diagrams with descriptive alt text and
-uncropped 2:1 frames. Original PNGs and their source-specific generation prompts
-are retained in `public/images/home/sources/`; AVIF and WebP serve the page.
-`components/HomeArtwork.tsx` gives exact article mappings priority over legacy
-hero images. Diagram labels must remain legible in both themes, and decorative
-filters or hover zoom must not obscure labels or connector endpoints.
+Homepage covers use accessible, server-rendered SVG illustrations in
+`components/visuals/CoverArtwork.tsx`. They reuse the curated article mechanism
+glyphs, inherit the current palette, and remain sharp in uncropped 2:1 frames.
+These editorial previews do not assert a complete architecture or measured
+results. `components/HomeArtwork.tsx` uses a single indexed catalog pass for
+domain previews and exact article visuals when available. The previous raster
+assets in `public/images/home/`, their original PNGs and prompts, and authored
+hero images remain available as fallbacks.
 
 Every current non-empty article has a curated conceptual figure in
 `lib/visuals/catalog.ts`, mapped by repository-relative source identity. The
@@ -314,6 +315,10 @@ loads the sandboxed frame near the viewport, validates resize messages against
 its exact window, and propagates theme, visibility, and reduced-motion settings.
 Frames receive script permission without same-origin access. Static fallback
 images remain readable without JavaScript, on loading failure, and in print.
+Each embed has a full-view link and stays within the prose column. System theme
+changes propagate unless the reader selected an explicit palette. Playback
+starts paused, including with reduced motion; an explicit Play or Replay is a
+per-figure choice. Enabling reduced motion stops playback until another choice.
 The Habitat figures under `public/interactive/habitat/` retain the source
 article's explanatory simulations; they do not expose production telemetry.
 

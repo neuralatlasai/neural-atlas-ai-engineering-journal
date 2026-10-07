@@ -33,6 +33,7 @@ describe("sub-path deployment", () => {
     const { compileArticle } = await import("../lib/content/compile");
     const { html } = await compileArticle('<figure data-interactive-src="/interactive/example/flow.html">Fallback diagram</figure>');
     assert.ok(html.includes(`data-src="${PREFIX}/interactive/example/flow.html"`));
+    assert.ok(html.includes(`href="${PREFIX}/interactive/example/flow.html"`));
     assert.ok(!html.includes(`${PREFIX}${PREFIX}`));
   });
   it("prefixes a site-relative path", () => {

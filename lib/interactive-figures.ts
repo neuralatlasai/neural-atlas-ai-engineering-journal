@@ -1,3 +1,8 @@
+/** Explicit theme choices override the system preference, including absent metadata. */
+export function figureTheme(theme: string | undefined, systemDark: boolean): "light" | "dark" {
+  return theme === "dark" || (theme !== "light" && systemDark) ? "dark" : "light";
+}
+
 /**
  * Progressive enhancement for local, opaque-origin figure frames. Only the
  * exact iframe window can report its size; no frame receives same-origin access.
@@ -12,10 +17,11 @@ export function enhanceInteractiveFigures(root: HTMLElement): () => void {
   const timeouts = new Map<HTMLIFrameElement, ReturnType<typeof setTimeout>>();
   const visible = new Set<HTMLIFrameElement>();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const systemTheme = matchMedia("(prefers-color-scheme: dark)");
   const configure = (frame: HTMLIFrameElement) => {
     frame.contentWindow?.postMessage({
       type: "neural-atlas:figure-config",
-      theme: document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+      theme: figureTheme(document.documentElement.dataset.theme, systemTheme.matches),
       active: visible.has(frame) && !document.hidden,
       reducedMotion: reduced.matches,
     }, "*");
@@ -71,6 +77,7 @@ export function enhanceInteractiveFigures(root: HTMLElement): () => void {
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   document.addEventListener("visibilitychange", configureAll);
   reduced.addEventListener("change", configureAll);
+  systemTheme.addEventListener("change", configureAll);
   for (const frame of frames) {
     if (frame.parentElement) observer.observe(frame.parentElement);
   }
@@ -78,6 +85,7 @@ export function enhanceInteractiveFigures(root: HTMLElement): () => void {
     window.removeEventListener("message", onMessage);
     document.removeEventListener("visibilitychange", configureAll);
     reduced.removeEventListener("change", configureAll);
+    systemTheme.removeEventListener("change", configureAll);
     observer.disconnect();
     themeObserver.disconnect();
     timeouts.forEach(clearTimeout);

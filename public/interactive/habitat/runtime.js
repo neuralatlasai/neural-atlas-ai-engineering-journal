@@ -193,11 +193,28 @@ const copyText = {
   },
 };
 
+/** Reduced motion is the default; explicit playback is a per-figure user choice. */
+function motionPreference(initialReduced) {
+  let reduced = initialReduced;
+  let optedIn = false;
+  return {
+    get blocked() { return reduced && !optedIn; },
+    request() { optedIn = true; },
+    configure(nextReduced) {
+      if (nextReduced !== reduced) {
+        reduced = nextReduced;
+        optedIn = false;
+      }
+    },
+  };
+}
+
 function initializeSimulation(figure, kind) {
   const e = kind,
     t = copyText,
     r = { current: figure };
-  let n = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const n = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const motion = motionPreference(n);
   const i = { current: false },
     l = { current: undefined },
     c = { current: false };
@@ -1209,16 +1226,21 @@ function initializeSimulation(figure, kind) {
         ((ed = 0),
           null !== eu && (el += e - eu),
           (eu = e),
-          es.render(el),
-          (ed = requestAnimationFrame(ep)));
+          es.render(el));
+        if (es.isComplete?.(el)) {
+          ec = true;
+          eh();
+          return;
+        }
+        ed = requestAnimationFrame(ep);
       },
       eh = () => {
-        if (n) ec = true;
+        if (motion.blocked) ec = true;
         (cancelAnimationFrame(ed), (ed = 0), (eu = null));
-        let e = ec && !!es.isComplete?.(el);
-        ((ea.dataset.state = ec ? "paused" : "playing"),
+        let e = ec && !!es.isComplete?.(el) && !motion.blocked;
+        ((ea.dataset.state = !ec && i.current ? "playing" : "paused"),
           (ea.dataset.complete = String(e)),
-          (ei.disabled = n || e),
+          (ei.disabled = e),
           ei.setAttribute(
             "aria-label",
             e
@@ -1238,6 +1260,8 @@ function initializeSimulation(figure, kind) {
       ei.addEventListener(
         "click",
         () => {
+          if (ec && es.isComplete?.(el)) el = es.replayTime ?? es.initialTime;
+          motion.request();
           ((ec = !ec), eh());
         },
         { signal: eo.signal },
@@ -1245,8 +1269,9 @@ function initializeSimulation(figure, kind) {
       f(ea, '[data-action="replay"]').addEventListener(
         "click",
         () => {
-          ((el = n ? es.reducedTime : (es.replayTime ?? es.initialTime)),
-            (ec = n),
+          motion.request();
+          ((el = es.replayTime ?? es.initialTime),
+            (ec = false),
             eh());
         },
         { signal: eo.signal },
@@ -1287,7 +1312,7 @@ function initializeSimulation(figure, kind) {
   return {
     cleanup,
     configure(config) {
-      n = config.reducedMotion;
+      motion.configure(config.reducedMotion);
       i.current = config.active;
       l.current?.();
     },
@@ -1300,11 +1325,11 @@ function initializeFlow(figure) {
   );
   const toggle = figure.querySelector('[data-action="toggle-motion"]');
   const replay = figure.querySelector('[data-action="replay"]');
-  let requested = false,
-    active = false,
-    reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let requested = false, active = false;
+  const motion = motionPreference(matchMedia("(prefers-reduced-motion: reduce)").matches);
   const refresh = () => {
-    const playing = requested && active && !reduced;
+    if (motion.blocked) requested = false;
+    const playing = requested && active && !motion.blocked;
     svgs.forEach((svg) =>
       playing ? svg.unpauseAnimations() : svg.pauseAnimations(),
     );
@@ -1314,16 +1339,18 @@ function initializeFlow(figure) {
       requested ? "Pause animation" : "Play animation",
     );
     toggle.setAttribute("aria-pressed", String(requested));
-    toggle.disabled = reduced;
+    toggle.disabled = false;
     figure.dataset.state = playing ? "playing" : "paused";
   };
   toggle.addEventListener("click", () => {
+    motion.request();
     requested = !requested;
     refresh();
   });
   replay.addEventListener("click", () => {
     svgs.forEach((svg) => svg.setCurrentTime(0));
-    requested = !reduced;
+    motion.request();
+    requested = true;
     refresh();
   });
   refresh();
@@ -1331,10 +1358,35 @@ function initializeFlow(figure) {
     cleanup: () => svgs.forEach((svg) => svg.pauseAnimations()),
     configure(config) {
       active = config.active;
-      reduced = config.reducedMotion;
+      motion.configure(config.reducedMotion);
       refresh();
     },
   };
+}
+
+/** Preserve original coordinates while fitting the fixed-width overview canvas. */
+function initializeFit(figure) {
+  const board = figure.querySelector('[class*="__board"]');
+  const viewport = board.closest(".scrollable");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.dataset.action = "zoom-diagram";
+  let zoomed = false;
+  const fit = () => {
+    const scale = Math.min(1, viewport.clientWidth / board.offsetWidth);
+    board.style.zoom = zoomed ? "1" : String(scale);
+    button.textContent = zoomed ? "Fit diagram" : "Zoom in";
+    button.setAttribute("aria-pressed", String(zoomed));
+    button.setAttribute("aria-label", zoomed ? "Fit entire diagram" : "Show diagram at original size");
+    button.disabled = scale >= 1;
+    if (!zoomed) viewport.scrollLeft = 0;
+  };
+  button.addEventListener("click", () => { zoomed = !zoomed; fit(); });
+  figure.querySelector(".flow-controls").appendChild(button);
+  const observer = new ResizeObserver(fit);
+  observer.observe(viewport);
+  fit();
+  return () => { observer.disconnect(); button.remove(); };
 }
 const kind = document.body.dataset.figureKind;
 const figure = document.querySelector("figure");
@@ -1349,6 +1401,7 @@ try {
   console.error("Habitat figure initialization failed", error);
 }
 if (controller) {
+  const fitCleanup = kind === "platform" ? initializeFit(figure) : () => {};
   let requestedSize = 0,
     lastHeight = 0;
   const notify = () => {
@@ -1405,6 +1458,7 @@ if (controller) {
     "pagehide",
     () => {
       resize.disconnect();
+      fitCleanup();
       cancelAnimationFrame(requestedSize);
       controller.cleanup?.();
     },
