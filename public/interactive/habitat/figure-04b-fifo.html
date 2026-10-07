@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>
+      FIFO breaks the connection-reuse feedback loop | Habitat figure
+    </title>
+    <meta
+      name="description"
+      content="Interactive explanatory figure from OpenAI's Habitat storage engineering article."
+    />
+    <link rel="stylesheet" href="figures.css" />
+    <script src="runtime.js" defer></script>
+  </head>
+  <body data-figure-kind="fifo">
+    <main>
+      <h1 class="sr-only">FIFO breaks the connection-reuse feedback loop</h1>
+      <div class="HabitatEditorialDiagram-module__PKlXrq__root">
+        <figure
+          aria-labelledby="_r_n_"
+          class="diagram-card diagram-card--pool"
+          data-complete="true"
+          data-habitat-diagram="pool-fifo"
+          data-state="paused"
+        >
+          <figcaption class="diagram-heading">
+            <div>
+              <p class="diagram-kicker">
+                Figure 04B · Client-side connection pooling
+              </p>
+              <h2 class="diagram-title" id="_r_n_">
+                FIFO breaks the connection-reuse feedback loop
+              </h2>
+              <p class="diagram-subtitle">
+                FIFO maintains more active connections after a burst, but
+                balances workloads fairly across all servers.
+              </p>
+            </div>
+            <div class="diagram-controls">
+              <button
+                aria-label="Replay the FIFO example"
+                class="diagram-control"
+                data-action="replay"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  fill="none"
+                  height="14"
+                  viewbox="0 0 20 20"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10 1.834a8.15 8.15 0 0 1 6.417 3.115V3.924a.875.875 0 0 1 1.75 0V7.57a.875.875 0 0 1-.875.875H14.05a.876.876 0 0 1 0-1.75h1.45a6.417 6.417 0 1 0 .757 4.732.875.875 0 0 1 1.708.387 8.166 8.166 0 0 1-16.13-1.813A8.167 8.167 0 0 1 10 1.834"
+                    fill="currentColor"
+                    style="fill-opacity: 1"
+                  ></path></svg
+                ><span>Replay</span></button
+              ><button
+                aria-label="Play animation"
+                class="diagram-control"
+                data-action="toggle-motion"
+                disabled=""
+                type="button"
+              >
+                <span aria-hidden="true" class="control-icon"
+                  ><svg
+                    class="control-icon-play"
+                    fill="none"
+                    height="14"
+                    viewbox="0 0 20 20"
+                    width="14"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M5.325 2.718a2.27 2.27 0 0 1 2.168.09h.001l8.794 5.353.133.087c1.328.936 1.285 3-.13 3.864l-.014.007-8.783 5.139h.001c-.702.43-1.53.401-2.17.092-.607-.294-1.131-.89-1.194-1.694l-.006-.163V4.573c0-.887.553-1.542 1.2-1.855m.55 12.775c0 .093.05.203.212.282.17.082.362.072.496-.01l.014-.008 8.788-5.145c.335-.21.334-.748-.006-.955h-.001L6.584 4.302l-.001-.001a.53.53 0 0 0-.496-.009c-.163.079-.212.188-.212.28z"
+                      fill="currentColor"
+                      style="fill-opacity: 1"
+                    ></path></svg
+                  ><svg
+                    class="control-icon-pause"
+                    fill="none"
+                    height="14"
+                    viewbox="0 0 20 20"
+                    width="14"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M7.35 4.959c.796 0 1.442.645 1.442 1.44V13.6c0 .796-.646 1.441-1.442 1.441H5.983a1.44 1.44 0 0 1-1.441-1.44V6.4c0-.796.645-1.441 1.441-1.442zm6.667 0c.796 0 1.442.645 1.442 1.44V13.6c0 .796-.646 1.441-1.442 1.441H12.65a1.44 1.44 0 0 1-1.441-1.44V6.4c0-.796.645-1.441 1.441-1.442z"
+                      fill="currentColor"
+                      style="fill-opacity: 1"
+                    ></path></svg></span
+                ><span class="control-label"></span>
+              </button>
+            </div>
+          </figcaption>
+          <div class="pool-explanation">
+            <p data-pool-narrative="true">
+              With the same arrivals and server work, FIFO reduces the
+              concentration of requests on C.
+            </p>
+            <p aria-hidden="true" class="pool-narrative-space">
+              An initial burst reaches A, B, and the slower process C.
+            </p>
+            <p aria-hidden="true" class="pool-narrative-space">
+              A and B return connections first. C’s connections return later.
+            </p>
+            <p aria-hidden="true" class="pool-narrative-space">
+              FIFO picks the oldest returned connection, spreading new requests
+              while C catches up.
+            </p>
+            <p aria-hidden="true" class="pool-narrative-space">
+              With the same arrivals and server work, FIFO reduces the
+              concentration of requests on C.
+            </p>
+          </div>
+          <div
+            aria-label="Inspect the FIFO example"
+            class="pool-scrubber"
+            role="group"
+          >
+            <button
+              aria-pressed="false"
+              class="scrub-button"
+              data-phase="0"
+              type="button"
+            >
+              <span class="scrub-index">01</span
+              ><span class="scrub-phase">Initial burst</span></button
+            ><button
+              aria-pressed="false"
+              class="scrub-button"
+              data-phase="2"
+              type="button"
+            >
+              <span class="scrub-index">02</span
+              ><span class="scrub-phase">Reusing connections</span></button
+            ><button
+              aria-pressed="true"
+              class="scrub-button"
+              data-phase="3"
+              type="button"
+            >
+              <span class="scrub-index">03</span
+              ><span class="scrub-phase">Outcome</span>
+            </button>
+            <div aria-hidden="true" class="scrub-progress">
+              <i data-progress="pool" style="transform: scaleX(1)"></i>
+            </div>
+          </div>
+          <div class="pool-comparison">
+            <section aria-labelledby="_r_n_" class="pool-lane">
+              <span aria-hidden="true" class="pool-visibility-target"></span>
+              <div
+                aria-label="The same burst, subsequent requests, and server work are shown with FIFO connection reuse. The oldest returned connection is selected. More subsequent requests go to A and B while earlier C requests finish. C remains slower and still receives requests. Counts show this example, not production metrics; FIFO changes connection reuse, not server request scheduling."
+                class="diagram-stage pool-stage"
+                data-stage="fifo"
+                role="img"
+              >
+                <div
+                  aria-hidden="true"
+                  class="pool-system"
+                  data-choice="A2"
+                  data-phase="3"
+                  data-policy="fifo"
+                  data-time="11850"
+                >
+                  <div class="pool-client">
+                    <div class="pool-client-heading">
+                      <strong class="">Client process</strong>
+                    </div>
+                    <p class="pool-connection-key">
+                      B3 = connection 3 to server process B. Each process has
+                      three connections; only available connections are shown.
+                    </p>
+                    <div class="pool-return-order">
+                      <span class="">Returned first</span
+                      ><span class="">Returned last</span>
+                    </div>
+                    <div class="pool-returned-well">
+                      <div class="pool-empty-slots">
+                        <i class=""></i><i class=""></i><i class=""></i
+                        ><i class=""></i><i class=""></i><i class=""></i
+                        ><i class=""></i><i class=""></i><i class=""></i>
+                      </div>
+                      <div class="pool-connection-track">
+                        <span
+                          class="pool-connection"
+                          data-busy="false"
+                          data-connection="A1"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="A"
+                          style="--ha-pool-slot: 6"
+                          >A1</span
+                        ><span
+                          class="pool-connection"
+                          data-busy="false"
+                          data-connection="A2"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="A"
+                          style="--ha-pool-slot: 0"
+                          >A2</span
+                        ><span
+                          class="pool-connection"
+                          data-busy="false"
+                          data-connection="A3"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="A"
+                          style="--ha-pool-slot: 3"
+                          >A3</span
+                        ><span
+                          class="pool-connection"
+                          data-busy="true"
+                          data-connection="B1"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="B"
+                          hidden=""
+                          >B1</span
+                        ><span
+                          class="pool-connection"
+                          data-busy="false"
+                          data-connection="B2"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="B"
+                          style="--ha-pool-slot: 2"
+                          >B2</span
+                        ><span
+                          class="pool-connection"
+                          data-busy="false"
+                          data-connection="B3"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="B"
+                          style="--ha-pool-slot: 5"
+                          >B3</span
+                        ><span
+                          class="pool-connection"
+                          data-busy="true"
+                          data-connection="C1"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="C"
+                          hidden=""
+                          >C1</span
+                        ><span
+                          class="pool-connection"
+                          data-busy="false"
+                          data-connection="C2"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="C"
+                          style="--ha-pool-slot: 1"
+                          >C2</span
+                        ><span
+                          class="pool-connection"
+                          data-busy="false"
+                          data-connection="C3"
+                          data-next="false"
+                          data-returned="false"
+                          data-server="C"
+                          style="--ha-pool-slot: 4"
+                          >C3</span
+                        >
+                      </div>
+                    </div>
+                    <div class="pool-selection">
+                      <i
+                        class="pool-selection-arrow"
+                        hidden=""
+                        style="--ha-pool-slot: 0"
+                        >↑</i
+                      ><span class="pool-selection-label"
+                        >Selected connection</span
+                      ><strong class="pool-next-choice" data-server="B"
+                        >B1</strong
+                      >
+                    </div>
+                  </div>
+                  <div class="pool-traffic">
+                    <div
+                      class="pool-branch"
+                      data-request="false"
+                      data-response="false"
+                      data-server="A"
+                    >
+                      <i class="pool-request-wire"></i
+                      ><i class="pool-response-wire"></i>
+                    </div>
+                    <div
+                      class="pool-branch"
+                      data-request="true"
+                      data-response="false"
+                      data-server="B"
+                    >
+                      <i class="pool-request-wire"></i
+                      ><i class="pool-response-wire"></i>
+                    </div>
+                    <div
+                      class="pool-branch"
+                      data-request="false"
+                      data-response="false"
+                      data-server="C"
+                    >
+                      <i class="pool-request-wire"></i
+                      ><i class="pool-response-wire"></i>
+                    </div>
+                    <i
+                      class="pool-traffic-packet"
+                      data-request-id="0"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="1"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="2"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="3"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="4"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="5"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="6"
+                      data-server="C"
+                      hidden=""
+                      style="--ha-pool-server: 2"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="7"
+                      data-server="C"
+                      hidden=""
+                      style="--ha-pool-server: 2"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="8"
+                      data-server="C"
+                      hidden=""
+                      style="--ha-pool-server: 2"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="9"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="10"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="11"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="12"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="13"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="14"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="15"
+                      data-server="C"
+                      hidden=""
+                      style="--ha-pool-server: 2"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="16"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="17"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="18"
+                      data-server="C"
+                      hidden=""
+                      style="--ha-pool-server: 2"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="19"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="20"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="21"
+                      data-server="C"
+                      hidden=""
+                      style="--ha-pool-server: 2"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="22"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="23"
+                      data-server="B"
+                      hidden=""
+                      style="--ha-pool-server: 1"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="24"
+                      data-server="A"
+                      hidden=""
+                      style="--ha-pool-server: 0"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-request-id="25"
+                      data-server="C"
+                      hidden=""
+                      style="--ha-pool-server: 2"
+                    ></i
+                    ><i
+                      class="pool-traffic-packet"
+                      data-kind="request"
+                      data-request-id="26"
+                      data-server="B"
+                      style="
+                        --ha-pool-server: 1;
+                        --ha-pool-travel: 0.3333333333333333;
+                      "
+                    ></i>
+                  </div>
+                  <div class="pool-processes">
+                    <div
+                      class="pool-process"
+                      data-count="0"
+                      data-overloaded="false"
+                      data-server="A"
+                    >
+                      <div class="pool-process-heading">
+                        <span class="">Server process</span
+                        ><strong class="">A</strong>
+                      </div>
+                      <p class="pool-process-note"></p>
+                      <strong class="pool-process-count">0</strong
+                      ><span class="pool-count-label">Concurrent requests</span>
+                      <div class="pool-process-load">
+                        <i class="pool-load-slot"></i
+                        ><i class="pool-load-slot"></i
+                        ><i class="pool-load-slot"></i
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="0"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="1"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="2"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="9"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="11"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="13"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="16"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="19"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="22"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="24"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i
+                        ></span>
+                      </div>
+                    </div>
+                    <div
+                      class="pool-process"
+                      data-count="0"
+                      data-overloaded="false"
+                      data-server="B"
+                    >
+                      <div class="pool-process-heading">
+                        <span class="">Server process</span
+                        ><strong class="">B</strong>
+                      </div>
+                      <p class="pool-process-note"></p>
+                      <strong class="pool-process-count">0</strong
+                      ><span class="pool-count-label">Concurrent requests</span>
+                      <div class="pool-process-load">
+                        <i class="pool-load-slot"></i
+                        ><i class="pool-load-slot"></i
+                        ><i class="pool-load-slot"></i
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="3"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="4"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="5"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="10"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="12"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="14"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="17"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="20"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="23"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="26"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i
+                        ></span>
+                      </div>
+                    </div>
+                    <div
+                      class="pool-process"
+                      data-count="1"
+                      data-overloaded="false"
+                      data-server="C"
+                    >
+                      <div class="pool-process-heading">
+                        <span class="">Server process</span
+                        ><strong class="">C</strong>
+                      </div>
+                      <p class="pool-process-note">Slower server</p>
+                      <strong class="pool-process-count">1</strong
+                      ><span class="pool-count-label">Concurrent requests</span>
+                      <div class="pool-process-load">
+                        <i class="pool-load-slot"></i
+                        ><i class="pool-load-slot"></i
+                        ><i class="pool-load-slot"></i
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="6"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="7"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="8"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="15"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="18"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-request-id="21"
+                          hidden=""
+                          >Request<i class="pool-request-work"></i></span
+                        ><span
+                          class="pool-load-request"
+                          data-processing="true"
+                          data-request-id="25"
+                          style="--ha-pool-load-slot: 0"
+                          >Request<i
+                            class="pool-request-work"
+                            style="--ha-pool-work: 0.4166666666666667"
+                          ></i
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pool-request-history">
+                    <span class="pool-history-label">Subsequent requests</span>
+                    <div class="pool-history-track">
+                      <span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="A"
+                        >A</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="B"
+                        >B</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="A"
+                        >A</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="B"
+                        >B</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="A"
+                        >A</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="B"
+                        >B</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="C"
+                        >C</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="A"
+                        >A</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="B"
+                        >B</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="C"
+                        >C</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="A"
+                        >A</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="B"
+                        >B</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="C"
+                        >C</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="A"
+                        >A</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="B"
+                        >B</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="false"
+                        data-sent="true"
+                        data-server="A"
+                        >A</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="true"
+                        data-sent="true"
+                        data-server="C"
+                        >C</span
+                      ><span
+                        class="pool-history-request"
+                        data-active="true"
+                        data-sent="true"
+                        data-server="B"
+                        >B</span
+                      >
+                    </div>
+                  </div>
+                  <p class="pool-outcome">
+                    FIFO reuse broke this feedback loop.
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </figure>
+      </div>
+      <noscript
+        ><p>
+          Animation controls require JavaScript. All diagram labels remain
+          readable.
+        </p></noscript
+      >
+    </main>
+  </body>
+</html>

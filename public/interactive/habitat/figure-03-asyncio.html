@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Concurrency is not CPU parallelism | Habitat figure</title>
+    <meta
+      name="description"
+      content="Interactive explanatory figure from OpenAI's Habitat storage engineering article."
+    />
+    <link rel="stylesheet" href="figures.css" />
+    <script src="runtime.js" defer></script>
+  </head>
+  <body data-figure-kind="asyncio">
+    <main>
+      <h1 class="sr-only">Concurrency is not CPU parallelism</h1>
+      <div class="HabitatEditorialDiagram-module__PKlXrq__root">
+        <figure
+          aria-labelledby="_r_l_"
+          class="diagram-card diagram-card--asyncio"
+          data-complete="false"
+          data-habitat-diagram="asyncio"
+          data-state="paused"
+        >
+          <figcaption class="diagram-heading">
+            <div>
+              <p class="diagram-kicker">
+                Figure 03 · Tracking the asyncio delay
+              </p>
+              <h2 class="diagram-title" id="_r_l_">
+                Concurrency is not CPU parallelism
+              </h2>
+              <p class="diagram-subtitle">
+                Python asyncio allows concurrent request processing, but only a
+                single request executes on the CPU thread at a time. This has
+                high impact on request latencies when there's a lot of CPU work
+                to be done.
+              </p>
+            </div>
+            <div class="diagram-controls">
+              <button
+                aria-label="Replay both asyncio scenarios"
+                class="diagram-control"
+                data-action="replay"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  fill="none"
+                  height="14"
+                  viewbox="0 0 20 20"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10 1.834a8.15 8.15 0 0 1 6.417 3.115V3.924a.875.875 0 0 1 1.75 0V7.57a.875.875 0 0 1-.875.875H14.05a.876.876 0 0 1 0-1.75h1.45a6.417 6.417 0 1 0 .757 4.732.875.875 0 0 1 1.708.387 8.166 8.166 0 0 1-16.13-1.813A8.167 8.167 0 0 1 10 1.834"
+                    fill="currentColor"
+                    style="fill-opacity: 1"
+                  ></path></svg
+                ><span>Replay</span></button
+              ><button
+                aria-label="Play animation"
+                class="diagram-control"
+                data-action="toggle-motion"
+                type="button"
+              >
+                <span aria-hidden="true" class="control-icon"
+                  ><svg
+                    class="control-icon-play"
+                    fill="none"
+                    height="14"
+                    viewbox="0 0 20 20"
+                    width="14"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M5.325 2.718a2.27 2.27 0 0 1 2.168.09h.001l8.794 5.353.133.087c1.328.936 1.285 3-.13 3.864l-.014.007-8.783 5.139h.001c-.702.43-1.53.401-2.17.092-.607-.294-1.131-.89-1.194-1.694l-.006-.163V4.573c0-.887.553-1.542 1.2-1.855m.55 12.775c0 .093.05.203.212.282.17.082.362.072.496-.01l.014-.008 8.788-5.145c.335-.21.334-.748-.006-.955h-.001L6.584 4.302l-.001-.001a.53.53 0 0 0-.496-.009c-.163.079-.212.188-.212.28z"
+                      fill="currentColor"
+                      style="fill-opacity: 1"
+                    ></path></svg
+                  ><svg
+                    class="control-icon-pause"
+                    fill="none"
+                    height="14"
+                    viewbox="0 0 20 20"
+                    width="14"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M7.35 4.959c.796 0 1.442.645 1.442 1.44V13.6c0 .796-.646 1.441-1.442 1.441H5.983a1.44 1.44 0 0 1-1.441-1.44V6.4c0-.796.645-1.441 1.441-1.442zm6.667 0c.796 0 1.442.645 1.442 1.44V13.6c0 .796-.646 1.441-1.442 1.441H12.65a1.44 1.44 0 0 1-1.441-1.44V6.4c0-.796.645-1.441 1.441-1.442z"
+                      fill="currentColor"
+                      style="fill-opacity: 1"
+                    ></path></svg></span
+                ><span class="control-label">Play</span>
+              </button>
+            </div>
+          </figcaption>
+          <div
+            aria-label="Request phase colors"
+            class="asyncio-key"
+            role="group"
+          >
+            <span
+              ><i data-kind="request"></i>CPU request/response processing</span
+            ><span><i data-kind="send"></i>Python network read/write</span
+            ><span><i data-kind="cosmos"></i>Wait for Cosmos</span>
+          </div>
+          <div
+            aria-label="Diagram details. Use arrow keys to move between items, and Tab to leave."
+            role="group"
+            style="outline: none"
+            tabindex="0"
+          >
+            <div
+              aria-label="Low and high CPU scenarios share one illustrative time scale. Matching blue bars show CPU request and response work; darker blue bars show Python network writes and reads; pale blue shows waiting for Cosmos. The outlined ready interval begins when a response is at the socket but Python is still busy with another request."
+              class="asyncio-stage"
+              role="group"
+            >
+              <section class="asyncio-scenario" data-asyncio-cpu="1">
+                <div class="asyncio-scenario-heading">
+                  <h3>Low CPU work</h3>
+                  <span class="asyncio-summary"
+                    >Brief Python steps; I/O waits overlap</span
+                  >
+                </div>
+                <p class="asyncio-status">
+                  Python: all three requests complete
+                </p>
+                <div
+                  aria-label="Low CPU work"
+                  class="scrollable scrollable-horizontal asyncio-timeline"
+                  role="region"
+                  tabindex="-1"
+                >
+                  <div class="relative min-w-fit">
+                    <div
+                      class="pointer-events-none absolute z-1 inset-y-0 inset-s-0 w-px"
+                    ></div>
+                    <div
+                      class="asyncio-timeline-content"
+                      data-stage="asyncio-1"
+                    >
+                      <div class="asyncio-axis">
+                        <span class="">Time →</span>
+                        <div class="asyncio-ticks">
+                          <span class="">0</span><span class="">10</span
+                          ><span class="">20</span><span class="">30</span
+                          ><span class="">40</span>
+                        </div>
+                      </div>
+                      <div class="asyncio-row asyncio-row--cpu">
+                        <strong class="asyncio-row-label">Python thread</strong>
+                        <div
+                          aria-label="Only one Python step runs at a time. Empty intervals are idle."
+                          class="asyncio-track"
+                          role="group"
+                        >
+                          <div class="asyncio-bars">
+                            <span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: CPU request processing, 0.0–1.0 units"
+                              data-kind="request"
+                              data-state="past"
+                              data-track-start="true"
+                              style="left: 0%; width: 2.5%"
+                              title="A: CPU request processing, 0.0–1.0 units"
+                              ><span class="asyncio-segment-label"
+                                >A</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Python network write, 1.0–1.4 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 2.5%; width: 1%"
+                              title="A: Python network write, 1.0–1.4 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Python network read, 7.4–7.8 units"
+                              data-kind="receive"
+                              data-state="past"
+                              style="left: 18.5%; width: 1%"
+                              title="A: Python network read, 7.4–7.8 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: CPU response processing, 7.8–8.8 units"
+                              data-kind="response"
+                              data-state="past"
+                              style="left: 19.5%; width: 2.5%"
+                              title="A: CPU response processing, 7.8–8.8 units"
+                              ><span class="asyncio-segment-label"
+                                >A</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: CPU request processing, 1.4–2.4 units"
+                              data-kind="request"
+                              data-state="past"
+                              style="left: 3.5%; width: 2.5%"
+                              title="B: CPU request processing, 1.4–2.4 units"
+                              ><span class="asyncio-segment-label"
+                                >B</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Python network write, 2.4–2.8 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 6%; width: 1%"
+                              title="B: Python network write, 2.4–2.8 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Python network read, 8.8–9.2 units"
+                              data-kind="receive"
+                              data-state="past"
+                              style="left: 22%; width: 1%"
+                              title="B: Python network read, 8.8–9.2 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: CPU response processing, 9.2–10.2 units"
+                              data-kind="response"
+                              data-state="past"
+                              style="left: 23%; width: 2.5%"
+                              title="B: CPU response processing, 9.2–10.2 units"
+                              ><span class="asyncio-segment-label"
+                                >B</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: CPU request processing, 2.8–3.8 units"
+                              data-kind="request"
+                              data-state="past"
+                              style="left: 7%; width: 2.5%"
+                              title="C: CPU request processing, 2.8–3.8 units"
+                              ><span class="asyncio-segment-label"
+                                >C</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Python network write, 3.8–4.2 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 9.5%; width: 1%"
+                              title="C: Python network write, 3.8–4.2 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Python network read, 10.2–10.6 units"
+                              data-kind="receive"
+                              data-state="past"
+                              style="left: 25.5%; width: 1%"
+                              title="C: Python network read, 10.2–10.6 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: CPU response processing, 10.6–11.6 units"
+                              data-kind="response"
+                              data-state="past"
+                              style="left: 26.5%; width: 2.5%"
+                              title="C: CPU response processing, 10.6–11.6 units"
+                              ><span class="asyncio-segment-label"
+                                >C</span
+                              ></span
+                            >
+                          </div>
+                          <i class="asyncio-cursor" style="left: 40%"></i>
+                        </div>
+                      </div>
+                      <div class="asyncio-row" data-phase="done">
+                        <div class="asyncio-row-label">
+                          <strong class="">Request A</strong
+                          ><span class="asyncio-row-state">Complete</span>
+                        </div>
+                        <div class="asyncio-track">
+                          <div class="asyncio-bars">
+                            <span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: CPU request processing, 0.0–1.0 units"
+                              data-kind="request"
+                              data-state="past"
+                              data-track-start="true"
+                              style="left: 0%; width: 2.5%"
+                              title="A: CPU request processing, 0.0–1.0 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Python network write, 1.0–1.4 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 2.5%; width: 1%"
+                              title="A: Python network write, 1.0–1.4 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Waiting for Cosmos response, 1.4–7.4 units"
+                              data-kind="cosmos"
+                              data-state="past"
+                              style="left: 3.5%; width: 15%"
+                              title="A: Waiting for Cosmos response, 1.4–7.4 units"
+                              ><span class="asyncio-segment-label"
+                                >Cosmos</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Python network read, 7.4–7.8 units"
+                              data-kind="receive"
+                              data-state="past"
+                              style="left: 18.5%; width: 1%"
+                              title="A: Python network read, 7.4–7.8 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: CPU response processing, 7.8–8.8 units"
+                              data-kind="response"
+                              data-state="past"
+                              style="left: 19.5%; width: 2.5%"
+                              title="A: CPU response processing, 7.8–8.8 units"
+                            ></span>
+                          </div>
+                          <i
+                            class="asyncio-arrival"
+                            data-diagram-tooltip="Request A: Cosmos response available at socket at 7.4 units"
+                            style="left: 18.5%; opacity: 1"
+                            title="Request A: Cosmos response available at socket at 7.4 units"
+                          ></i
+                          ><i class="asyncio-cursor" style="left: 40%"></i>
+                        </div>
+                      </div>
+                      <div class="asyncio-row" data-phase="done">
+                        <div class="asyncio-row-label">
+                          <strong class="">Request B</strong
+                          ><span class="asyncio-row-state">Complete</span>
+                        </div>
+                        <div class="asyncio-track">
+                          <div class="asyncio-bars">
+                            <span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Waiting for first Python turn, 0.0–1.4 units"
+                              data-kind="queued"
+                              data-state="past"
+                              style="left: 0%; width: 3.5%"
+                              title="B: Waiting for first Python turn, 0.0–1.4 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: CPU request processing, 1.4–2.4 units"
+                              data-kind="request"
+                              data-state="past"
+                              style="left: 3.5%; width: 2.5%"
+                              title="B: CPU request processing, 1.4–2.4 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Python network write, 2.4–2.8 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 6%; width: 1%"
+                              title="B: Python network write, 2.4–2.8 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Waiting for Cosmos response, 2.8–8.8 units"
+                              data-kind="cosmos"
+                              data-state="past"
+                              style="left: 7%; width: 15%"
+                              title="B: Waiting for Cosmos response, 2.8–8.8 units"
+                              ><span class="asyncio-segment-label"
+                                >Cosmos</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Python network read, 8.8–9.2 units"
+                              data-kind="receive"
+                              data-state="past"
+                              style="left: 22%; width: 1%"
+                              title="B: Python network read, 8.8–9.2 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: CPU response processing, 9.2–10.2 units"
+                              data-kind="response"
+                              data-state="past"
+                              style="left: 23%; width: 2.5%"
+                              title="B: CPU response processing, 9.2–10.2 units"
+                            ></span>
+                          </div>
+                          <i
+                            class="asyncio-arrival"
+                            data-diagram-tooltip="Request B: Cosmos response available at socket at 8.8 units"
+                            style="left: 22%; opacity: 1"
+                            title="Request B: Cosmos response available at socket at 8.8 units"
+                          ></i
+                          ><i class="asyncio-cursor" style="left: 40%"></i>
+                        </div>
+                      </div>
+                      <div class="asyncio-row" data-phase="done">
+                        <div class="asyncio-row-label">
+                          <strong class="">Request C</strong
+                          ><span class="asyncio-row-state">Complete</span>
+                        </div>
+                        <div class="asyncio-track">
+                          <div class="asyncio-bars">
+                            <span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Waiting for first Python turn, 0.0–2.8 units"
+                              data-kind="queued"
+                              data-state="past"
+                              style="left: 0%; width: 7%"
+                              title="C: Waiting for first Python turn, 0.0–2.8 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: CPU request processing, 2.8–3.8 units"
+                              data-kind="request"
+                              data-state="past"
+                              style="left: 7%; width: 2.5%"
+                              title="C: CPU request processing, 2.8–3.8 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Python network write, 3.8–4.2 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 9.5%; width: 1%"
+                              title="C: Python network write, 3.8–4.2 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Waiting for Cosmos response, 4.2–10.2 units"
+                              data-kind="cosmos"
+                              data-state="past"
+                              style="left: 10.5%; width: 15%"
+                              title="C: Waiting for Cosmos response, 4.2–10.2 units"
+                              ><span class="asyncio-segment-label"
+                                >Cosmos</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Python network read, 10.2–10.6 units"
+                              data-kind="receive"
+                              data-state="past"
+                              style="left: 25.5%; width: 1%"
+                              title="C: Python network read, 10.2–10.6 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: CPU response processing, 10.6–11.6 units"
+                              data-kind="response"
+                              data-state="past"
+                              style="left: 26.5%; width: 2.5%"
+                              title="C: CPU response processing, 10.6–11.6 units"
+                            ></span>
+                          </div>
+                          <i
+                            class="asyncio-arrival"
+                            data-diagram-tooltip="Request C: Cosmos response available at socket at 10.2 units"
+                            style="left: 25.5%; opacity: 1"
+                            title="Request C: Cosmos response available at socket at 10.2 units"
+                          ></i
+                          ><i class="asyncio-cursor" style="left: 40%"></i>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="pointer-events-none absolute inset-y-0 inset-e-0 w-px"
+                    ></div>
+                  </div>
+                </div>
+                <p class="asyncio-result">
+                  All requests finished at 11.6 units.
+                </p>
+              </section>
+              <section class="asyncio-scenario" data-asyncio-cpu="6">
+                <div class="asyncio-scenario-heading">
+                  <h3>High CPU work</h3>
+                  <span class="asyncio-summary"
+                    >Long Python steps keep ready responses waiting</span
+                  >
+                </div>
+                <p class="asyncio-status">
+                  Python: request C · CPU request processing
+                </p>
+                <div
+                  aria-label="High CPU work"
+                  class="scrollable scrollable-horizontal asyncio-timeline"
+                  role="region"
+                  tabindex="-1"
+                >
+                  <div class="relative min-w-fit">
+                    <div
+                      class="pointer-events-none absolute z-1 inset-y-0 inset-s-0 w-px"
+                    ></div>
+                    <div
+                      class="asyncio-timeline-content"
+                      data-stage="asyncio-6"
+                    >
+                      <div class="asyncio-axis">
+                        <span class="">Time →</span>
+                        <div class="asyncio-ticks">
+                          <span class="">0</span><span class="">10</span
+                          ><span class="">20</span><span class="">30</span
+                          ><span class="">40</span>
+                        </div>
+                      </div>
+                      <div class="asyncio-row asyncio-row--cpu">
+                        <strong class="asyncio-row-label">Python thread</strong>
+                        <div
+                          aria-label="Only one Python step runs at a time. Empty intervals are idle."
+                          class="asyncio-track"
+                          role="group"
+                        >
+                          <div class="asyncio-bars">
+                            <span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: CPU request processing, 0.0–6.0 units"
+                              data-kind="request"
+                              data-state="past"
+                              data-track-start="true"
+                              style="left: 0%; width: 15%"
+                              title="A: CPU request processing, 0.0–6.0 units"
+                              ><span class="asyncio-segment-label"
+                                >A</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Python network write, 6.0–6.4 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 15%; width: 1%"
+                              title="A: Python network write, 6.0–6.4 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Python network read, 19.2–19.6 units"
+                              data-kind="receive"
+                              data-state="future"
+                              style="left: 48%; width: 1%"
+                              title="A: Python network read, 19.2–19.6 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: CPU response processing, 19.6–25.6 units"
+                              data-kind="response"
+                              data-state="future"
+                              style="left: 49%; width: 15%"
+                              title="A: CPU response processing, 19.6–25.6 units"
+                              ><span class="asyncio-segment-label"
+                                >A</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: CPU request processing, 6.4–12.4 units"
+                              data-kind="request"
+                              data-state="past"
+                              style="left: 16%; width: 15%"
+                              title="B: CPU request processing, 6.4–12.4 units"
+                              ><span class="asyncio-segment-label"
+                                >B</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Python network write, 12.4–12.8 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 31%; width: 1%"
+                              title="B: Python network write, 12.4–12.8 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Python network read, 25.6–26.0 units"
+                              data-kind="receive"
+                              data-state="future"
+                              style="left: 64%; width: 1%"
+                              title="B: Python network read, 25.6–26.0 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: CPU response processing, 26.0–32.0 units"
+                              data-kind="response"
+                              data-state="future"
+                              style="left: 65%; width: 15%"
+                              title="B: CPU response processing, 26.0–32.0 units"
+                              ><span class="asyncio-segment-label"
+                                >B</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: CPU request processing, 12.8–18.8 units"
+                              data-kind="request"
+                              data-state="active"
+                              style="left: 32%; width: 15%"
+                              title="C: CPU request processing, 12.8–18.8 units"
+                              ><span class="asyncio-segment-label"
+                                >C</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Python network write, 18.8–19.2 units"
+                              data-kind="send"
+                              data-state="future"
+                              style="left: 47%; width: 1%"
+                              title="C: Python network write, 18.8–19.2 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Python network read, 32.0–32.4 units"
+                              data-kind="receive"
+                              data-state="future"
+                              style="left: 80%; width: 1%"
+                              title="C: Python network read, 32.0–32.4 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: CPU response processing, 32.4–38.4 units"
+                              data-kind="response"
+                              data-state="future"
+                              style="left: 81%; width: 15%"
+                              title="C: CPU response processing, 32.4–38.4 units"
+                              ><span class="asyncio-segment-label"
+                                >C</span
+                              ></span
+                            >
+                          </div>
+                          <i class="asyncio-cursor" style="left: 40%"></i>
+                        </div>
+                      </div>
+                      <div class="asyncio-row" data-phase="ready">
+                        <div class="asyncio-row-label">
+                          <strong class="">Request A</strong
+                          ><span class="asyncio-row-state"
+                            >Ready · blocked</span
+                          >
+                        </div>
+                        <div class="asyncio-track">
+                          <div class="asyncio-bars">
+                            <span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: CPU request processing, 0.0–6.0 units"
+                              data-kind="request"
+                              data-state="past"
+                              data-track-start="true"
+                              style="left: 0%; width: 15%"
+                              title="A: CPU request processing, 0.0–6.0 units"
+                              ><span class="asyncio-segment-label"
+                                >CPU request</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Python network write, 6.0–6.4 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 15%; width: 1%"
+                              title="A: Python network write, 6.0–6.4 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Waiting for Cosmos response, 6.4–12.4 units"
+                              data-kind="cosmos"
+                              data-state="past"
+                              style="left: 16%; width: 15%"
+                              title="A: Waiting for Cosmos response, 6.4–12.4 units"
+                              ><span class="asyncio-segment-label"
+                                >Cosmos</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Response arrived; waiting for Python, 12.4–19.2 units"
+                              data-kind="ready"
+                              data-state="active"
+                              style="left: 31%; width: 17%"
+                              title="A: Response arrived; waiting for Python, 12.4–19.2 units"
+                              ><span class="asyncio-segment-label"
+                                >Ready · blocked</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: Python network read, 19.2–19.6 units"
+                              data-kind="receive"
+                              data-state="future"
+                              style="left: 48%; width: 1%"
+                              title="A: Python network read, 19.2–19.6 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="A: CPU response processing, 19.6–25.6 units"
+                              data-kind="response"
+                              data-state="future"
+                              style="left: 49%; width: 15%"
+                              title="A: CPU response processing, 19.6–25.6 units"
+                              ><span class="asyncio-segment-label"
+                                >CPU response</span
+                              ></span
+                            >
+                          </div>
+                          <i
+                            class="asyncio-arrival"
+                            data-diagram-tooltip="Request A: Cosmos response available at socket at 12.4 units"
+                            style="left: 31%; opacity: 1"
+                            title="Request A: Cosmos response available at socket at 12.4 units"
+                          ></i
+                          ><i class="asyncio-cursor" style="left: 40%"></i>
+                        </div>
+                      </div>
+                      <div class="asyncio-row" data-phase="cosmos">
+                        <div class="asyncio-row-label">
+                          <strong class="">Request B</strong
+                          ><span class="asyncio-row-state"
+                            >Waiting for Cosmos response</span
+                          >
+                        </div>
+                        <div class="asyncio-track">
+                          <div class="asyncio-bars">
+                            <span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Waiting for first Python turn, 0.0–6.4 units"
+                              data-kind="queued"
+                              data-state="past"
+                              style="left: 0%; width: 16%"
+                              title="B: Waiting for first Python turn, 0.0–6.4 units"
+                              ><span class="asyncio-segment-label"></span></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: CPU request processing, 6.4–12.4 units"
+                              data-kind="request"
+                              data-state="past"
+                              style="left: 16%; width: 15%"
+                              title="B: CPU request processing, 6.4–12.4 units"
+                              ><span class="asyncio-segment-label"
+                                >CPU request</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Python network write, 12.4–12.8 units"
+                              data-kind="send"
+                              data-state="past"
+                              style="left: 31%; width: 1%"
+                              title="B: Python network write, 12.4–12.8 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Waiting for Cosmos response, 12.8–18.8 units"
+                              data-kind="cosmos"
+                              data-state="active"
+                              style="left: 32%; width: 15%"
+                              title="B: Waiting for Cosmos response, 12.8–18.8 units"
+                              ><span class="asyncio-segment-label"
+                                >Cosmos</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Response arrived; waiting for Python, 18.8–25.6 units"
+                              data-kind="ready"
+                              data-state="future"
+                              style="left: 47%; width: 17%"
+                              title="B: Response arrived; waiting for Python, 18.8–25.6 units"
+                              ><span class="asyncio-segment-label"
+                                >Ready · blocked</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: Python network read, 25.6–26.0 units"
+                              data-kind="receive"
+                              data-state="future"
+                              style="left: 64%; width: 1%"
+                              title="B: Python network read, 25.6–26.0 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="B: CPU response processing, 26.0–32.0 units"
+                              data-kind="response"
+                              data-state="future"
+                              style="left: 65%; width: 15%"
+                              title="B: CPU response processing, 26.0–32.0 units"
+                              ><span class="asyncio-segment-label"
+                                >CPU response</span
+                              ></span
+                            >
+                          </div>
+                          <i
+                            class="asyncio-arrival"
+                            data-diagram-tooltip="Request B: Cosmos response available at socket at 18.8 units"
+                            style="left: 47%; opacity: 0.22"
+                            title="Request B: Cosmos response available at socket at 18.8 units"
+                          ></i
+                          ><i class="asyncio-cursor" style="left: 40%"></i>
+                        </div>
+                      </div>
+                      <div class="asyncio-row" data-phase="request">
+                        <div class="asyncio-row-label">
+                          <strong class="">Request C</strong
+                          ><span class="asyncio-row-state">CPU request</span>
+                        </div>
+                        <div class="asyncio-track">
+                          <div class="asyncio-bars">
+                            <span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Waiting for first Python turn, 0.0–12.8 units"
+                              data-kind="queued"
+                              data-state="past"
+                              style="left: 0%; width: 32%"
+                              title="C: Waiting for first Python turn, 0.0–12.8 units"
+                              ><span class="asyncio-segment-label"></span></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: CPU request processing, 12.8–18.8 units"
+                              data-kind="request"
+                              data-state="active"
+                              style="left: 32%; width: 15%"
+                              title="C: CPU request processing, 12.8–18.8 units"
+                              ><span class="asyncio-segment-label"
+                                >CPU request</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Python network write, 18.8–19.2 units"
+                              data-kind="send"
+                              data-state="future"
+                              style="left: 47%; width: 1%"
+                              title="C: Python network write, 18.8–19.2 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Waiting for Cosmos response, 19.2–25.2 units"
+                              data-kind="cosmos"
+                              data-state="future"
+                              style="left: 48%; width: 15%"
+                              title="C: Waiting for Cosmos response, 19.2–25.2 units"
+                              ><span class="asyncio-segment-label"
+                                >Cosmos</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Response arrived; waiting for Python, 25.2–32.0 units"
+                              data-kind="ready"
+                              data-state="future"
+                              style="left: 63%; width: 17%"
+                              title="C: Response arrived; waiting for Python, 25.2–32.0 units"
+                              ><span class="asyncio-segment-label"
+                                >Ready · blocked</span
+                              ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: Python network read, 32.0–32.4 units"
+                              data-kind="receive"
+                              data-state="future"
+                              style="left: 80%; width: 1%"
+                              title="C: Python network read, 32.0–32.4 units"
+                            ></span
+                            ><span
+                              class="asyncio-segment"
+                              data-diagram-tooltip="C: CPU response processing, 32.4–38.4 units"
+                              data-kind="response"
+                              data-state="future"
+                              style="left: 81%; width: 15%"
+                              title="C: CPU response processing, 32.4–38.4 units"
+                              ><span class="asyncio-segment-label"
+                                >CPU response</span
+                              ></span
+                            >
+                          </div>
+                          <i
+                            class="asyncio-arrival"
+                            data-diagram-tooltip="Request C: Cosmos response available at socket at 25.2 units"
+                            style="left: 63%; opacity: 0.22"
+                            title="Request C: Cosmos response available at socket at 25.2 units"
+                          ></i
+                          ><i class="asyncio-cursor" style="left: 40%"></i>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      class="pointer-events-none absolute inset-y-0 inset-e-0 w-px"
+                    ></div>
+                  </div>
+                </div>
+                <p class="asyncio-result">
+                  A: response already at the socket, but Python cannot receive
+                  it yet.
+                </p>
+              </section>
+            </div>
+          </div>
+          <div class="asyncio-playhead">
+            <label
+              >Illustrative time<input
+                aria-label="Seek both asyncio scenarios"
+                data-asyncio-time="true"
+                max="40"
+                min="0"
+                step="0.1"
+                type="range"
+                value="0" /></label
+            ><output aria-live="off" data-asyncio-readout="true"
+              >16.0 / 40 illustrative units</output
+            >
+          </div>
+        </figure>
+      </div>
+      <noscript
+        ><p>
+          Animation controls require JavaScript. All diagram labels remain
+          readable.
+        </p></noscript
+      >
+    </main>
+  </body>
+</html>

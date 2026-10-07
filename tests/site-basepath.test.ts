@@ -29,6 +29,12 @@ before(async () => {
 });
 
 describe("sub-path deployment", () => {
+  it("prefixes local interactive figure documents exactly once", async () => {
+    const { compileArticle } = await import("../lib/content/compile");
+    const { html } = await compileArticle('<figure data-interactive-src="/interactive/example/flow.html">Fallback diagram</figure>');
+    assert.ok(html.includes(`data-src="${PREFIX}/interactive/example/flow.html"`));
+    assert.ok(!html.includes(`${PREFIX}${PREFIX}`));
+  });
   it("prefixes a site-relative path", () => {
     assert.equal(site.withBasePath("/feed.xml"), `${PREFIX}/feed.xml`);
     assert.equal(site.withBasePath("feed.xml"), `${PREFIX}/feed.xml`);

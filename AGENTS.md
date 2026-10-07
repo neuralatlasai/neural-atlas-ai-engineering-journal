@@ -306,6 +306,17 @@ source existence, accessible markup, and exact agreement between the shared
 renderer and checked-in exports. Adding an article requires an editorial figure
 entry to satisfy that coverage gate; route discovery remains automatic.
 
+Authored body figures can opt into local interactive documents with
+`<figure data-interactive-src="/interactive/example/flow.html">` around a
+Markdown fallback image. `lib/content/interactive-figures.ts` validates the
+local HTML path and applies the deployment prefix. `lib/interactive-figures.ts`
+loads the sandboxed frame near the viewport, validates resize messages against
+its exact window, and propagates theme, visibility, and reduced-motion settings.
+Frames receive script permission without same-origin access. Static fallback
+images remain readable without JavaScript, on loading failure, and in print.
+The Habitat figures under `public/interactive/habitat/` retain the source
+article's explanatory simulations; they do not expose production telemetry.
+
 ## 6. Search, navigation, and metadata
 
 - Search data is generated statically at `/search-index.json`.

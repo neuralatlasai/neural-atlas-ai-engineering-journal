@@ -27,6 +27,7 @@ import type { Root as MdastRoot } from "mdast";
 import katex from "katex";
 import { preprocess } from "./preprocess";
 import { headingLabel, titleLabel } from "./tex-text";
+import { frameInteractiveFigures } from "./interactive-figures";
 
 export interface HeadingRecord {
   id: string;
@@ -1725,6 +1726,7 @@ async function compileArticleUncached(
     .use(removeLeadingThematicBreaks)
     .use(resolveBodyImages, resolveAsset, images, title)
     .use(frameBodyImages)
+    .use(frameInteractiveFigures)
     .use(wrapTables)
     // Build-time render; on malformed TeX, emit the source in a styled span
     // rather than throwing (plan §11.4). rehype-katex defaults output to

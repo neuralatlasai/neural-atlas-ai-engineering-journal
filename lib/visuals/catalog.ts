@@ -164,6 +164,20 @@ export const articleVisuals: readonly ArticleVisual[] = [
       ["Session", "A stateful instance", "model", "The session materializes work and owns evolving runtime state."],
       ["Events", "Observable progress", "tokens", "An event stream records work admission, interaction, outputs, and lifecycle transitions."],
     ]),
+  visual("Engineering/ScalingHabitat", "scaling-habitat", "Bound change, concurrency, and request work",
+    "Habitat evolved from distributed client logic into a service with predictable online storage operations.", "sequence", "Centralize change, control serving pressure, and bound online work", [
+      ["Client library", "Deployment fan-out", "layers", "Storage routing changes originally required coordinated upgrades across independently deployed product services."],
+      ["Central service", "One serving boundary", "network", "Moving Habitat logic behind a service boundary centralized storage-platform changes and observability."],
+      ["Runtime + transport", "Concurrency + connections", "filter", "Asyncio delay measurements, low worker concurrency, and Envoy connection pooling controlled distinct sources of serving pressure."],
+      ["NoSQL contract", "Predictable request work", "check", "Constrained online operations and local object-and-edge partitioning kept request work predictable; complex reads used a separate path."],
+    ]),
+  visual("Models/autoregressive_language_model/deepseek/DeepSeek-V4.1-Flash", "deepseek-v41-flash", "Coordinate compute, sparse state, and decoding",
+    "The reconstructed report addresses repeated prefill, long-context KV state, and decode efficiency with complementary mechanisms.", "compare", "Conceptual mechanisms from the reconstructed technical report", [
+      ["Prefill", "Conditional execution", "filter", "Conditional execution targets the repeated-prefill compute pressure described in long-horizon agent workloads."],
+      ["Sparse attention", "Shared KV + indexing", "sparse", "CSA2 and hierarchical sparse indexing address layer-wise KV duplication and index-search work in the reconstructed architecture."],
+      ["KV storage", "FP4 + bounded replay", "memory", "FP4 main KV and bounded replay for sliding-window state address different parts of runtime and persistent cache storage."],
+      ["Decode", "DSpark + residual work", "tokens", "DSpark targets decoding throughput while single-pass mHC addresses residual memory traffic; the article distinguishes their roles."],
+    ]),
   visual("Models/autoregressive_language_model/deepseek/deepseek-v4-pro", "deepseek-architecture", "Sparse computation across sequence and experts",
     "Hybrid attention and expert routing operate within a structured residual topology.", "sequence", "Conceptual block organization; consult the source for the layer schedule", [
       ["Token stream", "Embedded sequence", "tokens", "Token embeddings enter a decoder-only language model."],
@@ -212,6 +226,27 @@ export const articleVisuals: readonly ArticleVisual[] = [
       ["Acoustic frames", "Log-Mel observations", "spectrum", "Windowed log-Mel features convert waveform samples into timed acoustic observations."],
       ["Encode + align", "Causal representation", "matrix", "The acoustic encoder and alignment mechanism respect the model's frame and token clocks."],
       ["Text stream", "Incremental decoding", "tokens", "The decoder emits text under the streaming architecture's latency and context constraints."],
+    ]),
+  visual("Models/JEPA/JEPA_Anything/JEPA-Anything", "jepa-anything", "Predict complementary coordinates of one world state",
+    "Domain-specific encoders meet at an orthogonally factorized latent predictive interface.", "sequence", "Complementary subspace predictions recompose a coherent latent state", [
+      ["Encode", "Domain-specific context", "layers", "Each domain retains its observations, structural descriptors, context-target construction, and encoder."],
+      ["Factorize", "Orthogonal coordinates", "matrix", "Orthogonal Predictive Factorization allocates complementary predictive subspaces instead of using a monolithic latent target."],
+      ["Predict", "One pathway per factor", "model", "Separate prediction pathways learn the complementary coordinates while preserving the shared latent interface."],
+      ["Recompose", "Coherent latent state", "network", "Predicted factors reconstruct a complete latent state that supports the article's discussion of sequential world modeling."],
+    ]),
+  visual("Research/Blogs/Agentic Environment Engineering for Large Language Models", "agentic-environments", "Improve the agent and the environment together",
+    "Environment definitions, trajectories, quality signals, and update operators form one engineering loop.", "cycle", "Assess and update both sides of the agent-environment interface", [
+      ["Environment", "POMDP + attributes", "network", "The reconstruction specifies states, actions, transitions, rewards, observations, and environment attributes."],
+      ["Roll out", "Policy + observations", "tokens", "An agent policy interacts with the environment to produce histories, actions, rewards, and trajectories."],
+      ["Assess", "Environment quality", "check", "Environment data, synthesis, and quality operators supply explicit inputs for evaluating the interaction setting."],
+      ["Update", "Agent + environment", "model", "Separate agent-update and environment-update operators close the engineering loop described by the formalization."],
+    ]),
+  visual("Research/Blogs/LONG-CONTINUOUS-CONTEXT", "continuous-context", "Context capacity depends on the entire state system",
+    "Model execution, context selection, persistent memory, and serving constraints jointly determine usable context.", "compare", "Nominal, effective, and economic context are distinct quantities", [
+      ["Represent", "Model + positions", "layers", "The model, positional representation, and training determine how long sequences enter the neural state."],
+      ["Select", "Context + compression", "filter", "Selection and compression determine which information is materialized in the active context."],
+      ["Remember", "Persistent memory + KV", "memory", "Persistent external memory and attention KV state have distinct storage and access responsibilities."],
+      ["Serve + evaluate", "Placement + scheduling", "check", "Physical state placement, serving schedules, and task evaluation constrain effective and economically usable context."],
     ]),
   visual("Research/Frontier Reasoning-Agent Systems", "reasoning-systems", "Capability lives in the whole system",
     "Reasoning quality depends on policies for compute, state, tools, and verification as well as weights.", "cycle", "Observe → reason → act → verify → update state", [

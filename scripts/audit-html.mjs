@@ -101,6 +101,7 @@ for (const f of files) {
   // unresolved document-relative paths and unsafe filenames (spaces, parens)
   // that produce URLs the browser cannot fetch.
   const assetRefs = [
+    ...[...html.matchAll(/<iframe[^>]*\s(?:data-src|src)="([^"]+)"/g)].map((m) => m[1]),
     ...[...html.matchAll(/<img[^>]*\ssrc="([^"]+)"/g)].map((m) => m[1]),
     ...[...html.matchAll(/srcSet="([^"]+)"/gi)].flatMap((m) =>
       m[1].split(",").map((s) => s.trim().split(/\s+/)[0]),

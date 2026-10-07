@@ -4797,3 +4797,20 @@ body:has(.home-page) .site-footer {
     word-break: break-all;
   }
 }
+
+/* Local figure documents enhance authored fallback images without affecting prose. */
+.article-body .interactive-figure { margin-block: var(--space-8); }
+.article-body .interactive-figure__frame {
+  display: block;
+  width: 100%;
+  height: 600px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.article-body .interactive-figure [hidden] { display: none; }
+.article-body .interactive-figure__fallback > .content-figure { margin: 0; }
+@media print {
+  .article-body .interactive-figure__frame { display: none !important; }
+  .article-body .interactive-figure__fallback[hidden] { display: block !important; }
+}

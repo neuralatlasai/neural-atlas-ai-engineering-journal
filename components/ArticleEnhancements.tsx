@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { enhanceInteractiveFigures } from "@/lib/interactive-figures";
 
 /**
  * Progressive enhancement for the statically-rendered article body: adds a
@@ -12,6 +13,7 @@ export function ArticleEnhancements() {
     const root = document.querySelector<HTMLElement>(".article-body");
     if (!root) return;
     const cleanups: (() => void)[] = [];
+    cleanups.push(enhanceInteractiveFigures(root));
     let disposed = false;
 
     // Copy buttons on code blocks.

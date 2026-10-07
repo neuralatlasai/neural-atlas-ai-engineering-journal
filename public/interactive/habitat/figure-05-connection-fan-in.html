@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>The same requests, fewer connections | Habitat figure</title>
+    <meta
+      name="description"
+      content="Interactive explanatory figure from OpenAI's Habitat storage engineering article."
+    />
+    <link rel="stylesheet" href="figures.css" />
+    <script src="runtime.js" defer></script>
+  </head>
+  <body data-figure-kind="fanin">
+    <main>
+      <h1 class="sr-only">The same requests, fewer connections</h1>
+      <div class="HabitatEditorialDiagram-module__PKlXrq__root">
+        <figure
+          aria-labelledby="_r_o_"
+          class="diagram-card diagram-card--connections"
+          data-complete="false"
+          data-habitat-diagram="fanin"
+          data-state="paused"
+        >
+          <figcaption class="diagram-heading">
+            <div>
+              <p class="diagram-kicker">Figure 05 · Connection fan-in</p>
+              <h2 class="diagram-title" id="_r_o_">
+                The same requests, fewer connections
+              </h2>
+              <p class="diagram-subtitle">
+                Connection pooling and HTTP/2 connection multiplexing help
+                reduce connection load on downstreams.
+              </p>
+            </div>
+            <div class="diagram-controls">
+              <button
+                aria-label="Replay connection buildup from the first request"
+                class="diagram-control"
+                data-action="replay"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  fill="none"
+                  height="14"
+                  viewbox="0 0 20 20"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10 1.834a8.15 8.15 0 0 1 6.417 3.115V3.924a.875.875 0 0 1 1.75 0V7.57a.875.875 0 0 1-.875.875H14.05a.876.876 0 0 1 0-1.75h1.45a6.417 6.417 0 1 0 .757 4.732.875.875 0 0 1 1.708.387 8.166 8.166 0 0 1-16.13-1.813A8.167 8.167 0 0 1 10 1.834"
+                    fill="currentColor"
+                    style="fill-opacity: 1"
+                  ></path></svg
+                ><span>Replay</span></button
+              ><button
+                aria-label="Play animation"
+                class="diagram-control"
+                data-action="toggle-motion"
+                type="button"
+              >
+                <span aria-hidden="true" class="control-icon"
+                  ><svg
+                    class="control-icon-play"
+                    fill="none"
+                    height="14"
+                    viewbox="0 0 20 20"
+                    width="14"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M5.325 2.718a2.27 2.27 0 0 1 2.168.09h.001l8.794 5.353.133.087c1.328.936 1.285 3-.13 3.864l-.014.007-8.783 5.139h.001c-.702.43-1.53.401-2.17.092-.607-.294-1.131-.89-1.194-1.694l-.006-.163V4.573c0-.887.553-1.542 1.2-1.855m.55 12.775c0 .093.05.203.212.282.17.082.362.072.496-.01l.014-.008 8.788-5.145c.335-.21.334-.748-.006-.955h-.001L6.584 4.302l-.001-.001a.53.53 0 0 0-.496-.009c-.163.079-.212.188-.212.28z"
+                      fill="currentColor"
+                      style="fill-opacity: 1"
+                    ></path></svg
+                  ><svg
+                    class="control-icon-pause"
+                    fill="none"
+                    height="14"
+                    viewbox="0 0 20 20"
+                    width="14"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M7.35 4.959c.796 0 1.442.645 1.442 1.44V13.6c0 .796-.646 1.441-1.442 1.441H5.983a1.44 1.44 0 0 1-1.441-1.44V6.4c0-.796.645-1.441 1.441-1.442zm6.667 0c.796 0 1.442.645 1.442 1.44V13.6c0 .796-.646 1.441-1.442 1.441H12.65a1.44 1.44 0 0 1-1.441-1.44V6.4c0-.796.645-1.441 1.441-1.442z"
+                      fill="currentColor"
+                      style="fill-opacity: 1"
+                    ></path></svg></span
+                ><span class="control-label">Play</span>
+              </button>
+            </div>
+          </figcaption>
+          <div class="connections-key">
+            <span><i class="connection-key-request"></i>Request</span
+            ><span><i class="connection-key-response"></i>Response</span
+            ><span><i class="connection-key-idle"></i>Idle keep-alive</span>
+          </div>
+          <div
+            aria-label="Diagram details. Use arrow keys to move between items, and Tab to leave."
+            role="group"
+            style="outline: none"
+            tabindex="0"
+          >
+            <div
+              aria-label="Six Python pods receive a planned steady sequence of individual requests. Each pod reaches three concurrent Cosmos requests at a different time. Each request turns immediately into a response upon reaching Cosmos. The round trip lasts six illustrative seconds, with a new request each second, keeping six concurrent exchanges fleet-wide after startup. Direct pools retain eighteen connections: six busy and twelve idle. A shared HTTP/1 pool retains six connections, all busy. HTTP/2 retains one connection carrying all six concurrent requests on separate streams. All open connections remain drawn. Replay buildup starts from zero connections; the initial view shows the established steady state."
+              class="connections-stage"
+              role="group"
+            >
+              <section
+                aria-label="Direct from Python"
+                class="scrollable scrollable-horizontal connection-scenario"
+                data-mode="direct"
+                tabindex="-1"
+              >
+                <div class="relative min-w-fit">
+                  <div
+                    class="pointer-events-none absolute z-1 inset-y-0 inset-s-0 w-px"
+                  ></div>
+                  <div data-stage="connection-direct">
+                    <div class="connection-heading">
+                      <h3 class="">Direct from Python</h3>
+                    </div>
+                    <p class="connection-description">
+                      Separate pools keep each pod’s peak. After all 6 pods peak
+                      at 3 requests: 18 connections stay open, but only 6 are
+                      busy.
+                    </p>
+                    <div class="connection-diagram">
+                      <div class="connection-incoming">
+                        <div class="connection-column-label">Requests →</div>
+                        <div class="connection-wire-field">
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 8.333333333333332%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 25%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 41.66666666666667%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 58.333333333333336%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 75%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 91.66666666666666%"
+                          ></div>
+                          <span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 40 · Pod 4"
+                            data-kind="request"
+                            data-request-id="40"
+                            style="
+                              opacity: 1;
+                              left: 71.4286%;
+                              --connection-top: 58.333333333333336%;
+                            "
+                            title="Request 40 · Pod 4"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 41 · Pod 4"
+                            data-kind="request"
+                            data-request-id="41"
+                            hidden=""
+                            style="
+                              opacity: 0;
+                              left: 0%;
+                              --connection-top: 58.333333333333336%;
+                            "
+                            title="Request 41 · Pod 4"
+                          ></span>
+                        </div>
+                      </div>
+                      <div class="connection-processes">
+                        <div class="connection-column-label">Python pods</div>
+                        <div class="connection-workers">
+                          <div
+                            class="connection-worker"
+                            data-active="true"
+                            data-diagram-tooltip="Pod 1: 3 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 1: 3 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 1</strong
+                            ><span class="connection-worker-count"
+                              >3 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 2: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 2: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 2</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 3: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 3: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 3</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 4: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 4: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 4</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="true"
+                            data-diagram-tooltip="Pod 5: 3 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 5: 3 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 5</strong
+                            ><span class="connection-worker-count"
+                              >3 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 6: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 6: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 6</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                      <div class="connection-outbound">
+                        <div class="connection-column-label">
+                          18 open connections
+                        </div>
+                        <div class="connection-wire-field">
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 1: 1 in-flight request"
+                            style="--connection-top: 2.7777777777777777%"
+                            title="Connection 1: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 2: 1 in-flight request"
+                            style="--connection-top: 8.333333333333332%"
+                            title="Connection 2: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 3: 1 in-flight request"
+                            style="--connection-top: 13.88888888888889%"
+                            title="Connection 3: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 4: 0 in-flight requests"
+                            style="--connection-top: 52.77777777777778%"
+                            title="Connection 4: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 5: 0 in-flight requests"
+                            style="--connection-top: 58.333333333333336%"
+                            title="Connection 5: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 6: 0 in-flight requests"
+                            style="--connection-top: 63.88888888888889%"
+                            title="Connection 6: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 7: 0 in-flight requests"
+                            style="--connection-top: 19.444444444444446%"
+                            title="Connection 7: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 8: 0 in-flight requests"
+                            style="--connection-top: 25%"
+                            title="Connection 8: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 9: 0 in-flight requests"
+                            style="--connection-top: 30.555555555555557%"
+                            title="Connection 9: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 10: 0 in-flight requests"
+                            style="--connection-top: 86.11111111111111%"
+                            title="Connection 10: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 11: 0 in-flight requests"
+                            style="--connection-top: 91.66666666666666%"
+                            title="Connection 11: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 12: 0 in-flight requests"
+                            style="--connection-top: 97.22222222222221%"
+                            title="Connection 12: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 13: 0 in-flight requests"
+                            style="--connection-top: 36.11111111111111%"
+                            title="Connection 13: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 14: 0 in-flight requests"
+                            style="--connection-top: 41.66666666666667%"
+                            title="Connection 14: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            data-diagram-tooltip="Connection 15: 0 in-flight requests"
+                            style="--connection-top: 47.22222222222223%"
+                            title="Connection 15: 0 in-flight requests"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 16: 1 in-flight request"
+                            style="--connection-top: 69.44444444444446%"
+                            title="Connection 16: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 17: 1 in-flight request"
+                            style="--connection-top: 75%"
+                            title="Connection 17: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 18: 1 in-flight request"
+                            style="--connection-top: 80.55555555555554%"
+                            title="Connection 18: 1 in-flight request"
+                          ></div>
+                          <span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 34 · Pod 5"
+                            data-kind="response"
+                            data-request-id="34"
+                            style="
+                              opacity: 1;
+                              left: 13.3333%;
+                              --connection-top: 69.44444444444446%;
+                            "
+                            title="Request 34 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 35 · Pod 5"
+                            data-kind="response"
+                            data-request-id="35"
+                            style="
+                              opacity: 1;
+                              left: 46.6667%;
+                              --connection-top: 75%;
+                            "
+                            title="Request 35 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 36 · Pod 5"
+                            data-kind="response"
+                            data-request-id="36"
+                            style="
+                              opacity: 1;
+                              left: 80%;
+                              --connection-top: 80.55555555555554%;
+                            "
+                            title="Request 36 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 37 · Pod 1"
+                            data-kind="request"
+                            data-request-id="37"
+                            style="
+                              opacity: 1;
+                              left: 85.5072%;
+                              --connection-top: 2.7777777777777777%;
+                            "
+                            title="Request 37 · Pod 1"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 38 · Pod 1"
+                            data-kind="request"
+                            data-request-id="38"
+                            style="
+                              opacity: 1;
+                              left: 49.2754%;
+                              --connection-top: 8.333333333333332%;
+                            "
+                            title="Request 38 · Pod 1"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 39 · Pod 1"
+                            data-kind="request"
+                            data-request-id="39"
+                            style="
+                              opacity: 1;
+                              left: 13.0435%;
+                              --connection-top: 13.88888888888889%;
+                            "
+                            title="Request 39 · Pod 1"
+                          ></span>
+                        </div>
+                      </div>
+                      <div class="connection-cosmos-column">
+                        <div class="connection-column-label">Storage</div>
+                        <div class="connection-cosmos">
+                          <strong class="">Azure Cosmos DB</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <p class="connection-status">
+                      6 busy · 12 idle · 6 concurrent upstream requests
+                    </p>
+                  </div>
+                  <div
+                    class="pointer-events-none absolute inset-y-0 inset-e-0 w-px"
+                  ></div>
+                </div>
+              </section>
+              <section
+                aria-label="Envoy pools HTTP/1 connections"
+                class="scrollable scrollable-horizontal connection-scenario"
+                data-mode="pooled"
+                tabindex="-1"
+              >
+                <div class="relative min-w-fit">
+                  <div
+                    class="pointer-events-none absolute z-1 inset-y-0 inset-s-0 w-px"
+                  ></div>
+                  <div data-stage="connection-pooled">
+                    <div class="connection-heading">
+                      <h3 class="">Envoy pools HTTP/1 connections</h3>
+                    </div>
+                    <p class="connection-description">
+                      One shared pool grows to the fleet’s peak: 6 connections.
+                      Steady traffic reuses each connection as soon as its
+                      response returns.
+                    </p>
+                    <div class="connection-diagram">
+                      <div class="connection-incoming">
+                        <div class="connection-column-label">Requests →</div>
+                        <div class="connection-wire-field">
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 8.333333333333332%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 25%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 41.66666666666667%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 58.333333333333336%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 75%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 91.66666666666666%"
+                          ></div>
+                          <span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 40 · Pod 4"
+                            data-kind="request"
+                            data-request-id="40"
+                            style="
+                              opacity: 1;
+                              left: 71.4286%;
+                              --connection-top: 58.333333333333336%;
+                            "
+                            title="Request 40 · Pod 4"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 41 · Pod 4"
+                            data-kind="request"
+                            data-request-id="41"
+                            hidden=""
+                            style="
+                              opacity: 0;
+                              left: 0%;
+                              --connection-top: 58.333333333333336%;
+                            "
+                            title="Request 41 · Pod 4"
+                          ></span>
+                        </div>
+                      </div>
+                      <div class="connection-processes">
+                        <div class="connection-column-label">Python pods</div>
+                        <div class="connection-workers">
+                          <div
+                            class="connection-worker"
+                            data-active="true"
+                            data-diagram-tooltip="Pod 1: 2 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 1: 2 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 1</strong
+                            ><span class="connection-worker-count"
+                              >2 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 2: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 2: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 2</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="true"
+                            data-diagram-tooltip="Pod 3: 1 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 3: 1 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 3</strong
+                            ><span class="connection-worker-count"
+                              >1 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 4: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 4: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 4</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="true"
+                            data-diagram-tooltip="Pod 5: 3 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 5: 3 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 5</strong
+                            ><span class="connection-worker-count"
+                              >3 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 6: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 6: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 6</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                      <div class="connection-inbound">
+                        <div class="connection-column-label">Local traffic</div>
+                        <div class="connection-wire-field">
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 8.333333333333332%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 25%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 41.66666666666667%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 58.333333333333336%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 75%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 91.66666666666666%"
+                          ></div>
+                          <span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 31 · Pod 3"
+                            data-kind="response"
+                            data-request-id="31"
+                            style="
+                              opacity: 1;
+                              left: 14.2857%;
+                              --connection-top: 41.66666666666667%;
+                            "
+                            title="Request 31 · Pod 3"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 32 · Pod 3"
+                            data-kind="response"
+                            data-request-id="32"
+                            style="
+                              opacity: 1;
+                              left: 85.7143%;
+                              --connection-top: 41.66666666666667%;
+                            "
+                            title="Request 32 · Pod 3"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 39 · Pod 1"
+                            data-kind="request"
+                            data-request-id="39"
+                            style="
+                              opacity: 1;
+                              left: 31.0345%;
+                              --connection-top: 8.333333333333332%;
+                            "
+                            title="Request 39 · Pod 1"
+                          ></span>
+                        </div>
+                      </div>
+                      <div class="connection-proxy-column">
+                        <div class="connection-column-label">Shared pool</div>
+                        <div class="connection-proxy">
+                          <strong class="">Envoy</strong
+                          ><span class="">HTTP/1 → HTTP/1</span>
+                        </div>
+                      </div>
+                      <div class="connection-outbound">
+                        <div class="connection-column-label">
+                          6 open connections
+                        </div>
+                        <div class="connection-wire-field">
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 1: 1 in-flight request"
+                            style="--connection-top: 8.333333333333332%"
+                            title="Connection 1: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 2: 1 in-flight request"
+                            style="--connection-top: 25%"
+                            title="Connection 2: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 3: 1 in-flight request"
+                            style="--connection-top: 41.66666666666667%"
+                            title="Connection 3: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 4: 1 in-flight request"
+                            style="--connection-top: 58.333333333333336%"
+                            title="Connection 4: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 5: 1 in-flight request"
+                            style="--connection-top: 75%"
+                            title="Connection 5: 1 in-flight request"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 6: 1 in-flight request"
+                            style="--connection-top: 91.66666666666666%"
+                            title="Connection 6: 1 in-flight request"
+                          ></div>
+                          <span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 33 · Pod 3"
+                            data-kind="response"
+                            data-request-id="33"
+                            style="
+                              opacity: 1;
+                              left: 26.6667%;
+                              --connection-top: 41.66666666666667%;
+                            "
+                            title="Request 33 · Pod 3"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 34 · Pod 5"
+                            data-kind="response"
+                            data-request-id="34"
+                            style="
+                              opacity: 1;
+                              left: 60%;
+                              --connection-top: 58.333333333333336%;
+                            "
+                            title="Request 34 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 35 · Pod 5"
+                            data-kind="response"
+                            data-request-id="35"
+                            style="
+                              opacity: 1;
+                              left: 93.3333%;
+                              --connection-top: 75%;
+                            "
+                            title="Request 35 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 36 · Pod 5"
+                            data-kind="request"
+                            data-request-id="36"
+                            style="
+                              opacity: 1;
+                              left: 73.3333%;
+                              --connection-top: 91.66666666666666%;
+                            "
+                            title="Request 36 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 37 · Pod 1"
+                            data-kind="request"
+                            data-request-id="37"
+                            style="
+                              opacity: 1;
+                              left: 40%;
+                              --connection-top: 8.333333333333332%;
+                            "
+                            title="Request 37 · Pod 1"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 38 · Pod 1"
+                            data-kind="request"
+                            data-request-id="38"
+                            style="
+                              opacity: 1;
+                              left: 6.66667%;
+                              --connection-top: 25%;
+                            "
+                            title="Request 38 · Pod 1"
+                          ></span>
+                        </div>
+                      </div>
+                      <div class="connection-cosmos-column">
+                        <div class="connection-column-label">Storage</div>
+                        <div class="connection-cosmos">
+                          <strong class="">Azure Cosmos DB</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <p class="connection-status">
+                      6 busy · 0 idle · 6 concurrent upstream requests
+                    </p>
+                  </div>
+                  <div
+                    class="pointer-events-none absolute inset-y-0 inset-e-0 w-px"
+                  ></div>
+                </div>
+              </section>
+              <section
+                aria-label="Envoy upgrades to HTTP/2"
+                class="scrollable scrollable-horizontal connection-scenario"
+                data-mode="http2"
+                tabindex="-1"
+              >
+                <div class="relative min-w-fit">
+                  <div
+                    class="pointer-events-none absolute z-1 inset-y-0 inset-s-0 w-px"
+                  ></div>
+                  <div data-stage="connection-http2">
+                    <div class="connection-heading">
+                      <h3 class="">Envoy upgrades to HTTP/2</h3>
+                    </div>
+                    <p class="connection-description">
+                      At steady load, the same 6 requests share 1 retained
+                      HTTP/2 connection, each on its own concurrent stream.
+                    </p>
+                    <div class="connection-diagram">
+                      <div class="connection-incoming">
+                        <div class="connection-column-label">Requests →</div>
+                        <div class="connection-wire-field">
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 8.333333333333332%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 25%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 41.66666666666667%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 58.333333333333336%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 75%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 91.66666666666666%"
+                          ></div>
+                          <span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 40 · Pod 4"
+                            data-kind="request"
+                            data-request-id="40"
+                            style="
+                              opacity: 1;
+                              left: 71.4286%;
+                              --connection-top: 58.333333333333336%;
+                            "
+                            title="Request 40 · Pod 4"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 41 · Pod 4"
+                            data-kind="request"
+                            data-request-id="41"
+                            hidden=""
+                            style="
+                              opacity: 0;
+                              left: 0%;
+                              --connection-top: 58.333333333333336%;
+                            "
+                            title="Request 41 · Pod 4"
+                          ></span>
+                        </div>
+                      </div>
+                      <div class="connection-processes">
+                        <div class="connection-column-label">Python pods</div>
+                        <div class="connection-workers">
+                          <div
+                            class="connection-worker"
+                            data-active="true"
+                            data-diagram-tooltip="Pod 1: 2 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 1: 2 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 1</strong
+                            ><span class="connection-worker-count"
+                              >2 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 2: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 2: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 2</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="true"
+                            data-diagram-tooltip="Pod 3: 1 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 3: 1 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 3</strong
+                            ><span class="connection-worker-count"
+                              >1 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 4: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 4: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 4</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="true"
+                            data-diagram-tooltip="Pod 5: 3 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 5: 3 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 5</strong
+                            ><span class="connection-worker-count"
+                              >3 active · peak 3</span
+                            >
+                          </div>
+                          <div
+                            class="connection-worker"
+                            data-active="false"
+                            data-diagram-tooltip="Pod 6: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                            title="Pod 6: 0 concurrent Cosmos requests; highest concurrency so far 3"
+                          >
+                            <strong class="">Pod 6</strong
+                            ><span class="connection-worker-count"
+                              >0 active · peak 3</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                      <div class="connection-inbound">
+                        <div class="connection-column-label">Local traffic</div>
+                        <div class="connection-wire-field">
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 8.333333333333332%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 25%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 41.66666666666667%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 58.333333333333336%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            style="--connection-top: 75%"
+                          ></div>
+                          <div
+                            class="connection-wire"
+                            data-active="false"
+                            style="--connection-top: 91.66666666666666%"
+                          ></div>
+                          <span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 31 · Pod 3"
+                            data-kind="response"
+                            data-request-id="31"
+                            style="
+                              opacity: 1;
+                              left: 14.2857%;
+                              --connection-top: 41.66666666666667%;
+                            "
+                            title="Request 31 · Pod 3"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 32 · Pod 3"
+                            data-kind="response"
+                            data-request-id="32"
+                            style="
+                              opacity: 1;
+                              left: 85.7143%;
+                              --connection-top: 41.66666666666667%;
+                            "
+                            title="Request 32 · Pod 3"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 39 · Pod 1"
+                            data-kind="request"
+                            data-request-id="39"
+                            style="
+                              opacity: 1;
+                              left: 31.0345%;
+                              --connection-top: 8.333333333333332%;
+                            "
+                            title="Request 39 · Pod 1"
+                          ></span>
+                        </div>
+                      </div>
+                      <div class="connection-proxy-column">
+                        <div class="connection-column-label">Shared pool</div>
+                        <div class="connection-proxy">
+                          <strong class="">Envoy</strong
+                          ><span class="">HTTP/1 → HTTP/2</span>
+                        </div>
+                      </div>
+                      <div class="connection-outbound">
+                        <div class="connection-column-label">
+                          1 open connection
+                        </div>
+                        <div class="connection-wire-field">
+                          <div
+                            class="connection-wire"
+                            data-active="true"
+                            data-diagram-tooltip="Connection 1: 6 in-flight requests"
+                            style="--connection-top: 50%"
+                            title="Connection 1: 6 in-flight requests"
+                          ></div>
+                          <span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 33 · Pod 3"
+                            data-kind="response"
+                            data-request-id="33"
+                            style="
+                              opacity: 1;
+                              left: 26.6667%;
+                              --connection-top: 50%;
+                            "
+                            title="Request 33 · Pod 3"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 34 · Pod 5"
+                            data-kind="response"
+                            data-request-id="34"
+                            style="opacity: 1; left: 60%; --connection-top: 50%"
+                            title="Request 34 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 35 · Pod 5"
+                            data-kind="response"
+                            data-request-id="35"
+                            style="
+                              opacity: 1;
+                              left: 93.3333%;
+                              --connection-top: 50%;
+                            "
+                            title="Request 35 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 36 · Pod 5"
+                            data-kind="request"
+                            data-request-id="36"
+                            style="
+                              opacity: 1;
+                              left: 73.3333%;
+                              --connection-top: 50%;
+                            "
+                            title="Request 36 · Pod 5"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 37 · Pod 1"
+                            data-kind="request"
+                            data-request-id="37"
+                            style="opacity: 1; left: 40%; --connection-top: 50%"
+                            title="Request 37 · Pod 1"
+                          ></span
+                          ><span
+                            class="connection-packet"
+                            data-diagram-tooltip="Request 38 · Pod 1"
+                            data-kind="request"
+                            data-request-id="38"
+                            style="
+                              opacity: 1;
+                              left: 6.66667%;
+                              --connection-top: 50%;
+                            "
+                            title="Request 38 · Pod 1"
+                          ></span>
+                        </div>
+                      </div>
+                      <div class="connection-cosmos-column">
+                        <div class="connection-column-label">Storage</div>
+                        <div class="connection-cosmos">
+                          <strong class="">Azure Cosmos DB</strong>
+                        </div>
+                      </div>
+                    </div>
+                    <p class="connection-status">
+                      1 busy · 0 idle · 6 concurrent upstream requests
+                    </p>
+                  </div>
+                  <div
+                    class="pointer-events-none absolute inset-y-0 inset-e-0 w-px"
+                  ></div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </figure>
+      </div>
+      <noscript
+        ><p>
+          Animation controls require JavaScript. All diagram labels remain
+          readable.
+        </p></noscript
+      >
+    </main>
+  </body>
+</html>

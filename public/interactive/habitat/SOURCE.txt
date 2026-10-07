@@ -1,0 +1,7 @@
+Original figures and scenario controller imported from the user-supplied saved OpenAI article.
+Source: https://openai.com/index/scaling-storage-one-billion-users-part-one/
+Authors: Jon Lee, Chaomin Yu, Ben Ries
+Published: September 11, 2026
+Local adaptations: standalone runtime, accessible controls, theme/visibility bridge, opt-in motion, reduced-motion handling.
+These diagrams are illustrative simulations, not live production metrics.
+Source HTML SHA-256: 7844efe65157efa862b0c6f21fb18c33f3c6734fd79731d23482a14553667fa6

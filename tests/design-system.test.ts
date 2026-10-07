@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 
-const css = fs.readFileSync(path.join("app", "globals.css"), "utf8");
+// Selector assertions must agree across LF CI checkouts and CRLF Windows checkouts.
+const css = fs.readFileSync(path.join("app", "globals.css"), "utf8").replace(/\r\n/g, "\n");
 const siteHeader = fs.readFileSync(
   path.join("components", "SiteHeader.tsx"),
   "utf8",

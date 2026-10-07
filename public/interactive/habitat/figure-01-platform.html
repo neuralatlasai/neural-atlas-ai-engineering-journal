@@ -1,0 +1,1360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Online storage platform | Habitat figure</title>
+    <meta
+      name="description"
+      content="Interactive explanatory figure from OpenAI's Habitat storage engineering article."
+    />
+    <link rel="stylesheet" href="figures.css" />
+    <script src="runtime.js" defer></script>
+  </head>
+  <body data-figure-kind="platform">
+    <main>
+      <h1 class="sr-only">Online storage platform</h1>
+      <div
+        class="relative my-16 w-full min-w-0 HabitatOnlineStorageFlow-module__3nEiTq__root toc-collision-target"
+      >
+        <figure
+          aria-label="Online storage platform"
+          class="HabitatOnlineStorageFlow-module__3nEiTq__figure"
+        >
+          <figcaption class="HabitatOnlineStorageFlow-module__3nEiTq__header">
+            <div class="HabitatOnlineStorageFlow-module__3nEiTq__headerCopy">
+              <p class="HabitatOnlineStorageFlow-module__3nEiTq__kicker">
+                Figure 01 · What is Habitat?
+              </p>
+              <div class="HabitatOnlineStorageFlow-module__3nEiTq__headerText">
+                <h2 class="HabitatOnlineStorageFlow-module__3nEiTq__heading">
+                  Online storage platform
+                </h2>
+                <p class="HabitatOnlineStorageFlow-module__3nEiTq__intro">
+                  Habitat is the online storage platform we built so OpenAI
+                  products can quickly and reliably access needed information.
+                </p>
+              </div>
+            </div>
+            <div class="flow-controls">
+              <button data-action="replay" type="button">Replay</button
+              ><button
+                aria-label="Play animation"
+                aria-pressed="false"
+                data-action="toggle-motion"
+                type="button"
+              >
+                Play
+              </button>
+            </div>
+          </figcaption>
+          <ul class="HabitatOnlineStorageFlow-module__3nEiTq__legend">
+            <li class="HabitatOnlineStorageFlow-module__3nEiTq__legendItem">
+              <span
+                aria-hidden="true"
+                class="HabitatOnlineStorageFlow-module__3nEiTq__legendDot HabitatOnlineStorageFlow-module__3nEiTq__request"
+              ></span
+              >Request
+            </li>
+            <li class="HabitatOnlineStorageFlow-module__3nEiTq__legendItem">
+              <span
+                aria-hidden="true"
+                class="HabitatOnlineStorageFlow-module__3nEiTq__legendDot HabitatOnlineStorageFlow-module__3nEiTq__response"
+              ></span
+              >Response
+            </li>
+            <li class="HabitatOnlineStorageFlow-module__3nEiTq__legendItem">
+              <span
+                aria-hidden="true"
+                class="HabitatOnlineStorageFlow-module__3nEiTq__legendDot HabitatOnlineStorageFlow-module__3nEiTq__change"
+              ></span
+              >Changes (CDC)
+            </li>
+          </ul>
+          <div
+            aria-label="Figure 01 · What is Habitat?"
+            class="scrollable scrollable-horizontal HabitatOnlineStorageFlow-module__3nEiTq__viewport focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-primary-12"
+            role="region"
+            tabindex="0"
+          >
+            <div class="relative min-w-fit">
+              <div
+                class="pointer-events-none absolute z-1 inset-y-0 inset-s-0 w-px"
+              ></div>
+              <div
+                class="HabitatOnlineStorageFlow-module__3nEiTq__board"
+                id="_r_j_"
+              >
+                <p
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__label HabitatOnlineStorageFlow-module__3nEiTq__labelLeft"
+                >
+                  Clients
+                </p>
+                <p
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__label HabitatOnlineStorageFlow-module__3nEiTq__labelCenter"
+                >
+                  Online storage platform
+                </p>
+                <p
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__label HabitatOnlineStorageFlow-module__3nEiTq__labelRight"
+                >
+                  Storage resources
+                </p>
+                <svg
+                  aria-hidden="true"
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__railLayer"
+                  focusable="false"
+                  viewbox="0 0 1278 633"
+                >
+                  <path
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__railStroke"
+                    d="M220 126H233Q241 126 241 134V234Q241 242 249 242M220 184H233Q241 184 241 192M220 242H333M220 358H233Q241 358 241 350V250Q241 242 249 242M220 300H233Q241 300 241 292M945 242H1028M1028 242Q1036 242 1036 234V141.5Q1036 133.5 1044 133.5H1060M1036 214.5Q1036 206.5 1044 206.5H1060M1028 242Q1036 242 1036 250V344.5Q1036 352.5 1044 352.5H1060M1036 271.5Q1036 279.5 1044 279.5H1060M639 383V427M639 485V510Q639 522.5 626.5 522.5H425Q417 522.5 417 530V537M573 522.5Q565 522.5 565 530V537M639 510Q639 522.5 651.5 522.5H853Q861 522.5 861 530V537M705 522.5Q713 522.5 713 530V537"
+                  ></path>
+                  <path
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__railArrow"
+                    d="M225 123L220 126L225 129M225 181L220 184L225 187M225 239L220 242L225 245M225 297L220 300L225 303M225 355L220 358L225 361M328 239L333 242L328 245M950 239L945 242L950 245M1055 130.5L1060 133.5L1055 136.5M1055 203.5L1060 206.5L1055 209.5M1055 276.5L1060 279.5L1055 282.5M1055 349.5L1060 352.5L1055 355.5M636 422L639 427L642 422M414 532L417 537L420 532M562 532L565 537L568 532M710 532L713 537L716 532M858 532L861 537L864 532"
+                  ></path>
+                </svg>
+                <ul
+                  aria-label="Clients"
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__clients"
+                >
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g clip-path="url(#clip0_39783_724)">
+                        <path
+                          clip-rule="evenodd"
+                          d="m19.167 6.543-.001-.653a26 26 0 0 0-.009-.55c-.01-.4-.034-.802-.105-1.197-.072-.4-.19-.774-.375-1.138a3.82 3.82 0 0 0-1.674-1.673 4 4 0 0 0-1.139-.375 8 8 0 0 0-1.197-.105 26 26 0 0 0-.55-.008l-.654-.002-2.528-.009H9.043L6.56.843h-.655q-.276.002-.551.009c-.4.01-.805.034-1.2.105-.402.072-.776.19-1.141.375a3.84 3.84 0 0 0-1.677 1.673A4 4 0 0 0 .96 4.143 8 8 0 0 0 .854 5.34q-.007.276-.008.55c-.001.218-.013.488-.013.706v4.36l.012 2.502.001.654q.001.276.008.55c.011.4.035.804.106 1.2.072.4.19.774.376 1.139a3.83 3.83 0 0 0 1.677 1.675 4 4 0 0 0 1.14.376c.397.07.8.094 1.2.105q.276.007.552.008.327.002.655.002h6.903q.327 0 .653-.002.276 0 .55-.008c.4-.01.803-.034 1.199-.105.4-.072.774-.19 1.138-.376a3.83 3.83 0 0 0 1.674-1.675 4 4 0 0 0 .375-1.14 8 8 0 0 0 .105-1.198q.007-.275.009-.551V6.543"
+                          fill="url(#paint0_linear_39783_724)"
+                          fill-rule="evenodd"
+                        ></path>
+                        <path
+                          d="m10.934.833 2.529.01.653.001q.276.001.55.008c.4.01.803.034 1.198.105.401.072.775.19 1.139.375a3.83 3.83 0 0 1 1.674 1.673c.185.364.303.737.375 1.138.071.395.094.798.105 1.197q.007.275.008.55.003.326.002.653v6.915l-.002.654q0 .276-.008.55c-.01.4-.034.804-.105 1.199a4 4 0 0 1-.375 1.14 3.83 3.83 0 0 1-1.674 1.675 4 4 0 0 1-1.139.376 8 8 0 0 1-1.198.105q-.274.007-.55.008l-.653.002H6.559l-.654-.002a26 26 0 0 1-.552-.008c-.4-.01-.804-.034-1.2-.105a4 4 0 0 1-1.14-.376 3.84 3.84 0 0 1-1.677-1.675 4 4 0 0 1-.376-1.14 8 8 0 0 1-.106-1.199 26 26 0 0 1-.008-.55q-.002-.327-.001-.654l-.012-2.5V6.595c0-.218.011-.488.013-.706q0-.274.008-.55c.01-.399.035-.802.106-1.197.072-.4.19-.774.376-1.138a3.83 3.83 0 0 1 1.677-1.673 4 4 0 0 1 1.14-.375c.397-.07.8-.094 1.2-.105q.276-.007.552-.008L6.56.842 9.043.833zm-4.373.426h-.002l-.651.002q-.275 0-.543.008a7.6 7.6 0 0 0-1.138.098 3.6 3.6 0 0 0-1.025.336 3.42 3.42 0 0 0-1.495 1.491 3.6 3.6 0 0 0-.337 1.023 7.6 7.6 0 0 0-.1 1.135q-.006.269-.008.54c0 .114-.003.24-.006.361q-.005.187-.006.343v4.359l.012 2.501v.654q.001.273.009.542c.01.393.033.771.099 1.136.066.366.172.7.337 1.024a3.4 3.4 0 0 0 1.495 1.493c.324.165.659.271 1.026.337.365.065.744.088 1.137.1q.27.005.543.006l.651.002h6.904q.327 0 .65-.002.274 0 .542-.007c.393-.01.772-.034 1.136-.1a3.6 3.6 0 0 0 1.022-.336 3.4 3.4 0 0 0 1.493-1.493c.165-.323.27-.658.336-1.024.065-.365.089-.743.1-1.136q.005-.27.006-.542l.002-.652V6.543q0-.326-.002-.65a25 25 0 0 0-.007-.541 7.6 7.6 0 0 0-.1-1.136 3.6 3.6 0 0 0-.335-1.022 3.4 3.4 0 0 0-1.492-1.49 3.6 3.6 0 0 0-1.024-.337 7.6 7.6 0 0 0-1.135-.098q-.268-.007-.541-.008-.324-.002-.651-.002h-.002l-2.528-.009H9.045z"
+                          fill="#c0cbda"
+                          fill-opacity="0.8"
+                          style="
+                            fill: color(display-p3 0.7535 0.7978 0.8532);
+                            fill-opacity: 0.8;
+                          "
+                        ></path>
+                        <path
+                          d="M11.003 16.667q-.666 0-1.266-.254a3.4 3.4 0 0 1-1.067-.706 3.2 3.2 0 0 1-1.053.173 3.24 3.24 0 0 1-1.654-.44 3.45 3.45 0 0 1-1.226-1.2 3.24 3.24 0 0 1-.454-1.693q0-.387.107-.84a3.6 3.6 0 0 1-.827-1.134 3.29 3.29 0 0 1 .014-2.746q.307-.667.853-1.147A3.1 3.1 0 0 1 5.723 6q.147-.76.614-1.36.48-.613 1.173-.96a3.3 3.3 0 0 1 1.48-.347q.667 0 1.267.254.6.253 1.066.706a3.2 3.2 0 0 1 1.054-.173q.893 0 1.653.44t1.213 1.2q.467.76.467 1.693 0 .387-.107.84.534.494.827 1.147.294.64.293 1.347 0 .72-.306 1.386a3.5 3.5 0 0 1-.867 1.16q-.546.48-1.28.667-.147.76-.627 1.36a3.3 3.3 0 0 1-1.16.96 3.26 3.26 0 0 1-1.48.347m-3.266-1.814q.626 0 1.106-.28l2.414-1.386a.29.29 0 0 0 .146-.254V12L8.43 13.707a.77.77 0 0 1-.827 0l-2.293-1.32v.106q0 .654.307 1.2.32.534.88.84.56.32 1.24.32m.12-2.173a.27.27 0 0 0 .146.053.6.6 0 0 0 .147-.053l.813-.453-2.96-1.734q-.413-.225-.413-.72V7.147a2.37 2.37 0 0 0-.933.866 2.3 2.3 0 0 0-.334 1.214q0 .626.307 1.2.32.56.827.853zm3.133 2.947q.68 0 1.227-.307.547-.306.853-.84.32-.534.32-1.187V10.52q0-.173-.147-.253l-.813-.494v3.44q0 .495-.413.72l-2.28 1.32q.586.374 1.253.374m.413-4.787V9.16l-1.4-.8-1.413.8v1.68l1.413.8zm-3.84-4.053q0-.495.414-.72l2.28-1.32a2.3 2.3 0 0 0-1.254-.374q-.667 0-1.213.307a2.3 2.3 0 0 0-.867.84 2.34 2.34 0 0 0-.306 1.187v2.76a.32.32 0 0 0 .146.266l.8.494zm6.854 6.066q.573-.293.906-.853.347-.56.347-1.227 0-.626-.32-1.186a2.13 2.13 0 0 0-.813-.867l-2.4-1.387q-.081-.053-.147-.04a.3.3 0 0 0-.147.04l-.813.44 2.973 1.747q.214.12.307.293a.73.73 0 0 1 .107.414zm-2.854-6.586a.74.74 0 0 1 .827 0l2.293 1.346v-.08q0-.613-.306-1.16a2.23 2.23 0 0 0-.854-.893 2.4 2.4 0 0 0-1.266-.333q-.627 0-1.107.28L8.737 6.813a.29.29 0 0 0-.147.254V8z"
+                          fill="#2c3339"
+                          style="
+                            fill: color(display-p3 0.1725 0.2 0.2235);
+                            fill-opacity: 1;
+                          "
+                        ></path>
+                      </g>
+                      <defs>
+                        <lineargradient
+                          gradientunits="userSpaceOnUse"
+                          id="paint0_linear_39783_724"
+                          x1="10"
+                          x2="10"
+                          y1="0.833"
+                          y2="19.167"
+                        >
+                          <stop
+                            stop-color="#fff"
+                            style="stop-color: white; stop-opacity: 1"
+                          ></stop>
+                          <stop
+                            offset="1"
+                            stop-color="#e2eaf3"
+                            style="
+                              stop-color: color(
+                                display-p3 0.8876 0.9174 0.9524
+                              );
+                              stop-opacity: 1;
+                            "
+                          ></stop>
+                        </lineargradient>
+                        <clippath id="clip0_39783_724">
+                          <path
+                            d="M0 0h20v20H0z"
+                            fill="#fff"
+                            style="fill: rgb(255, 255, 255); fill-opacity: 1"
+                          ></path>
+                        </clippath>
+                      </defs>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >ChatGPT</span
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.584 2.46a2.539 2.539 0 0 1 .436 5.04h.229v.167a3 3 0 0 1-2.999 2.998h-4.5c-.921 0-1.668.747-1.668 1.668v.218a2.539 2.539 0 0 1-.665 4.989 2.54 2.54 0 0 1-.665-4.99V7.449a2.538 2.538 0 0 1 .665-4.988 2.538 2.538 0 0 1 .665 4.988v2.393a3 3 0 0 1 1.668-.506h4.5a1.67 1.67 0 0 0 1.669-1.668V7.5h.229a2.538 2.538 0 0 1 .436-5.04M5.417 13.79a1.21 1.21 0 1 0 0 2.42 1.21 1.21 0 0 0 0-2.42m0-10a1.21 1.21 0 1 0 0 2.42 1.21 1.21 0 0 0 0-2.42m9.167 0a1.21 1.21 0 1 0 0 2.42 1.21 1.21 0 0 0 0-2.42"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >API</span
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M6.742 7.346a.665.665 0 0 1 .912.229l1.121 1.868c.206.343.206.77 0 1.113l-1.12 1.87a.666.666 0 0 1-1.141-.685L7.558 10 6.514 8.258a.665.665 0 0 1 .228-.912m6.592 4.072a.666.666 0 0 1 0 1.33h-2.5a.665.665 0 1 1 0-1.33z"
+                        fill="currentColor"
+                        style="fill-opacity: 1"
+                      ></path>
+                      <path
+                        clip-rule="evenodd"
+                        d="M7.798 1.781c1.532-.41 2.891.028 3.937.98 1.443-.288 3.164.104 4.283 1.222a4.49 4.49 0 0 1 1.22 4.077 4.485 4.485 0 0 1-1.94 7.239 4.484 4.484 0 0 1-7.237 1.939 4.485 4.485 0 0 1-5.3-5.299A4.486 4.486 0 0 1 4.7 4.7a4.49 4.49 0 0 1 3.097-2.918m3.254 2.168c-.79-.836-1.772-1.188-2.91-.884A3.16 3.16 0 0 0 5.885 5.39l-.095.398-.398.095A3.162 3.162 0 0 0 3.95 11.26l.298.282-.117.392a3.161 3.161 0 0 0 3.936 3.936l.393-.117.281.297a3.16 3.16 0 0 0 5.376-1.44l.095-.398.398-.095a3.162 3.162 0 0 0 1.442-5.377l-.298-.281.117-.393a3.16 3.16 0 0 0-.793-3.142c-.838-.839-2.256-1.122-3.352-.794l-.392.117z"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Codex</span
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.131 2.375a2.165 2.165 0 0 1 2.508 1.756l1.794 10.177a2.165 2.165 0 0 1-1.756 2.507l-1.395.246a2.165 2.165 0 0 1-2.508-1.756l-.483-2.742v2.604c0 1.195-.97 2.165-2.165 2.165H8.709a2.16 2.16 0 0 1-1.501-.607c-.39.375-.917.607-1.5.607H4.293a2.165 2.165 0 0 1-2.166-2.165V4.834c0-1.196.97-2.165 2.166-2.165H5.71c.582 0 1.11.23 1.499.604a2.16 2.16 0 0 1 1.5-.604h1.418c.558 0 1.065.213 1.449.56a2.15 2.15 0 0 1 1.16-.608zm-9.84 1.624a.835.835 0 0 0-.834.835v10.333c0 .461.373.835.835.835h1.417a.835.835 0 0 0 .834-.835V4.834a.835.835 0 0 0-.835-.835zm4.418 0a.835.835 0 0 0-.835.835v10.333c0 .461.373.835.835.835h1.417c.46 0 .834-.374.834-.835V4.979a2 2 0 0 1-.014-.288.834.834 0 0 0-.82-.692zm6.62.363a.836.836 0 0 0-.967-.677l-1.396.246a.84.84 0 0 0-.685.732q.008.084.01.17v.07l1.793 10.171c.08.454.513.758.967.678l1.396-.246a.836.836 0 0 0 .677-.968z"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Internal services</span
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M4.166 8.501a1.499 1.499 0 1 1 0 2.998 1.499 1.499 0 0 1 0-2.998m5.834 0a1.499 1.499 0 1 1 0 2.998 1.499 1.499 0 0 1 0-2.998m5.833 0a1.5 1.5 0 1 1 0 2.999 1.5 1.5 0 0 1 0-2.999"
+                        fill="currentColor"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >And more</span
+                      >
+                    </div>
+                  </li>
+                </ul>
+                <section
+                  aria-label="Habitat"
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__habitat"
+                >
+                  <p
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__habitatTitle"
+                  >
+                    Habitat
+                  </p>
+                  <ul
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__featureGrid"
+                  >
+                    <li
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__feature"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureTitle"
+                        >Caching</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureDescription"
+                        >Caches</small
+                      >
+                    </li>
+                    <li
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__feature"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureTitle"
+                        >ACL policies</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureDescription"
+                        >Authorization</small
+                      >
+                    </li>
+                    <li
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__feature"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureTitle"
+                        >Placement &amp; data residency</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureDescription"
+                        >Data residency</small
+                      >
+                    </li>
+                    <li
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__feature"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureTitle"
+                        >Encryption</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureDescription"
+                        >Data security</small
+                      >
+                    </li>
+                    <li
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__feature"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureTitle"
+                        >Isolation</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureDescription"
+                        >Multi-tenancy</small
+                      >
+                    </li>
+                    <li
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__feature"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureTitle"
+                        >Rate limiting</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureDescription"
+                        >Request shaping</small
+                      >
+                    </li>
+                    <li
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__feature HabitatOnlineStorageFlow-module__3nEiTq__featureWide"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureTitle"
+                        >Routing</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__featureDescription"
+                        >Schema lookup · Data residency</small
+                      >
+                    </li>
+                  </ul>
+                </section>
+                <ul
+                  aria-label="Storage resources"
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__storage"
+                >
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M15.169 11.911q-.367.213-.793.387c-1.148.466-2.694.764-4.376.764s-3.227-.298-4.375-.764a6 6 0 0 1-.793-.386v3.3c0 .025.016.147.241.351.218.199.569.413 1.053.61.963.391 2.334.666 3.874.666s2.911-.275 3.875-.666c.483-.197.835-.411 1.053-.61.224-.204.24-.326.24-.351zm0-5.307a6 6 0 0 1-.793.388c-1.148.467-2.694.763-4.376.763s-3.227-.296-4.375-.763a6 6 0 0 1-.793-.387v3.5l.006.037c.015.054.067.16.235.314.218.199.569.413 1.053.61.963.391 2.334.665 3.874.665s2.911-.274 3.875-.666c.483-.196.835-.41 1.053-.609.168-.153.22-.26.235-.314l.006-.037zm0-1.805c0-.025-.017-.148-.242-.353-.218-.198-.568-.412-1.052-.61-.964-.39-2.335-.664-3.875-.664s-2.911.273-3.874.665c-.484.197-.835.41-1.053.61-.225.204-.241.327-.241.352s.017.147.241.351c.218.199.569.413 1.053.61.963.391 2.334.665 3.874.665s2.911-.274 3.875-.665c.484-.197.835-.411 1.053-.61.223-.203.24-.326.24-.351m1.33 10.413c0 .55-.31 1.002-.676 1.335-.372.339-.876.626-1.447.858-1.148.467-2.694.764-4.376.764s-3.227-.297-4.375-.764c-.572-.232-1.075-.52-1.448-.858-.365-.333-.675-.785-.675-1.335V4.799c0-.55.31-1.003.675-1.336.373-.339.876-.625 1.448-.858C6.773 2.14 8.318 1.842 10 1.842s3.228.297 4.376.763c.571.233 1.075.519 1.447.858.366.333.676.785.676 1.336z"
+                        fill="currentColor"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Azure Cosmos DB</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemDescription"
+                        >Online storage</small
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M15.169 11.911q-.367.213-.793.387c-1.148.466-2.694.764-4.376.764s-3.227-.298-4.375-.764a6 6 0 0 1-.793-.386v3.3c0 .025.016.147.241.351.218.199.569.413 1.053.61.963.391 2.334.666 3.874.666s2.911-.275 3.875-.666c.483-.197.835-.411 1.053-.61.224-.204.24-.326.24-.351zm0-5.307a6 6 0 0 1-.793.388c-1.148.467-2.694.763-4.376.763s-3.227-.296-4.375-.763a6 6 0 0 1-.793-.387v3.5l.006.037c.015.054.067.16.235.314.218.199.569.413 1.053.61.963.391 2.334.665 3.874.665s2.911-.274 3.875-.666c.483-.196.835-.41 1.053-.609.168-.153.22-.26.235-.314l.006-.037zm0-1.805c0-.025-.017-.148-.242-.353-.218-.198-.568-.412-1.052-.61-.964-.39-2.335-.664-3.875-.664s-2.911.273-3.874.665c-.484.197-.835.41-1.053.61-.225.204-.241.327-.241.352s.017.147.241.351c.218.199.569.413 1.053.61.963.391 2.334.665 3.874.665s2.911-.274 3.875-.665c.484-.197.835-.411 1.053-.61.223-.203.24-.326.24-.351m1.33 10.413c0 .55-.31 1.002-.676 1.335-.372.339-.876.626-1.447.858-1.148.467-2.694.764-4.376.764s-3.227-.297-4.375-.764c-.572-.232-1.075-.52-1.448-.858-.365-.333-.675-.785-.675-1.335V4.799c0-.55.31-1.003.675-1.336.373-.339.876-.625 1.448-.858C6.773 2.14 8.318 1.842 10 1.842s3.228.297 4.376.763c.571.233 1.075.519 1.447.858.366.333.676.785.676 1.336z"
+                        fill="currentColor"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Nanobase</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemDescription"
+                        >Online storage</small
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M10.539 1.996c.844-.844 2.323-.052 2.03 1.155l-.9 3.71h4.41c1.096 0 1.693 1.282.986 2.121l-7.524 8.935c-.826.981-2.412.178-2.11-1.068l.899-3.71H3.922c-1.097 0-1.694-1.282-.987-2.121l7.524-8.935zM4.008 11.81h4.85a.915.915 0 0 1 .889 1.13l-.908 3.747 7.153-8.495h-4.85a.916.916 0 0 1-.89-1.13l.908-3.747z"
+                        fill="currentColor"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Valkey</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemDescription"
+                        >Caches</small
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M16.525 13.192c0 .356-.19.685-.498.863l-5.362 3.096V10.39l5.86-3.296zM3.88 6.008a1 1 0 0 1 .094-.063l5.529-3.192a1 1 0 0 1 .996 0l5.442 3.143-5.95 3.347zm-.404 1.29 5.86 3.103v6.75l-5.362-3.096a1 1 0 0 1-.498-.863zm14.38-.49c0-.831-.443-1.599-1.163-2.014L11.163 1.6a2.33 2.33 0 0 0-2.326 0l-5.53 3.194a2.33 2.33 0 0 0-1.162 2.013v6.385c0 .831.443 1.6 1.163 2.015l5.529 3.192c.72.416 1.607.416 2.326 0l5.53-3.192a2.33 2.33 0 0 0 1.162-2.015z"
+                        fill="currentColor"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Blob storage</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemDescription"
+                        >Storage resources</small
+                      >
+                    </div>
+                  </li>
+                </ul>
+                <div class="HabitatOnlineStorageFlow-module__3nEiTq__cdc">
+                  <div class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 2.253a3.374 3.374 0 1 1-1.908 6.154l-4.134 4.134a3.374 3.374 0 1 1-.93-.952l4.137-4.137a3.373 3.373 0 0 1 2.835-5.2M5.566 12.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086m8.874-8.748a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 11.001a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086M5.566 2.253a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >CDC Services</span
+                      ><small
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemDescription"
+                        >Change Data Capture</small
+                      >
+                    </div>
+                  </div>
+                </div>
+                <ul class="HabitatOnlineStorageFlow-module__3nEiTq__sinks">
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 2.253a3.374 3.374 0 1 1-1.908 6.154l-4.134 4.134a3.374 3.374 0 1 1-.93-.952l4.137-4.137a3.373 3.373 0 0 1 2.835-5.2M5.566 12.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086m8.874-8.748a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 11.001a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086M5.566 2.253a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Databricks</span
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 2.253a3.374 3.374 0 1 1-1.908 6.154l-4.134 4.134a3.374 3.374 0 1 1-.93-.952l4.137-4.137a3.373 3.373 0 0 1 2.835-5.2M5.566 12.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086m8.874-8.748a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 11.001a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086M5.566 2.253a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Rockset</span
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 2.253a3.374 3.374 0 1 1-1.908 6.154l-4.134 4.134a3.374 3.374 0 1 1-.93-.952l4.137-4.137a3.373 3.373 0 0 1 2.835-5.2M5.566 12.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086m8.874-8.748a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 11.001a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086M5.566 2.253a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >Kafka</span
+                      >
+                    </div>
+                  </li>
+                  <li class="HabitatOnlineStorageFlow-module__3nEiTq__item">
+                    <svg
+                      aria-hidden="true"
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__icon"
+                      fill="none"
+                      focusable="false"
+                      height="20"
+                      viewbox="0 0 20 20"
+                      width="20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 2.253a3.374 3.374 0 1 1-1.908 6.154l-4.134 4.134a3.374 3.374 0 1 1-.93-.952l4.137-4.137a3.373 3.373 0 0 1 2.835-5.2M5.566 12.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086m8.874-8.748a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                      <path
+                        clip-rule="evenodd"
+                        d="M14.44 11.001a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086M5.566 2.253a3.374 3.374 0 1 1 0 6.748 3.374 3.374 0 0 1 0-6.748m0 1.33a2.043 2.043 0 1 0 0 4.086 2.043 2.043 0 0 0 0-4.086"
+                        fill="currentColor"
+                        fill-rule="evenodd"
+                        style="fill-opacity: 1"
+                      ></path>
+                    </svg>
+                    <div
+                      class="HabitatOnlineStorageFlow-module__3nEiTq__itemText"
+                    >
+                      <span
+                        class="HabitatOnlineStorageFlow-module__3nEiTq__itemTitle"
+                        >And more</span
+                      >
+                    </div>
+                  </li>
+                </ul>
+                <svg
+                  aria-hidden="true"
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__motionLayer"
+                  focusable="false"
+                  viewbox="0 0 1278 633"
+                >
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="0s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M220 126H233Q241 126 241 134V234Q241 242 249 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="0s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="-1.35s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M220 184H233Q241 184 241 192V234Q241 242 249 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-1.35s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="-2.7s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M220 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-2.7s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="-4.05s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M220 300H233Q241 300 241 292V250Q241 242 249 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-4.05s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="-5.4s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M220 358H233Q241 358 241 350V250Q241 242 249 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-5.4s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="0s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M220 126H233Q241 126 241 134V234Q241 242 249 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="0s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="-1.7s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M220 184H233Q241 184 241 192V234Q241 242 249 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-1.7s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="-3.4s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M220 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-3.4s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="-5.1s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M220 300H233Q241 300 241 292V250Q241 242 249 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-5.1s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="-6.8s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M220 358H233Q241 358 241 350V250Q241 242 249 242H333"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-6.8s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="0s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M945 242H1028Q1036 242 1036 234V141.5Q1036 133.5 1044 133.5H1060"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="0s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="-1.55s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M945 242H1028Q1036 242 1036 234V214.5Q1036 206.5 1044 206.5H1060"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-1.55s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="-3.1s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M945 242H1028Q1036 242 1036 250V271.5Q1036 279.5 1044 279.5H1060"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-3.1s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__response"
+                  >
+                    <circle r="4"></circle>
+                    <animatemotion
+                      begin="-4.65s"
+                      calcmode="linear"
+                      dur="9s"
+                      keypoints="1;0"
+                      keytimes="0;1"
+                      path="M945 242H1028Q1036 242 1036 250V344.5Q1036 352.5 1044 352.5H1060"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-4.65s"
+                      dur="9s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="0s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M945 242H1028Q1036 242 1036 234V141.5Q1036 133.5 1044 133.5H1060"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="0s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="-1.25s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M945 242H1028Q1036 242 1036 234V214.5Q1036 206.5 1044 206.5H1060"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-1.25s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="-2.5s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M945 242H1028Q1036 242 1036 250V271.5Q1036 279.5 1044 279.5H1060"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-2.5s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__request"
+                  >
+                    <rect height="8" rx="2" width="8" x="-4" y="-4"></rect>
+                    <animatemotion
+                      begin="-3.75s"
+                      calcmode="linear"
+                      dur="8s"
+                      path="M945 242H1028Q1036 242 1036 250V344.5Q1036 352.5 1044 352.5H1060"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-3.75s"
+                      dur="8s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g></svg
+                ><svg
+                  aria-hidden="true"
+                  class="HabitatOnlineStorageFlow-module__3nEiTq__motionLayer HabitatOnlineStorageFlow-module__3nEiTq__motionLayerBottom"
+                  focusable="false"
+                  viewbox="0 0 1278 633"
+                >
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="0s"
+                      calcmode="linear"
+                      dur="4s"
+                      path="M639 383V427"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="0s"
+                      dur="4s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="-0.55s"
+                      calcmode="linear"
+                      dur="7s"
+                      path="M639 485V510Q639 522.5 626.5 522.5H425Q417 522.5 417 530V537"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-0.55s"
+                      dur="7s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="-1.95s"
+                      calcmode="linear"
+                      dur="7s"
+                      path="M639 485V510Q639 522.5 626.5 522.5H425Q417 522.5 417 530V537"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-1.95s"
+                      dur="7s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="-1.1s"
+                      calcmode="linear"
+                      dur="7s"
+                      path="M639 485V510Q639 522.5 626.5 522.5H573Q565 522.5 565 530V537"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-1.1s"
+                      dur="7s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="-2.5s"
+                      calcmode="linear"
+                      dur="7s"
+                      path="M639 485V510Q639 522.5 626.5 522.5H573Q565 522.5 565 530V537"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-2.5s"
+                      dur="7s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="-1.6500000000000001s"
+                      calcmode="linear"
+                      dur="7s"
+                      path="M639 485V510Q639 522.5 651.5 522.5H705Q713 522.5 713 530V537"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-1.6500000000000001s"
+                      dur="7s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="-3.05s"
+                      calcmode="linear"
+                      dur="7s"
+                      path="M639 485V510Q639 522.5 651.5 522.5H705Q713 522.5 713 530V537"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-3.05s"
+                      dur="7s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="-2.2s"
+                      calcmode="linear"
+                      dur="7s"
+                      path="M639 485V510Q639 522.5 651.5 522.5H853Q861 522.5 861 530V537"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-2.2s"
+                      dur="7s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                  <g
+                    class="HabitatOnlineStorageFlow-module__3nEiTq__moving HabitatOnlineStorageFlow-module__3nEiTq__change"
+                  >
+                    <rect
+                      height="8"
+                      rx="1"
+                      transform="rotate(45)"
+                      width="8"
+                      x="-4"
+                      y="-4"
+                    ></rect>
+                    <animatemotion
+                      begin="-3.6s"
+                      calcmode="linear"
+                      dur="7s"
+                      path="M639 485V510Q639 522.5 651.5 522.5H853Q861 522.5 861 530V537"
+                      repeatcount="indefinite"
+                    ></animatemotion>
+                    <animate
+                      attributename="opacity"
+                      begin="-3.6s"
+                      dur="7s"
+                      keytimes="0;.03;.97;1"
+                      repeatcount="indefinite"
+                      values="0;1;1;0"
+                    ></animate>
+                  </g>
+                </svg>
+              </div>
+              <div
+                class="pointer-events-none absolute inset-y-0 inset-e-0 w-px"
+              ></div>
+            </div>
+          </div>
+        </figure>
+      </div>
+      <noscript
+        ><p>
+          Animation controls require JavaScript. All diagram labels remain
+          readable.
+        </p></noscript
+      >
+    </main>
+  </body>
+</html>
