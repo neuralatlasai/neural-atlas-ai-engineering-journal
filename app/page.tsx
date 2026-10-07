@@ -3,7 +3,6 @@ import {
   formatArticleType,
   getAllArticles,
   getSections,
-  type ArticleMeta,
 } from "@/lib/content/corpus";
 import { site } from "@/lib/site";
 import { websiteJsonLd } from "@/lib/structured-data";
@@ -11,6 +10,9 @@ import { ArticleLink } from "@/components/ArticleLink";
 import { HomeArtwork } from "@/components/HomeArtwork";
 import { JsonLd } from "@/components/JsonLd";
 import { getArticleVisual } from "@/lib/visuals/catalog";
+import { pickFeatured, selectAcrossSections } from "@/lib/home-selection";
+import { explorers } from "@/lib/explorers/catalog";
+import { ExplorerLinks } from "@/components/ExplorerLinks";
 
 type SectionSummary = ReturnType<typeof getSections>[number];
 
@@ -25,41 +27,6 @@ const SECTION_SCOPE: Readonly<Record<string, string>> = {
 
 function sectionScope(section: SectionSummary): string {
   return SECTION_SCOPE[section.section] ?? `Technical analyses in ${section.label}`;
-}
-
-/** Prefer the authored field note, then fall back to the strongest described item. */
-function pickFeatured(articles: readonly ArticleMeta[]): ArticleMeta | undefined {
-  return (
-    articles.find((article) => article.section === "blogs" && article.description) ??
-    articles.find((article) => article.description && article.hero) ??
-    articles.find((article) => article.description) ??
-    articles[0]
-  );
-}
-
-/**
- * Take the first article from each section before filling the remaining slots.
- * The two linear arrays keep selection O(n) and avoid an unbounded nested scan.
- */
-function selectAcrossSections(
-  articles: readonly ArticleMeta[],
-  excludedRoute: string | undefined,
-  limit: number,
-): ArticleMeta[] {
-  const firstBySection: ArticleMeta[] = [];
-  const remainder: ArticleMeta[] = [];
-  const representedSections = new Set<string>();
-
-  for (const article of articles) {
-    if (article.route === excludedRoute) continue;
-    if (representedSections.has(article.section)) remainder.push(article);
-    else {
-      representedSections.add(article.section);
-      firstBySection.push(article);
-    }
-  }
-
-  return [...firstBySection, ...remainder].slice(0, limit);
 }
 
 export default function HomePage() {
@@ -123,6 +90,10 @@ export default function HomePage() {
             </li>
           ))}
         </ol>
+      </section>
+
+      <section className="shell home-section" aria-label="Interactive model explorer">
+        <ExplorerLinks items={explorers} />
       </section>
 
       {featured && (

@@ -1,16 +1,9 @@
 import React from "react";
 import type { HeroImage } from "@/lib/content/corpus";
 import { withBasePath } from "@/lib/site";
-import { articleVisuals } from "@/lib/visuals/catalog";
 import type { ArticleVisual } from "@/lib/visuals/types";
-import { CoverArtwork } from "@/components/visuals/CoverArtwork";
-
-// One O(n) catalog pass provides O(1) section previews, including future sections.
-const domainVisuals = new Map<string, ArticleVisual>();
-for (const visual of articleVisuals) {
-  const section = visual.source.split("/")[1].toLowerCase();
-  if (!domainVisuals.has(section)) domainVisuals.set(section, visual);
-}
+import { getHomeCover } from "@/lib/visuals/home-covers";
+import { CoverArtwork, coverPalettes } from "@/components/visuals/CoverArtwork";
 
 interface HomeArtworkAsset {
   readonly avif: string;
@@ -105,11 +98,13 @@ export function HomeArtwork({
   variant?: "section" | "featured";
   visual?: ArticleVisual;
 }) {
-  const preview = visual ?? (!articleRoute ? domainVisuals.get(section) : undefined);
-  if (preview) {
-    return <figure className={className}>
-      <CoverArtwork visual={preview} idPrefix={articleRoute
-        ? `${variant}-${preview.id}` : `domain-${section}`} />
+  const cover = articleRoute
+    ? (visual ? getHomeCover(section, visual.id) : undefined)
+    : getHomeCover(section);
+  if (cover) {
+    return <figure className={className} style={{ background: coverPalettes[cover.palette].paper }}>
+      <CoverArtwork cover={cover} idPrefix={articleRoute
+        ? `${variant}-${cover.id}` : `domain-${section}`} />
     </figure>;
   }
   const artwork =

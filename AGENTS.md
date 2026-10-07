@@ -280,13 +280,17 @@ than article-specific colors.
 ### Article graphical abstracts
 
 Homepage covers use accessible, server-rendered SVG illustrations in
-`components/visuals/CoverArtwork.tsx`. They reuse the curated article mechanism
-glyphs, inherit the current palette, and remain sharp in uncropped 2:1 frames.
-These editorial previews do not assert a complete architecture or measured
-results. `components/HomeArtwork.tsx` uses a single indexed catalog pass for
-domain previews and exact article visuals when available. The previous raster
-assets in `public/images/home/`, their original PNGs and prompts, and authored
-hero images remain available as fallbacks.
+`components/visuals/CoverArtwork.tsx`, with a detailed line-symbol vocabulary in
+`CoverSymbols.tsx`. `lib/visuals/home-covers.ts` curates separate domain and
+article compositions; a domain never borrows an article's cover. Soft, pale
+backgrounds and legible strokes remain consistent across themes, in uncropped
+8:5 frames. These editorial previews do not assert a complete architecture or
+measured results. `lib/home-selection.ts` supplies the homepage's bounded,
+linear selection. `tests/home-cover.test.ts` checks that every selected card has
+its own curated cover and geometry, plus canvas bounds and symbol contrast.
+Newly selected articles need a distinct cover to pass that gate. The previous
+raster assets in `public/images/home/`, their original PNGs and prompts, and
+authored hero images remain available as fallbacks outside the curated set.
 
 Every current non-empty article has a curated conceptual figure in
 `lib/visuals/catalog.ts`, mapped by repository-relative source identity. The
@@ -321,6 +325,21 @@ starts paused, including with reduced motion; an explicit Play or Replay is a
 per-figure choice. Enabling reduced motion stops playback until another choice.
 The Habitat figures under `public/interactive/habitat/` retain the source
 article's explanatory simulations; they do not expose production telemetry.
+
+### Standalone architecture explorers
+
+Curated self-contained HTML tools are registered in `lib/explorers/catalog.ts`;
+they do not enter Markdown discovery. `npm run explorers` preserves each source
+document in `docs/` and generates its hosted copy in `public/explorers/` with a
+shared presentation layer. Prebuild runs this generator automatically. Run it
+after editing an explorer during development. The dedicated `/explorers/[id]/`
+page embeds the tool with scripts and SVG downloads enabled inside an isolated
+sandbox. Protected external reference links can open in new tabs. A source-checked
+message bridge handles theme, bounded document height,
+and view deep links. The static overview remains readable without JavaScript.
+Homepage and owning model folders link to the tool; sitemap entries use shared
+base-path helpers. The supplied architecture's symbolic dimensions and scope
+remain authored facts rather than inferred numerical model specifications.
 
 ## 6. Search, navigation, and metadata
 
@@ -375,7 +394,8 @@ Use the pinned npm lockfile. CI uses Node.js 22 and `npm ci`.
 | `npm test` | Runs Node tests in `tests/*.test.ts` through `tsx`. |
 | `npm run content:validate` | Runs content-specific validation only. |
 | `npm run images` | Runs responsive image generation/cache logic. |
-| `npm run build` | Runs image preprocessing, `next build`, math verification, and HTML audit. |
+| `npm run explorers` | Generates hosted HTML tools from their registered source documents. |
+| `npm run build` | Generates explorers and images, runs `next build`, math verification, and HTML audit. |
 | `npm run verify:math` | Audits math in an existing `out/`; it does not rebuild first. |
 | `npm run verify:html` | Audits an existing `out/`; it does not rebuild first. |
 | `npm run verify:determinism` | Builds comparable outputs with a pinned build ID and compares them. |
@@ -401,6 +421,11 @@ Brutal truth about the command surface:
 Development writes compiler state to `.next-dev`; production builds use `.next`
 and export to `out/`. This separation fixes the former failure where `next dev`
 and `next build` truncated each other’s manifests.
+
+The library root and nested folder pages share `app/library/[[...path]]/page.tsx`.
+One route entry gives them one client-reference manifest, avoiding equivalent
+navigation chunk aliases in exported HTML and Flight payloads. Keep the two-build
+determinism check when changing these route boundaries or upgrading Next.
 
 The separation does not make every concurrent operation safe. A dev server and
 build still compete for CPU and memory, and scripts may share generated public

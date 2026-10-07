@@ -5,6 +5,7 @@ import {
   getSections,
 } from "@/lib/content/corpus";
 import { absoluteUrl, staticNav } from "@/lib/site";
+import { explorers, explorerRoute } from "@/lib/explorers/catalog";
 
 /**
  * Sitemap covering every prerendered route (plan §23).
@@ -27,6 +28,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   for (const item of staticNav) {
     entries.push({ url: absoluteUrl(item.href), changeFrequency: "monthly", priority: 0.5 });
+  }
+  for (const explorer of explorers) {
+    entries.push({ url: absoluteUrl(explorerRoute(explorer)), changeFrequency: "monthly", priority: 0.8 });
   }
   for (const section of getSections()) {
     entries.push({

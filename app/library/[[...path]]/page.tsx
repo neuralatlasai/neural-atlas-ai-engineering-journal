@@ -6,21 +6,28 @@ import {
 } from "@/lib/content/corpus";
 import { absoluteUrl, site } from "@/lib/site";
 import { FolderPage } from "@/components/FolderPage";
+import LibraryIndex, { libraryIndexMetadata } from "@/components/LibraryIndex";
 
 export const dynamicParams = false;
 
+/**
+ * One entry owns both the root and folders. Separate entries with identical
+ * client dependencies let Next serialize equivalent navigation chunk aliases
+ * inconsistently between exports. A shared manifest removes that ambiguity.
+ */
 export function generateStaticParams(): { path: string[] }[] {
-  return getContentFolders()
+  return [{ path: [] }, ...getContentFolders()
     .filter((folder) => folder.depth > 1)
-    .map((folder) => ({ path: folder.routeSegments }));
+    .map((folder) => ({ path: folder.routeSegments }))];
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ path: string[] }>;
+  params: Promise<{ path?: string[] }>;
 }): Promise<Metadata> {
-  const { path } = await params;
+  const { path = [] } = await params;
+  if (path.length === 0) return libraryIndexMetadata;
   const contents = getFolderContents(path);
   if (!contents || contents.folder.depth === 1) return {};
 
@@ -43,9 +50,10 @@ export async function generateMetadata({
 export default async function LibraryFolderPage({
   params,
 }: {
-  params: Promise<{ path: string[] }>;
+  params: Promise<{ path?: string[] }>;
 }) {
-  const { path } = await params;
+  const { path = [] } = await params;
+  if (path.length === 0) return <LibraryIndex />;
   const contents = getFolderContents(path);
   if (!contents || contents.folder.depth === 1) notFound();
 

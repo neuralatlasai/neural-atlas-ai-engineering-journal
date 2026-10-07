@@ -30,6 +30,7 @@ const articleEnhancements = fs.readFileSync(
   "utf8",
 );
 const homePage = fs.readFileSync(path.join("app", "page.tsx"), "utf8");
+const homeSelection = fs.readFileSync(path.join("lib", "home-selection.ts"), "utf8");
 const homeArtwork = fs.readFileSync(
   path.join("components", "HomeArtwork.tsx"),
   "utf8",
@@ -427,7 +428,7 @@ describe("homepage composition", () => {
 
   it("bounds and diversifies selected analysis in one corpus pass", () => {
     assert.match(
-      homePage,
+      homeSelection,
       /function selectAcrossSections\([\s\S]*?new Set<string>\(\)[\s\S]*?for \(const article of articles\)[\s\S]*?\.slice\(0, limit\)/,
       "selection must remain linear in corpus size",
     );

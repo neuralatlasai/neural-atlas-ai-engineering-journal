@@ -11,7 +11,7 @@ import { JsonLd } from "@/components/JsonLd";
 
 const description = `Browse ${site.name} research and engineering analysis by subject area.`;
 
-export const metadata: Metadata = {
+export const libraryIndexMetadata: Metadata = {
   title: "Research index",
   description,
   alternates: { canonical: absoluteUrl("/library") },
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function LibraryPage() {
+export default function LibraryIndex() {
   const articles = getAllArticles();
   const rootFolders = getRootFolders();
   const readingMinutes = articles.reduce(

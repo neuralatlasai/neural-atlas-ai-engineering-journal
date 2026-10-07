@@ -4,6 +4,8 @@ import { breadcrumbJsonLd } from "@/lib/structured-data";
 import { ArticleList } from "./ArticleList";
 import { FolderList } from "./FolderList";
 import { JsonLd } from "./JsonLd";
+import { ExplorerLinks } from "./ExplorerLinks";
+import { explorersForFolder } from "@/lib/explorers/catalog";
 
 function ancestorRoute(routeSegments: readonly string[], depth: number): string {
   if (depth === 1) return `/${routeSegments[0]}`;
@@ -61,6 +63,8 @@ export function FolderPage({
             : "."}
         </p>
       </section>
+
+      <ExplorerLinks items={explorersForFolder(folder.routeSegments)} />
 
       {childFolders.length > 0 && (
         <section className="section-block" aria-labelledby="collections-heading">

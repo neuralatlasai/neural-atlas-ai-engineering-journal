@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Decoder-only Transformer · Architecture explorer</title>
+  <style>
+    #model-atlas,#model-atlas *{box-sizing:border-box}
+    #model-atlas{--atlas-ink:#20201e;--atlas-muted:#666962;--atlas-line:#d8dbd4;--atlas-blue:#70a0ff;--atlas-mint:#9ae8c5;--atlas-purple:#bb8ae8;--atlas-mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;max-width:1180px;margin:0 auto;padding:29px 28px 40px;font-size:15px;line-height:1.55}
+    #model-atlas button,#model-atlas select{font:inherit;color:inherit}
+    #model-atlas button{cursor:pointer}
+    #model-atlas button:disabled{cursor:default;opacity:.43}
+    #model-atlas button:focus-visible,#model-atlas select:focus-visible,#model-atlas a:focus-visible,#model-atlas summary:focus-visible{outline:2px solid #426ecd;outline-offset:3px}
+    #model-atlas a{color:inherit;text-underline-offset:3px}
+    .atlas-header{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:22px}
+    .atlas-overline{font:10px/1.5 var(--atlas-mono);letter-spacing:.085em;text-transform:uppercase;color:var(--atlas-muted)}
+    .atlas-title{margin:8px 0 9px;font-size:clamp(25px,3.6vw,38px);line-height:1.16;font-weight:500;letter-spacing:-.045em}
+    .atlas-intro{max-width:700px;margin:0;color:var(--atlas-muted);font-size:14px;line-height:1.6}
+    .atlas-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:17px;font:11px/1.4 var(--atlas-mono);color:#575b54}
+    .atlas-legend-item{display:inline-flex;align-items:center;gap:7px}
+    .atlas-symbol{display:inline-block;width:9px;height:9px;border:1px solid #464942;background:var(--atlas-blue);flex:0 0 auto}
+    .atlas-symbol-cache{background:var(--atlas-mint);border-radius:50%}
+    .atlas-symbol-grad{background:var(--atlas-purple);transform:rotate(45deg);width:8px;height:8px;margin:0 1px}
+    .atlas-control{min-height:34px;padding:6px 10px;border:1px solid #686c63;border-radius:2px;background:#fff;font-size:12px!important;line-height:20px;white-space:nowrap}
+    .atlas-control:hover:not(:disabled){background:#f5f5f5}
+    .atlas-export{align-self:flex-start;margin-top:4px}
+    .atlas-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;border-top:1px solid var(--atlas-line);padding-top:17px;scroll-margin-top:12px}
+    .atlas-tab{display:flex;align-items:center;justify-content:flex-start;gap:9px;min-height:46px;padding:8px 11px;border:1px solid var(--atlas-line);border-radius:2px;background:#fff;text-align:left;font-size:13px!important;line-height:1.2}
+    .atlas-tab:hover{border-color:#6e756a;background:#fafafa}
+    .atlas-tab[aria-current="page"]{border-color:#424c3d;background:#f3f3f3}
+    .atlas-tab-number{color:var(--atlas-muted);font:10px/1 var(--atlas-mono)}
+    .atlas-tab[aria-current="page"] .atlas-tab-number{color:#242424}
+    .atlas-view-header{padding:21px 0 15px}
+    .atlas-breadcrumb{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-height:19px;color:var(--atlas-muted);font:11px/1.5 var(--atlas-mono)}
+    .atlas-link-button{padding:0;border:0;background:none;text-align:left;text-decoration:underline;text-underline-offset:3px;font-size:inherit!important;line-height:inherit}
+    .atlas-view-title{font-size:22px;font-weight:500;letter-spacing:-.025em;line-height:1.25;margin:9px 0 6px}
+    .atlas-view-description{margin:0;font-size:14px;color:var(--atlas-muted);max-width:900px}
+    .atlas-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px 14px;flex-wrap:wrap;padding:11px 0;border-top:1px solid var(--atlas-line)}
+    .atlas-playback{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .atlas-stage-count{font:11px/1.4 var(--atlas-mono);color:var(--atlas-muted);min-width:91px;margin-left:4px;font-variant-numeric:tabular-nums}
+    .atlas-mode{display:flex;align-items:center;gap:7px;font:11px/1.4 var(--atlas-mono)}
+    .atlas-mode select{min-height:34px;max-width:150px;padding:5px 24px 5px 8px;border:1px solid #7f8579;border-radius:2px;background:#fff;font-size:12px!important}
+    .atlas-step-detail{margin:0;padding:8px 11px 10px;border:1px solid var(--atlas-line);border-bottom:0;color:#535353;background:#fcfcfc;min-height:39px;font-size:12px;line-height:1.55}
+    .atlas-step-detail strong{font-weight:600;color:var(--atlas-ink)}
+    .atlas-details-link{display:inline-block;margin-left:10px;font-size:11px!important;white-space:nowrap;color:#303030!important}
+    .atlas-stage{border:1px solid var(--atlas-line);width:100%;background:#fff;overflow:hidden}
+    .atlas-stage>svg{display:block;width:100%;height:auto;max-width:none;max-height:none}
+    .atlas-stage:focus-visible{outline:2px solid #426ecd;outline-offset:3px}
+    .atlas-stage svg [data-node-id],.atlas-stage svg [data-edge-id]{cursor:pointer}
+    .atlas-stage svg .atlas-inactive{opacity:.62}
+    .atlas-stage svg [data-node-id].atlas-active>rect:first-of-type,.atlas-stage svg [data-node-id].atlas-selected>rect:first-of-type{stroke:#20201e!important;stroke-width:2px!important}
+    .atlas-stage svg [data-edge-id].atlas-active path.ma-edge-line,.atlas-stage svg [data-edge-id].atlas-selected path.ma-edge-line{stroke-width:2.5px!important}
+    .atlas-stage svg [data-node-id]:focus{outline:none}
+    .atlas-stage svg [data-node-id]:focus>rect:first-of-type{stroke:#426ecd!important;stroke-width:2.5px!important}
+    .atlas-stage svg [data-edge-id]:focus{outline:none}
+    .atlas-stage svg [data-edge-id]:focus path.ma-edge-line{stroke:#426ecd!important;stroke-width:2.5px!important}
+    .atlas-stage svg [data-open-view]:focus{outline:2px solid #426ecd;outline-offset:3px}
+    .atlas-board-caption{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:9px 0 0;font:10px/1.6 var(--atlas-mono);color:var(--atlas-muted)}
+    .atlas-inspector{margin-top:23px;border:1px solid var(--atlas-line);padding:19px 21px 21px;background:#fff;scroll-margin-top:18px}
+    .atlas-inspector-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
+    .atlas-inspector-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;max-width:50%;padding-top:4px}
+    .atlas-return-selection{font-size:11px!important;color:#303030!important;line-height:1.5;white-space:nowrap}
+    .atlas-inspector-title{font-size:19px;font-weight:500;letter-spacing:-.02em;line-height:1.3;margin:6px 0 9px}
+    .atlas-inspector-description{max-width:980px;font-size:14px;margin:0 0 16px;color:#555555}
+    .atlas-inspector-empty{margin:9px 0 0;font-size:14px;color:var(--atlas-muted)}
+    .atlas-equation{display:block;padding:12px 14px;margin:0 0 17px;background:#f8f8f8;border:1px solid #e3e7dc;font:13px/1.8 var(--atlas-mono);white-space:pre-wrap;overflow-wrap:anywhere}
+    .atlas-inspector-columns{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .atlas-section-title{margin:0 0 10px;font:11px/1.4 var(--atlas-mono);color:var(--atlas-muted);text-transform:uppercase;letter-spacing:.065em}
+    .atlas-tensors{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:21px}
+    .atlas-tensors th,.atlas-tensors td{border-top:1px solid #e5e8df;padding:8px 5px;vertical-align:top;text-align:left}
+    .atlas-tensors th{font:12px/1.65 var(--atlas-mono);font-weight:400;width:35%;overflow-wrap:anywhere}
+    .atlas-tensor-shape{font:12px/1.6 var(--atlas-mono);overflow-wrap:anywhere}
+    .atlas-tensor-detail{display:block;color:var(--atlas-muted);font-size:12px;line-height:1.55;margin-top:3px}
+    .atlas-connections{list-style:none;margin:0;padding:0}
+    .atlas-connection{padding:10px 0;border-top:1px solid #e5e8df}
+    .atlas-neighbor{font-size:13px!important;text-decoration:none;font-weight:500;color:#242424!important}
+    .atlas-neighbor:hover{text-decoration:underline}
+    .atlas-ports{display:block;font:11px/1.7 var(--atlas-mono);color:var(--atlas-muted);overflow-wrap:anywhere;margin:4px 0}
+    .atlas-edge-link{font-size:11px!important;color:#626262!important}
+    .atlas-inline-empty{font-size:12px;color:var(--atlas-muted);margin:0 0 18px}
+    .atlas-step-nodes{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+    .atlas-endpoint{border-top:1px solid #e5e8df;padding-top:11px}
+    .atlas-endpoint-port{display:block;font:12px/1.6 var(--atlas-mono);color:var(--atlas-muted);margin-top:5px;overflow-wrap:anywhere}
+    .atlas-scope{margin:21px 0 0;font:11px/1.7 var(--atlas-mono);color:var(--atlas-muted);border-top:1px solid var(--atlas-line);padding-top:16px}
+    .atlas-sources{margin-top:14px;font-size:12px;color:var(--atlas-muted)}
+    .atlas-sources summary{cursor:pointer;width:fit-content}
+    .atlas-sources ul{margin:12px 0 0;padding-left:19px;line-height:1.9}
+    .atlas-footnote{font-size:12px;line-height:1.7;color:var(--atlas-muted)}
+    .atlas-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .atlas-error{padding:20px;color:#76352b;font-size:14px}
+    #model-atlas [hidden]{display:none!important}
+    @media(max-width:820px){#model-atlas{padding:23px 18px 32px}.atlas-header{gap:15px}.atlas-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.atlas-tab{min-height:42px}.atlas-title{font-size:30px}.atlas-header .atlas-export{font-size:11px!important}.atlas-inspector{padding:17px}.atlas-inspector-columns{gap:18px}}
+    @media(max-width:520px){#model-atlas{padding:19px 12px 28px}.atlas-header{display:block;padding-bottom:17px}.atlas-export{margin-top:15px}.atlas-title{font-size:27px}.atlas-intro{font-size:13px}.atlas-legend{gap:11px;font-size:10px}.atlas-tabs{grid-template-columns:repeat(2,minmax(0,1fr));padding-top:13px}.atlas-tab{font-size:12px!important;min-height:40px;padding:8px 10px}.atlas-view-header{padding:17px 0 13px}.atlas-view-title{font-size:21px}.atlas-view-description{font-size:13px}.atlas-toolbar{gap:8px}.atlas-playback{gap:5px}.atlas-control{padding:5px 8px;font-size:11px!important;min-height:32px}.atlas-stage-count{font-size:10px;min-width:78px;margin-left:1px}.atlas-mode{font-size:10px}.atlas-mode select{font-size:11px!important;min-height:32px}.atlas-step-detail{font-size:11px;padding:8px 9px}.atlas-inspector{padding:15px 13px;margin-top:18px}.atlas-inspector-columns{grid-template-columns:1fr;gap:8px}.atlas-inspector-title{font-size:18px}.atlas-inspector-description{font-size:13px}.atlas-equation{font-size:12px;padding:10px}.atlas-inspector-heading{display:block}.atlas-inspector-actions{max-width:none;justify-content:flex-start;padding:0 0 14px}.atlas-board-caption{font-size:9px}.atlas-scope{font-size:10px}}
+    @media(prefers-reduced-motion:reduce){#model-atlas *,#model-atlas *::before,#model-atlas *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+    @media print{#model-atlas{max-width:none;padding:0}.atlas-tabs,.atlas-toolbar,.atlas-export,.atlas-board-caption{display:none}.atlas-stage{break-inside:avoid}.atlas-inspector{break-inside:avoid}.atlas-sources{display:block}}
+  </style>
+<link rel="stylesheet" href="./explorer.css">
+</head>
+<body style="margin:0;background:#fff;color:#20201e;font-family:Arial,Helvetica,sans-serif">
+<main id="model-atlas">
+  <header class="atlas-header">
+    <div>
+      <div class="atlas-overline">MODEL ARCHITECTURE / 32 BLOCKS</div>
+      <h1 class="atlas-title">Decoder-only Transformer</h1>
+      <p class="atlas-intro">Follow the model, open each computation, and inspect the tensors and connections at every stage.</p>
+      <div class="atlas-legend" aria-label="Connection legend">
+        <span class="atlas-legend-item"><i class="atlas-symbol" aria-hidden="true"></i>Forward computation</span>
+        <span class="atlas-legend-item"><i class="atlas-symbol atlas-symbol-cache" aria-hidden="true"></i>Cache / decode</span>
+        <span class="atlas-legend-item"><i class="atlas-symbol atlas-symbol-grad" aria-hidden="true"></i>Gradient / update</span>
+      </div>
+    </div>
+    <button type="button" class="atlas-control atlas-export" id="atlas-export">↓ Export this SVG</button>
+  </header>
+
+  <nav class="atlas-tabs" id="atlas-tabs" aria-label="Architecture layers"></nav>
+
+  <section aria-labelledby="atlas-view-title">
+    <div class="atlas-view-header">
+      <div class="atlas-breadcrumb" id="atlas-breadcrumb">Architecture / Model</div>
+      <h2 class="atlas-view-title" id="atlas-view-title">Model overview</h2>
+      <p class="atlas-view-description" id="atlas-view-description">The complete forward computation, from token IDs to vocabulary logits.</p>
+    </div>
+    <div class="atlas-toolbar" aria-label="Diagram controls">
+      <div class="atlas-playback">
+        <button type="button" class="atlas-control" id="atlas-previous" aria-label="Previous computation stage">← Previous</button>
+        <button type="button" class="atlas-control" id="atlas-play" aria-label="Play computation stages" aria-pressed="false">▷ Play</button>
+        <button type="button" class="atlas-control" id="atlas-next" aria-label="Next computation stage">Next →</button>
+        <span class="atlas-stage-count" id="atlas-stage-count">All stages</span>
+        <button type="button" class="atlas-link-button" id="atlas-show-all" style="font-size:11px">Show all</button>
+      </div>
+      <label class="atlas-mode" id="atlas-mode-label">Context
+        <select id="atlas-mode" aria-label="Computation context">
+          <option value="training">Training</option>
+          <option value="inference">Inference</option>
+        </select>
+      </label>
+    </div>
+    <p class="atlas-step-detail" id="atlas-step-detail" role="status" aria-live="polite">Select a module or connection to inspect its exact computation.</p>
+    <div class="atlas-stage" id="atlas-stage" tabindex="0" aria-label="Interactive architecture diagram. Use left and right arrows to step through the computation; Enter selects a focused component.">
+      <svg xmlns="http://www.w3.org/2000/svg" width="680" height="1370" viewBox="0 0 680 1370" role="group" aria-label="The complete model" data-view="model"><title>The complete model</title><desc>Follow the shared computation from text to logits, then open the relevant execution path. 32 decoder blocks come from the supplied architecture. B, T, D, Hq, Hkv, dh, F and |V| are symbolic; numerical sizes and weight tying are unspecified.</desc><defs><style>.ma-text{font-family:Arial,Helvetica,sans-serif;fill:#242424}.ma-node-title{font-size:16px;font-weight:400}.ma-sub{font-family:Arial,Helvetica,sans-serif;font-size:12px;fill:#515151}.ma-stage{font-family:Courier New,monospace;font-size:12px;fill:#555}.ma-edge-label{font-family:Courier New,monospace;font-size:12px;fill:#303030}.ma-box{fill:#fff;stroke:#414141;stroke-width:1.2}.ma-edge-line{fill:none;stroke:#5f5f5f;stroke-width:1.25;stroke-linejoin:round;stroke-linecap:round}.ma-edge-halo{fill:none;stroke:#fff;stroke-width:5;stroke-linejoin:round}.ma-kind-metadata .ma-edge-line{stroke:#747474;stroke-dasharray:3 4}.ma-kind-control .ma-edge-line{stroke:#747474;stroke-dasharray:7 5}.ma-kind-gradient .ma-edge-line,.ma-kind-parameter .ma-edge-line{stroke:#655470}.ma-kind-kv-state .ma-edge-line{stroke:#4b7563}.ma-edge-hit{fill:none;stroke:transparent;stroke-width:16;pointer-events:stroke}.ma-note{font-family:Arial,Helvetica,sans-serif;font-size:12px;fill:#535353}.ma-open{font-family:Arial,Helvetica,sans-serif;font-size:12px;fill:#202020;text-decoration:underline}.ma-node:focus-visible .ma-box{stroke:#181818;stroke-width:2.5}.ma-edge:focus-visible .ma-edge-line{stroke:#181818;stroke-width:2.5}.ma-node,.ma-edge,[data-open-view]{cursor:pointer}.ma-port{fill:#fff;stroke:#686868;stroke-width:1}.ma-group{fill:#fff;stroke:#d1d1d1;stroke-width:1}</style><pattern id="atlas-model-inference-680-dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".55" fill="#d0d0d0" fill-opacity=".6"/></pattern><marker id="atlas-model-inference-680-arrow" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1L7 4L1 7" fill="none" stroke="#555" stroke-width="1.1"/></marker></defs><rect width="680" height="1370" fill="#fff"/><rect width="680" height="1370" fill="url(#atlas-model-inference-680-dots)"/><g class="ma-edge ma-kind-activation" data-edge-id="text-tokenizer" tabindex="0" role="button"><title>text · text.out → tokenizer.in</title><path class="ma-edge-halo" d="M340 128L340 174"/><path class="ma-edge-line" d="M340 128L340 174" marker-end="url(#atlas-model-inference-680-arrow)"/><path class="ma-edge-hit edge-hit" d="M340 128L340 174"/><rect x="362" y="142" width="38.8" height="18" rx="1" fill="#fff"/><text x="367" y="155" class="ma-edge-label" text-anchor="start">text</text></g><g class="ma-edge ma-kind-activation" data-edge-id="tokenizer-tokens" tabindex="0" role="button"><title>IDs · tokenizer.out → tokens.in</title><path class="ma-edge-halo" d="M340 268L340 314"/><path class="ma-edge-line" d="M340 268L340 314" marker-end="url(#atlas-model-inference-680-arrow)"/><path class="ma-edge-hit edge-hit" d="M340 268L340 314"/><rect x="362" y="282" width="31.6" height="18" rx="1" fill="#fff"/><text x="367" y="295" class="ma-edge-label" text-anchor="start">IDs</text></g><g class="ma-edge ma-kind-activation" data-edge-id="tokens-embedding" tabindex="0" role="button"><title>IDs · tokens.out → embedding.in</title><path class="ma-edge-halo" d="M340 408L340 454"/><path class="ma-edge-line" d="M340 408L340 454" marker-end="url(#atlas-model-inference-680-arrow)"/><path class="ma-edge-hit edge-hit" d="M340 408L340 454"/><rect x="362" y="422" width="31.6" height="18" rx="1" fill="#fff"/><text x="367" y="435" class="ma-edge-label" text-anchor="start">IDs</text></g><g class="ma-edge ma-kind-activation" data-edge-id="embedding-stack" tabindex="0" role="button"><title>h₀ · embedding.out → stack.in</title><path class="ma-edge-halo" d="M340 548L340 594"/><path class="ma-edge-line" d="M340 548L340 594" marker-end="url(#atlas-model-inference-680-arrow)"/><path class="ma-edge-hit edge-hit" d="M340 548L340 594"/><rect x="362" y="562" width="24.4" height="18" rx="1" fill="#fff"/><text x="367" y="575" class="ma-edge-label" text-anchor="start">h₀</text></g><g class="ma-edge ma-kind-activation" data-edge-id="stack-norm-final" tabindex="0" role="button"><title>h₃₂ · stack.out → norm-final.in</title><path class="ma-edge-halo" d="M340 714L340 760"/><path class="ma-edge-line" d="M340 714L340 760" marker-end="url(#atlas-model-inference-680-arrow)"/><path class="ma-edge-hit edge-hit" d="M340 714L340 760"/><rect x="362" y="728" width="31.6" height="18" rx="1" fill="#fff"/><text x="367" y="741" class="ma-edge-label" text-anchor="start">h₃₂</text></g><g class="ma-edge ma-kind-activation" data-edge-id="norm-final-head" tabindex="0" role="button"><title>r · norm-final.out → head.in</title><path class="ma-edge-halo" d="M340 854L340 900"/><path class="ma-edge-line" d="M340 854L340 900" marker-end="url(#atlas-model-inference-680-arrow)"/><path class="ma-edge-hit edge-hit" d="M340 854L340 900"/><rect x="362" y="868" width="17.2" height="18" rx="1" fill="#fff"/><text x="367" y="881" class="ma-edge-label" text-anchor="start">r</text></g><g class="ma-edge ma-kind-activation" data-edge-id="head-logits" tabindex="0" role="button"><title>Z · head.out → logits.in</title><path class="ma-edge-halo" d="M340 994L340 1040"/><path class="ma-edge-line" d="M340 994L340 1040" marker-end="url(#atlas-model-inference-680-arrow)"/><path class="ma-edge-hit edge-hit" d="M340 994L340 1040"/><rect x="362" y="1008" width="17.2" height="18" rx="1" fill="#fff"/><text x="367" y="1021" class="ma-edge-label" text-anchor="start">Z</text></g><g class="ma-edge ma-kind-activation" data-edge-id="logits-execution" tabindex="0" role="button"><title>Z · logits.out → execution.in</title><path class="ma-edge-halo" d="M340 1134L340 1180"/><path class="ma-edge-line" d="M340 1134L340 1180" marker-end="url(#atlas-model-inference-680-arrow)"/><path class="ma-edge-hit edge-hit" d="M340 1134L340 1180"/><rect x="362" y="1148" width="17.2" height="18" rx="1" fill="#fff"/><text x="367" y="1161" class="ma-edge-label" text-anchor="start">Z</text></g><g class="ma-node ma-kind-activation" data-node-id="text" tabindex="0" role="button" aria-label="Text / prompt"><title>Text / prompt</title><desc>Raw text supplied as a prompt or from a training corpus. Tokenization is outside the learned model.</desc><rect class="ma-box" x="170" y="34" width="340" height="94" rx="3"/><text class="ma-stage" x="184" y="51">01</text><rect x="490" y="44" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="74" style="font-size:16px">Text / prompt</text><text class="ma-sub" x="184" y="99">source text</text></g><g class="ma-node ma-kind-activation" data-node-id="tokenizer" tabindex="0" role="button" aria-label="Tokenizer"><title>Tokenizer</title><desc>Applies the tokenizer vocabulary and segmentation rules. This operation is not part of gradient backpropagation.</desc><rect class="ma-box" x="170" y="174" width="340" height="94" rx="3"/><text class="ma-stage" x="184" y="191">02</text><rect x="490" y="184" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="214" style="font-size:16px">Tokenizer</text><text class="ma-sub" x="184" y="239">encode text to IDs</text></g><g class="ma-node ma-kind-activation" data-node-id="tokens" tabindex="0" role="button" aria-label="Token IDs"><title>Token IDs</title><desc>The discrete input sequence. Generation appends IDs directly; it does not send sampled tokens through tokenization again.</desc><rect class="ma-box" x="170" y="314" width="340" height="94" rx="3"/><text class="ma-stage" x="184" y="331">03</text><rect x="490" y="324" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="354" style="font-size:16px">Token IDs</text><text class="ma-sub" x="184" y="379">x₁ … xₜ</text></g><g class="ma-node ma-kind-activation" data-node-id="embedding" tabindex="0" role="button" aria-label="Learned embeddings"><title>Learned embeddings</title><desc>Looks up one learned hidden vector for each token index.</desc><rect class="ma-box" x="170" y="454" width="340" height="94" rx="3"/><text class="ma-stage" x="184" y="471">04</text><rect x="490" y="464" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="494" style="font-size:16px">Learned embeddings</text><text class="ma-sub" x="184" y="519">h₀ = E[IDs]</text></g><g class="ma-node ma-kind-activation" data-node-id="stack" tabindex="0" role="button" aria-label="32 decoder blocks"><title>32 decoder blocks</title><desc>Applies 32 blocks sequentially, each with its own parameters. Position information and masking enter the attention operation inside each block.</desc><rect class="ma-box" x="170" y="594" width="340" height="120" rx="3"/><text class="ma-stage" x="184" y="611">05</text><rect x="490" y="604" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="634" style="font-size:16px">32 decoder blocks</text><text class="ma-sub" x="184" y="659">1 → 2 → … → 32</text><text class="ma-open" x="184" y="701" data-open-view="decoder" role="button" tabindex="0">Expand →</text></g><g class="ma-node ma-kind-activation" data-node-id="norm-final" tabindex="0" role="button" aria-label="Final RMSNorm"><title>Final RMSNorm</title><desc>Normalizes the final residual stream before the vocabulary projection.</desc><rect class="ma-box" x="170" y="760" width="340" height="94" rx="3"/><text class="ma-stage" x="184" y="777">06</text><rect x="490" y="770" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="800" style="font-size:16px">Final RMSNorm</text><text class="ma-sub" x="184" y="825">normalize h₃₂</text></g><g class="ma-node ma-kind-activation" data-node-id="head" tabindex="0" role="button" aria-label="Vocabulary projection"><title>Vocabulary projection</title><desc>Projects normalized hidden states to an unnormalized score for every vocabulary item. Output/embedding weight tying is not specified.</desc><rect class="ma-box" x="170" y="900" width="340" height="94" rx="3"/><text class="ma-stage" x="184" y="917">07</text><rect x="490" y="910" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="940" style="font-size:16px">Vocabulary projection</text><text class="ma-sub" x="184" y="965">linear / LM head</text></g><g class="ma-node ma-kind-activation" data-node-id="logits" tabindex="0" role="button" aria-label="Shared logits"><title>Shared logits</title><desc>The same vocabulary scores support training and generation. Cross-entropy consumes logits directly; decoding chooses a next token.</desc><rect class="ma-box" x="170" y="1040" width="340" height="94" rx="3"/><text class="ma-stage" x="184" y="1057">08</text><rect x="490" y="1050" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="1080" style="font-size:16px">Shared logits</text><text class="ma-sub" x="184" y="1105">unnormalized scores Z</text></g><g class="ma-node ma-kind-activation" data-node-id="execution" tabindex="0" role="button" aria-label="Next-token generation"><title>Next-token generation</title><desc>Open the prefill, sampling and cached autoregressive decode loop.</desc><rect class="ma-box" x="170" y="1180" width="340" height="120" rx="3"/><text class="ma-stage" x="184" y="1197">09</text><rect x="490" y="1190" width="6" height="6" fill="#70a0ff" stroke="#555" stroke-width=".6"/><text class="ma-text ma-node-title" x="184" y="1220" style="font-size:16px">Next-token generation</text><text class="ma-sub" x="184" y="1245">prefill → select → decode</text><text class="ma-open" x="184" y="1287" data-open-view="inference" role="button" tabindex="0">Expand →</text></g><text class="ma-note" x="30" y="1342">Open the decoder block to inspect its two residual sublayers.</text></svg>
+    </div>
+    <div class="atlas-board-caption"><span>Click a module or line to inspect · use ← / → to follow stages</span><span id="atlas-view-scope">One computation layer at a time</span><button type="button" class="atlas-link-button" id="atlas-back-controls">↑ Back to controls</button></div>
+  </section>
+
+  <section class="atlas-inspector table-scroll" id="atlas-inspector" aria-labelledby="atlas-inspector-title">
+    <div class="atlas-overline">INSPECT / TENSORS &amp; CONNECTIONS</div>
+    <h2 class="atlas-inspector-title" id="atlas-inspector-title">Inspect the computation</h2>
+    <p class="atlas-inspector-empty">Select a module for its equation, tensor shapes, and connected operations. Select a connection to inspect its source and destination ports.</p>
+  </section>
+
+  <p class="atlas-scope" id="atlas-scope">32-block reference configuration · symbolic tensor dimensions · pre-norm, RoPE, grouped-query attention, SwiGLU.</p>
+  <details class="atlas-sources">
+    <summary>Architecture scope &amp; primary sources</summary>
+    <p class="atlas-footnote">The supplied model drawing specifies 32 decoder blocks, pre-norm residuals, grouped-query attention, RoPE and SwiGLU. The OpenAI reference supplies the visual style. Model identity, numerical dimensions, optimizer choice and weight tying are unspecified. The boards show logical data dependencies; actual kernels may fuse operations.</p>
+<ul><li><a href="https://github.com/meta-llama/llama/blob/main/llama/model.py" target="_blank" rel="noreferrer noopener">Reference implementation: residuals, Q/K rotations, K/V cache, SwiGLU and output projection</a></li><li><a href="https://aclanthology.org/2023.emnlp-main.298/" target="_blank" rel="noreferrer noopener">Grouped-query attention — original paper</a></li><li><a href="https://arxiv.org/abs/2104.09864" target="_blank" rel="noreferrer noopener">RoFormer — rotary position embedding</a></li><li><a href="https://arxiv.org/abs/1910.07467" target="_blank" rel="noreferrer noopener">Root Mean Square Layer Normalization</a></li><li><a href="https://arxiv.org/abs/2002.05202" target="_blank" rel="noreferrer noopener">GLU Variants Improve Transformer — SwiGLU</a></li><li><a href="https://docs.pytorch.org/docs/2.12/generated/torch.nn.CrossEntropyLoss.html" target="_blank" rel="noreferrer noopener">PyTorch CrossEntropyLoss — logits, labels and reduction</a></li></ul>
+<p class="atlas-footnote">B = batch size; T = sequence length; D = residual width; Tq = newly processed tokens; P = previous cache length; Tk = P + Tq; Hq / Hkv = query / key-value head counts; dh = head width; F = feed-forward width; |V| = vocabulary size. Position and context-bound metadata are supplied by the parent model invocation.</p>
+  </details>
+  <div class="atlas-sr-only" id="atlas-announcement" aria-live="polite"></div>
+  <noscript><p class="atlas-footnote">The model overview remains visible. Enable JavaScript to inspect components, switch layers, follow stages, and export individual diagrams.</p></noscript>
+</main>
+<script>
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.ModelAtlas=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
+'use strict';
+const views=[
+ {id:'model',label:'01 Model',title:'The complete model',parent:null,description:'Follow the shared computation from text to logits, then open the relevant execution path.'},
+ {id:'decoder',label:'02 Decoder',title:'One decoder block',parent:'model',description:'Two pre-norm sublayers. Each residual starts before its own normalization and ends at a separate addition.'},
+ {id:'attention',label:'03 Attention',title:'Grouped-query attention',parent:'decoder',description:'Trace Q, K and V separately through position, context, score formation and value aggregation.'},
+ {id:'swiglu',label:'04 SwiGLU',title:'The gated feed-forward network',parent:'decoder',description:'The gate and up projections run in parallel. Only the gate passes through SiLU.'},
+ {id:'inference',label:'05 Generation',title:'Prefill and cached generation',parent:'model',description:'Prefill creates the initial cache. Later invocations consume a new token and the previous per-layer state.'},
+ {id:'training',label:'06 Training',title:'The training objective and update loop',parent:'model',description:'Separate token alignment, loss computation, gradients, parameter state and iteration control.'}
+];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const shape={h:'[B, T, D]',q:'[B, Hq, Tq, dh]',kv:'[B, Hkv, Tq, dh]',ctx:'[B, Hkv, Tk, dh]',score:'[B, Hq, Tq, Tk]',f:'[B, T, F]',z:'[B, T, |V|]'};
+const tensor=(name,shape,detail='')=>({name,shape,detail});
+function wrap(text,width,font=16){
+ const max=Math.max(5,Math.floor(width/(font*.54))),words=String(text).split(/\s+/),lines=[];let line='';
+ for(const word of words){if(line&&(line+' '+word).length>max){lines.push(line);line=word;}else line+=(line?' ':'')+word;}if(line)lines.push(line);return lines;
+}
+function route(points){
+ const p=points.filter((v,i,a)=>!i||v[0]!==a[i-1][0]||v[1]!==a[i-1][1]);if(p.length<2)return '';
+ let d='M'+p[0].join(' ');for(let i=1;i<p.length-1;i++){
+  const a=p[i-1],b=p[i],c=p[i+1],ab=Math.hypot(b[0]-a[0],b[1]-a[1]),bc=Math.hypot(c[0]-b[0],c[1]-b[1]);
+  if(!ab||!bc)continue;const r=Math.min(7,ab/2,bc/2),s=[b[0]-(b[0]-a[0])*r/ab,b[1]-(b[1]-a[1])*r/ab],e=[b[0]+(c[0]-b[0])*r/bc,b[1]+(c[1]-b[1])*r/bc];
+  d+='L'+s.join(' ')+'Q'+b.join(' ')+' '+e.join(' ');
+ }return d+'L'+p[p.length-1].join(' ');
+}
+function make(view,mode,width){
+ const W=Math.max(280,Math.round(width)),v=views.find(x=>x.id===view),g={view,mode,width:W,height:0,title:v.title,subtitle:v.description,parent:v.parent,nodes:[],edges:[],steps:[],notes:[],groups:[],junctions:[],scope:'32 decoder blocks come from the supplied architecture. B, T, D, Hq, Hkv, dh, F and |V| are symbolic; numerical sizes and weight tying are unspecified.'};
+ const M=W<480?18:30, map=new Map();
+ function n(id,title,x,y,w,h,stage,opt={}){
+  const o={id,title,rect:{x,y,w,h},stage,description:opt.description||title,operation:opt.operation||'',inputs:opt.inputs||[],outputs:opt.outputs||[],subtitle:opt.subtitle||'',nextView:opt.nextView,kind:opt.kind||'activation',...opt};
+  o.ports={};map.set(id,o);g.nodes.push(o);return o;
+ }
+ function port(id,name,side='bottom',f=.5){const o=map.get(id),r=o.rect;const p=side==='top'?[r.x+r.w*f,r.y]:side==='bottom'?[r.x+r.w*f,r.y+r.h]:side==='left'?[r.x,r.y+r.h*f]:[r.x+r.w,r.y+r.h*f];o.ports[name]={side,f,x:p[0],y:p[1]};return p;}
+ function e(id,from,to,label,stage,opt={}){
+  const a=port(from[0],from[1],from[2]||'bottom',from[3]==null?.5:from[3]),b=port(to[0],to[1],to[2]||'top',to[3]==null?.5:to[3]);
+  let points=opt.via?[a,...opt.via,b]:a[0]===b[0]||a[1]===b[1]?[a,b]:[a,[a[0],(a[1]+b[1])/2],[b[0],(a[1]+b[1])/2],b];
+  const o={id,from:{node:from[0],port:from[1]},to:{node:to[0],port:to[1]},label,stage,kind:opt.kind||'activation',detail:opt.detail||label,points,d:route(points),labelAt:opt.labelAt||null,short:opt.short==null?label:opt.short, ...opt};g.edges.push(o);return o;
+ }
+ function s(title,detail,ids){g.steps.push({title,detail,nodes:ids,edges:[]});}
+ const note=(x,y,text,opt={})=>g.notes.push({x,y,text,...opt});
+ const group=(x,y,w,h,label)=>g.groups.push({x,y,w,h,label});
+ function chain(from,to,label,stage,opt={}){return e(from+'-'+to,[from,'out'],[to,'in'],label,stage,opt);}
+
+ if(view==='model'){
+  const nw=Math.min(340,W-2*M-56),x=(W-nw)/2,h=94,gap=46;let y=34;
+  const items=[
+   ['text','Text / prompt','source text','Raw text supplied as a prompt or from a training corpus. Tokenization is outside the learned model.',[],[tensor('text','string')]],
+   ['tokenizer','Tokenizer','encode text to IDs','Applies the tokenizer vocabulary and segmentation rules. This operation is not part of gradient backpropagation.',[tensor('text','string')],[tensor('IDs','[B, T]','Integer token indices.')]],
+   ['tokens','Token IDs','x₁ … xₜ','The discrete input sequence. Generation appends IDs directly; it does not send sampled tokens through tokenization again.',[tensor('IDs','[B, T]')],[tensor('IDs','[B, T]')]],
+   ['embedding','Learned embeddings','h₀ = E[IDs]','Looks up one learned hidden vector for each token index.',[tensor('IDs','[B, T]')],[tensor('h₀',shape.h)]],
+   ['stack','32 decoder blocks','1 → 2 → … → 32','Applies 32 blocks sequentially, each with its own parameters. Position information and masking enter the attention operation inside each block.',[tensor('h₀',shape.h),tensor('position / mask','metadata')],[tensor('h₃₂',shape.h)]],
+   ['norm-final','Final RMSNorm','normalize h₃₂','Normalizes the final residual stream before the vocabulary projection.',[tensor('h₃₂',shape.h)],[tensor('r',shape.h)]],
+   ['head','Vocabulary projection','linear / LM head','Projects normalized hidden states to an unnormalized score for every vocabulary item. Output/embedding weight tying is not specified.',[tensor('r',shape.h)],[tensor('Z',shape.z)]],
+   ['logits','Shared logits','unnormalized scores Z','The same vocabulary scores support training and generation. Cross-entropy consumes logits directly; decoding chooses a next token.',[tensor('Z',shape.z)],[tensor('Z',shape.z)]],
+   ['execution',mode==='training'?'Training objective':'Next-token generation',mode==='training'?'loss → gradients → update':'prefill → select → decode',mode==='training'?'Open the supervised next-token objective and parameter update loop.':'Open the prefill, sampling and cached autoregressive decode loop.',[tensor('Z',shape.z)],[tensor(mode==='training'?'loss / updates':'next token',mode==='training'?'scalar / parameters':'[B]')]]
+  ];
+  items.forEach((a,i)=>{const next=a[0]==='stack'?'decoder':a[0]==='execution'?(mode==='training'?'training':'inference'):null;n(a[0],a[1],x,y,nw,h+(next?26:0),i,{subtitle:a[2],description:a[3],inputs:a[4],outputs:a[5],nextView:next,operation:a[0]==='embedding'?'h₀ = E[IDs]':a[0]==='stack'?'hℓ = Decoderℓ(hℓ₋₁), ℓ = 1, …, 32':a[0]==='norm-final'?'r = γ ⊙ h₃₂ / √(mean(h₃₂²) + ε)':a[0]==='head'?'Z = r W_vocab':'',kind:a[0]==='execution'&&mode==='training'?'gradient':'activation'});s(a[1],a[3],[a[0]]);if(i){const prev=items[i-1][0],label=items[i-1][5][0].name;chain(prev,a[0],label,i,{labelAt:[x+nw/2+27,y-gap/2+4],short:label});}y+=h+(next?26:0)+gap;});
+  g.height=y+2;note(M,y-4,'Open the decoder block to inspect its two residual sublayers.');
+ }
+
+ if(view==='decoder'){
+  const nw=Math.min(300,W-2*M-100),x=(W-nw)/2,h=94,ys=[34,180,326,506,652,798,978,1124];
+  const data=[
+   ['h','Block input','hℓ₋₁','The incoming residual stream forks before the first normalization.','',[],[tensor('hℓ₋₁',shape.h)]],
+   ['norm-a','RMSNorm 1','attention input a','Normalize the attention input while keeping the original residual separate.','a = RMSNorm₁(hℓ₋₁)',[tensor('hℓ₋₁',shape.h)],[tensor('a',shape.h)]],
+   ['gqa','Grouped-query attention','projected output o','The attention branch performs Q/K/V projection, Q/K rotary position, context assembly, causal attention, head concatenation and W_O.','o = GQA(a)',[tensor('a',shape.h)],[tensor('o',shape.h)]],
+   ['add-a','Add attention residual','u = hℓ₋₁ + o','Adds exactly two tensors: the original pre-normalization residual and the attention output.','u = hℓ₋₁ + o',[tensor('residual',shape.h,'Original hℓ₋₁.'),tensor('attention',shape.h,'Projected attention output o.')],[tensor('u',shape.h)]],
+   ['norm-f','RMSNorm 2','feed-forward input b','Normalize the post-attention state. The second residual bypass begins at u, before this norm.','b = RMSNorm₂(u)',[tensor('u',shape.h)],[tensor('b',shape.h)]],
+   ['ffn','SwiGLU feed-forward','projected output f','Parallel gate and up projections are combined by elementwise multiplication, then projected back to model width.','f = [SiLU(b W_gate) ⊙ (b W_up)] W_down',[tensor('b',shape.h)],[tensor('f',shape.h)]],
+   ['add-f','Add feed-forward residual','hℓ = u + f','Adds the post-attention residual u to the feed-forward output.','hℓ = u + f',[tensor('residual',shape.h,'The state u after attention addition.'),tensor('ffn',shape.h,'SwiGLU output f.')],[tensor('hℓ',shape.h)]],
+   ['h-out','Block output','hℓ → next block','For block 1, this is h₁ passed to block 2. Block 32 instead passes h₃₂ to final RMSNorm.','',[tensor('hℓ',shape.h)],[tensor('hℓ',shape.h)]]
+  ];
+  data.forEach((a,i)=>{const next=a[0]==='gqa'?'attention':a[0]==='ffn'?'swiglu':null;n(a[0],a[1],x,ys[i],nw,h+(next?26:0),i,{subtitle:a[2],description:a[3],operation:a[4],inputs:a[5],outputs:a[6],nextView:next});s(a[1],a[3],[a[0]]);if(i)chain(data[i-1][0],a[0],data[i-1][6][0].name,i,{labelAt:[x+nw/2+27,ys[i]-20],short:data[i-1][6][0].name});});
+  const right=W-M+2,left=M-2;
+  e('residual-h',['h','residual','right'],['add-a','residual','right'],'Residual hℓ₋₁',3,{via:[[right,81],[right,553]],labelAt:[right-9,485],short:W<480?'hℓ₋₁':'residual hℓ₋₁',anchor:'end',detail:'The original block input bypasses RMSNorm 1 and the entire attention branch.'});
+  e('residual-u',['add-a','residual-out','left'],['add-f','residual','left'],'Residual u',6,{via:[[left,553],[left,1025]],labelAt:[left+9,951],short:W<480?'u':'residual u',detail:'The post-attention state bypasses RMSNorm 2 and the SwiGLU network.'});
+  g.height=1268;note(M,1250,'Both additions preserve shape [B, T, D]. Residuals use separate rails.');
+ }
+
+ if(view==='swiglu'){
+  const gap=W<480?28:62,cw=Math.min(260,(W-2*M-gap)/2),l=(W-2*cw-gap)/2,r=l+cw+gap,mainW=Math.min(300,W-2*M-32),x=(W-mainW)/2;
+  n('b','Normalized FFN input',x,34,mainW,94,0,{subtitle:'b from RMSNorm 2',description:'Both branches receive the same normalized post-attention hidden state.',inputs:[tensor('b',shape.h)],outputs:[tensor('b',shape.h)]});
+  n('gate','Gate projection',l,210,cw,108,1,{subtitle:'G = b W_gate',description:'Projects the input into the gate branch of the intermediate feature space.',operation:'G = b W_gate',inputs:[tensor('b',shape.h)],outputs:[tensor('G',shape.f)]});
+  n('up','Up projection',r,210,cw,108,1,{subtitle:'U = b W_up',description:'Projects the same input into the up branch. This branch has no SiLU activation.',operation:'U = b W_up',inputs:[tensor('b',shape.h)],outputs:[tensor('U',shape.f)]});
+  n('silu','SiLU activation',l,394,cw,108,2,{subtitle:'S = G · sigmoid(G)',description:'Only the gate branch receives the SiLU nonlinearity.',operation:'S = SiLU(G) = G · sigmoid(G)',inputs:[tensor('G',shape.f)],outputs:[tensor('S',shape.f)]});
+  n('multiply','Elementwise product',x,590,mainW,104,3,{subtitle:'M = S ⊙ U',description:'Multiplies the activated gate by the up branch at each feature position. This is a Hadamard product, not a sum.',operation:'M = SiLU(b W_gate) ⊙ (b W_up)',inputs:[tensor('gate S',shape.f),tensor('up U',shape.f)],outputs:[tensor('M',shape.f)]});
+  n('down','Down projection',x,766,mainW,96,4,{subtitle:'f = M W_down',description:'Returns the gated intermediate features to the residual-stream width D.',operation:'f = [SiLU(b W_gate) ⊙ (b W_up)] W_down',inputs:[tensor('M',shape.f)],outputs:[tensor('f',shape.h)]});
+  n('f-out','FFN output',x,934,mainW,94,5,{subtitle:'f → second residual add',description:'The decoder adds this projected feed-forward output to u, the post-attention residual.',inputs:[tensor('f',shape.h)],outputs:[tensor('f',shape.h)]});
+  e('fork-gate',['b','b'],['gate','b'],'b',1,{via:[[W/2,165],[l+cw/2,165]],labelAt:[l+cw/2+15,190]});
+  e('fork-up',['b','b'],['up','b'],'b',1,{via:[[W/2,165],[r+cw/2,165]],labelAt:[r+cw/2+15,190]});g.junctions.push([W/2,165]);
+  chain('gate','silu','G',2,{labelAt:[l+cw/2+20,362]});
+  e('gate-product',['silu','S'],['multiply','gate','top',.3],'activated gate S',3,{via:[[l+cw/2,548],[x+mainW*.3,548]],labelAt:[x+mainW*.3-12,572],short:'S',anchor:'end'});
+  e('up-product',['up','U'],['multiply','up','right',.55],'up branch U',3,{via:[[r+cw/2,555],[W-M+2,555],[W-M+2,647.2]],labelAt:[W-M-7,530],short:'U',anchor:'end'});
+  chain('multiply','down','M',4,{labelAt:[W/2+22,739]});chain('down','f-out','f',5,{labelAt:[W/2+22,905]});
+  s('Receive normalized input','The input b is shared by both branches.',['b']);s('Project gate and up in parallel','These two projections are independent operations on the same input.',['gate','up']);s('Activate the gate','SiLU applies to G only; U bypasses the activation.',['silu']);s('Multiply the branches','The activated gate S and up projection U enter separate ports of the product.',['multiply']);s('Return to model width','The down projection maps F features back to D.',['down']);s('Return to the decoder','The result f goes to the second residual addition.',['f-out']);
+  g.height=1088;note(M,1065,'F is the intermediate width; its numerical value is unspecified.');
+ }
+
+ if(view==='attention'){
+  const gap=W<480?14:24,cw=(W-2*M-2*gap)/3,qx=M,kx=M+cw+gap,vx=M+2*(cw+gap),span=2*cw+gap,cx=kx,calcW=Math.min(310,W-cx-M-12),qxC=qx+cw/2,kxC=kx+cw/2,vxC=vx+cw/2,mainX=cx,mainC=cx+calcW/2;
+  n('a','Normalized attention input',(W-Math.min(300,W-2*M))/2,30,Math.min(300,W-2*M),94,0,{subtitle:'a from RMSNorm 1',description:'The same normalized hidden state feeds three independent projections.',inputs:[tensor('a','[B, Tq, D]')],outputs:[tensor('a','[B, Tq, D]')]});
+  const proj=[['q','Q projection',qx,'Q',shape.q,'Hq query heads'],['k','K projection',kx,'Knew',shape.kv,'Hkv key heads'],['v','V projection',vx,'Vnew',shape.kv,'Hkv value heads']];
+  proj.forEach(([id,title,x,out,sh,sub])=>n(id,title,x,198,cw,106,1,{subtitle:W<480?'project + split':sub,description:'Linear projection followed by a reshape into attention heads. '+(id==='v'?'Values do not receive RoPE.':id==='q'?'Queries are never stored in the KV cache.':'New keys are rotated before ordinary cache insertion.'),operation:out+' = SplitHeads(a W_'+id.toUpperCase()+')',inputs:[tensor('a','[B, Tq, D]')],outputs:[tensor(out,sh)]}));
+  n('rq','RoPE on Q',qx,372,cw,106,2,{subtitle:'Q → Q̃',description:'Rotate queries according to the current token positions.',operation:'Q̃ᵢ = R(pᵢ) Qᵢ',inputs:[tensor('Q',shape.q),tensor('positions','[Tq]')],outputs:[tensor('Q̃',shape.q)]});
+  n('rk','RoPE on K',kx,372,cw,106,2,{subtitle:'Knew → K̃new',description:'Rotate new keys before assembling the attention context or appending them to the cache.',operation:'K̃new,ᵢ = R(pᵢ) Knew,ᵢ',inputs:[tensor('Knew',shape.kv),tensor('positions','[Tq]')],outputs:[tensor('K̃new',shape.kv)]});
+  n('positions','Position IDs',vx,372,cw,106,2,{subtitle:mode==='inference'?'p = P … P+Tq−1':'p = 0 … Tq−1',description:mode==='inference'?'Position and context-bound metadata supplied by the parent model invocation. P is the valid cached prefix length; new query positions begin at P. This is an input source to attention.':'Position and context-bound metadata supplied by the parent model invocation. For an ordinary contiguous training sequence P is zero. This is an input source to attention.',operation:mode==='inference'?'pᵢ = P + i':'pᵢ = i',inputs:[],outputs:[tensor('positions','[Tq]'),tensor('context bounds','Tq, Tk; P for cached inference')],kind:'metadata'});
+  if(mode==='inference')n('cache-old','Previous K/V cache',qx,564,cw,122,3,{subtitle:'this layer · P tokens',description:'Read the previous valid K/V prefix for this decoder layer. Cached keys already include RoPE; values do not.',inputs:[],outputs:[tensor('Kprev','[B, Hkv, P, dh]'),tensor('Vprev','[B, Hkv, P, dh]')],kind:'kv-state'});
+  n('context',mode==='inference'?'Append new K/V':'Current-sequence K/V',kx,564,span,122,3,{subtitle:mode==='inference'?'ordered context · Tk = P + Tq':'context · Tk = Tq',description:mode==='inference'?'Append the new rotated keys and unrotated values to the previous prefix. Attention reads each complete resulting context exactly once.':'Use the current-sequence rotated keys and values directly. No persistent inference cache participates in this path.',operation:mode==='inference'?'Kctx = Concat_time(Kprev, K̃new)\nVctx = Concat_time(Vprev, Vnew)':'Kctx = K̃new; Vctx = Vnew',inputs:[tensor('K̃new',shape.kv),tensor('Vnew',shape.kv),...(mode==='inference'?[tensor('Kprev / Vprev','[B, Hkv, P, dh]')]:[])],outputs:[tensor('Kctx',shape.ctx),tensor('Vctx',shape.ctx),...(mode==='inference'?[tensor('cache_next','ordered per-layer state')]:[])],kind:mode==='inference'?'kv-state':'activation'});
+  if(mode==='inference')n('cache-next','Updated K/V cache',qx,768,cw,126,4,{subtitle:'next invocation',description:'Persist the exact contexts just assembled. This is state for the next invocation, not a second simultaneous input to the current attention calculation.',inputs:[tensor('cache_next','Kctx and Vctx')],outputs:[tensor('next-call state','per-layer K/V + valid length')],kind:'kv-state'});
+  n('head-map','GQA head mapping',kx,768,span,126,4,{subtitle:'g = Hq / Hkv',description:'Query head h uses key/value head floor(h/g). The same mapping applies to K and V. This is logical sharing; implementations need not materialize repeated tensors.',operation:'kv_head(h) = floor(h / g), g = Hq / Hkv',inputs:[tensor('Kctx',shape.ctx),tensor('Vctx',shape.ctx)],outputs:[tensor('mapped K','logical [B, Hq, Tk, dh]'),tensor('mapped V','logical [B, Hq, Tk, dh]')]});
+  n('scores','Scaled QKᵀ scores',mainX,988,calcW,104,5,{subtitle:'S = Q̃Kctxᵀ / √dh',description:'Compute one query-to-key score per allowed logical head pair. Scores are mathematical intermediates; a fused attention kernel may avoid materializing the entire matrix.',operation:'S[h,i,j] = dot(Q̃[h,i], Kctx[floor(h/g),j]) / √dh',inputs:[tensor('Q̃',shape.q),tensor('mapped K','logical [B, Hq, Tk, dh]')],outputs:[tensor('S',shape.score)]});
+  n('mask-src','Causal mask',qx,1172,cw,106,6,{subtitle:mode==='inference'?'allow j ≤ P+i':'allow j ≤ i',description:'For contiguous sequences, a query can only access its own and earlier absolute positions. Padding and segment restrictions, when used, are additional conditions.',operation:mode==='inference'?'M[i,j] = 0 if j ≤ P+i; −∞ otherwise':'M[i,j] = 0 if j ≤ i; −∞ otherwise',inputs:[tensor('position / lengths','metadata')],outputs:[tensor('M','broadcastable to scores')],kind:'metadata'});
+  n('masked','Add attention mask',mainX,1172,calcW,106,6,{subtitle:'S_masked = S + M',description:'The mask enters the score path before softmax; it is not applied to the values.',operation:'S_masked = S + M',inputs:[tensor('scores S',shape.score),tensor('mask M','broadcastable')],outputs:[tensor('S_masked',shape.score)]});
+  n('prob','Softmax over keys',mainX,1356,calcW,98,7,{subtitle:'A = softmaxⱼ(S_masked)',description:'Normalize scores across key positions j for each query position and query head.',operation:'A[h,i,j] = softmax_j(S[h,i,j] + M[i,j])',inputs:[tensor('S_masked',shape.score)],outputs:[tensor('A',shape.score)]});
+  n('weighted','Weighted value sum',mainX,1538,calcW,106,8,{subtitle:'O_heads = A · Vctx',description:'Attention probabilities weight the corresponding mapped value heads. V bypasses score formation, masking and softmax and enters here.',operation:'O_heads[h,i] = Σ_j A[h,i,j] Vctx[floor(h/g),j]',inputs:[tensor('probabilities A',shape.score),tensor('mapped V','logical [B, Hq, Tk, dh]')],outputs:[tensor('O_heads',shape.q)]});
+  n('concat','Concatenate heads',mainX,1726,calcW,98,9,{subtitle:'[B, Tq, Hq · dh]',description:'Reorder and concatenate the per-query-head outputs for each query token.',operation:'C = ConcatHeads(O_heads)',inputs:[tensor('O_heads',shape.q)],outputs:[tensor('C','[B, Tq, Hq·dh]')]});
+  n('wo','Output projection W_O',mainX,1904,calcW,98,10,{subtitle:'o = C W_O',description:'Project the combined attention heads back to width D before the first residual addition.',operation:'o = C W_O',inputs:[tensor('C','[B, Tq, Hq·dh]')],outputs:[tensor('o','[B, Tq, D]')]});
+  n('attention-out','Attention output',mainX,2082,calcW,98,11,{subtitle:'o → first residual add',description:'Return the projected output to the decoder. The residual h is added outside attention.',inputs:[tensor('o','[B, Tq, D]')],outputs:[tensor('o','[B, Tq, D]')]});
+  for(const id of ['q','k','v']){const c=map.get(id).rect.x+cw/2;e('input-'+id,['a','a'],[id,'a'],'a',1,{via:[[W/2,162],[c,162]],labelAt:[c+13,184],short:'a'});}g.junctions.push([W/2,162]);
+  e('q-rope',['q','Q'],['rq','Q'],'Q',2,{labelAt:[qxC+15,348]});e('k-rope',['k','Knew'],['rk','Knew'],'Knew',2,{labelAt:[kxC+15,348],short:'K'});
+  e('position-k',['positions','p','left'],['rk','p','right'],'positions p',2,{kind:'metadata',short:''});
+  e('position-q',['positions','p-Q','top',.65],['rq','p','right'], 'positions p',2,{kind:'metadata',via:[[vx+cw*.65,333],[qx+cw+gap/2,333],[qx+cw+gap/2,425]],labelAt:[vx+cw*.65-8,324],short:'p',anchor:'end'});
+  e('key-context',['rk','K̃new'],['context','new K','top',.23],'rotated new K',3,{via:[[kxC,526],[kx+span*.23,526]],labelAt:[kx+span*.23+14,548],short:'K̃new'});
+  e('value-context',['v','Vnew','right'],['context','new V','top',.83],'unrotated new V',3,{via:[[W-10,251],[W-10,526],[kx+span*.83,526]],labelAt:[kx+span*.83-12,548],short:'Vnew',anchor:'end'});
+  if(mode==='inference'){
+   e('read-cache',['cache-old','previous K/V','right'],['context','previous K/V','left'],'previous K/V',3,{kind:'kv-state',short:''});
+   e('persist-cache',['context','cache_next','bottom',.08],['cache-next','next-call state','top'],'persist cache',4,{kind:'kv-state',via:[[kx+span*.08,720],[qxC,720]],labelAt:[qxC+15,748],short:'state'});
+  }
+  e('context-map-k',['context','Kctx','bottom',.32],['head-map','Kctx','top',.32],'Kctx',4,{labelAt:[kx+span*.32+10,737]});
+  e('context-map-v',['context','Vctx','bottom',.76],['head-map','Vctx','top',.76],'Vctx',4,{labelAt:[kx+span*.76-10,737],anchor:'end'});
+  e('query-scores',['rq','Q̃'],['scores','query','left',.4],'rotated query Q̃',5,{via:[[qxC,517],[10,517],[10,1029.6]],labelAt:[20,961],short:'Q̃'});
+  e('key-scores',['head-map','mapped K','bottom',.4],['scores','key','top',.65],'mapped Kctx',5,{via:[[kx+span*.4,945],[mainX+calcW*.65,945]],labelAt:[mainX+calcW*.65+12,965],short:'Kctx'});
+  chain('scores','masked','S',6,{labelAt:[mainC+18,1145]});
+  e('positions-mask',['positions','position metadata','bottom'],['mask-src','positions and bounds','top'],'positions and context bounds',6,{kind:'metadata',via:[[vxC,503],[kx-gap/2,503],[kx-gap/2,1137],[qxC,1137]],labelAt:[kx-gap/2-8,1119],short:'p / Tk',anchor:'end'});
+  e('apply-mask',['mask-src','mask','right'],['masked','mask','left'],'causal mask M',6,{kind:'metadata',short:''});
+  chain('masked','prob','S + M',7,{labelAt:[mainC+18,1327]});chain('prob','weighted','A',8,{labelAt:[mainC+18,1508]});
+  e('values-weighted',['head-map','mapped V','right',.72],['weighted','values','right',.52],'mapped values Vctx',8,{via:[[W-10,858.72],[W-10,1593.12]],labelAt:[W-20,1486],short:'Vctx',anchor:'end'});
+  chain('weighted','concat','O_heads',9,{labelAt:[mainC+17,1698]});chain('concat','wo','C',10,{labelAt:[mainC+17,1875]});chain('wo','attention-out','o',11,{labelAt:[mainC+17,2053]});
+  s('Receive normalized input','All three projections consume the same a.',['a']);s('Project and split Q, K and V','The three branches are parallel, not three serial steps.',['q','k','v']);s('Apply rotary positions to Q and K','Position IDs feed Q/K only; V goes directly to context assembly.',['rq','rk','positions']);s(mode==='inference'?'Append new K/V to the previous prefix':'Use the current sequence as context',mode==='inference'?'Each complete K/V context is assembled once; the cache never contains queries.':'Training uses current-sequence K/V directly; there is no persistent inference cache.',mode==='inference'?['cache-old','context']:['context']);s('Map query heads to KV groups','The same logical grouping maps both keys and values.',['head-map',...(mode==='inference'?['cache-next']:[])]);s('Form scaled query-key scores','Only Q̃ and Kctx enter the score product.',['scores']);s('Apply causal masking','Masking occurs before probability normalization.',['mask-src','masked']);s('Normalize across key positions','Softmax acts over the context-token axis.',['prob']);s('Aggregate values','A and Vctx meet at distinct input ports.',['weighted']);s('Combine query-head outputs','Concatenate before the output projection.',['concat']);s('Project to residual width','W_O maps the combined heads to D.',['wo']);s('Return to the decoder','The residual addition is outside this attention view.',['attention-out']);
+  g.height=2250;note(M,2219,'P = cached prefix; Tq = new tokens; Tk = P + Tq; g = Hq/Hkv.');
+ }
+
+ if(view==='inference'){
+  const gap=W<480?32:70,l=M+20,cw=(W-l-M-gap)/2,r=l+cw+gap,h=106;
+  n('prompt','Prompt token IDs',l,34,cw,h,0,{subtitle:'tokenized prompt',description:'The prompt is tokenized once. The model sees discrete IDs.',outputs:[tensor('prompt IDs','[B, Tprompt]')]});
+  n('prefill','Prefill model call',l,218,cw,h,1,{subtitle:'all prompt tokens',description:'Process the prompt with causal attention, fill the cache in every layer, and return prompt-position logits.',operation:'(Z_prompt, C₀) = Model(prompt IDs, empty cache)',inputs:[tensor('prompt IDs','[B, Tprompt]')],outputs:[tensor('Z_prompt','[B, Tprompt, |V|]'),tensor('C₀','K/V state for each of 32 layers')],nextView:'model'});
+  n('cache','Per-layer KV state',r,218,cw,138,1,{subtitle:'K̃, V and valid length P',description:'State bank shared across successive model invocations. Prefill initializes it; every cached decode appends new K/V. It is separate from model parameters.',operation:'C ← complete per-layer state returned by the model call',inputs:[tensor('cache writes','per-layer K/V')],outputs:[tensor('cache reads','per-layer K/V'),tensor('positions','p = valid length P')],kind:'kv-state'});
+  n('last','Select next-token logits',l,428,cw,106,2,{subtitle:'last valid query position',description:'From prefill, select logits at the last valid prompt position. A one-token decode already produces the next-position distribution.',operation:'z_next = Z[:, last_valid_position, :]',inputs:[tensor('Z','[B, Tq, |V|]')],outputs:[tensor('z_next','[B, |V|]')]});
+  n('policy','Sampling or greedy choice',l,612,cw,122,3,{subtitle:'probabilities / argmax',description:'For sampling, normalize logits into probabilities and apply the selected decoding policy. Greedy argmax can act directly on logits.',operation:'sample: x_next ~ softmax(z_next / τ)\ngreedy: x_next = argmax(z_next)',inputs:[tensor('z_next','[B, |V|]')],outputs:[tensor('x_next','[B]')]});
+  n('token','Generated token ID',l,818,cw,106,4,{subtitle:'append ID to sequence',description:'The selected discrete ID is appended to the generated token sequence. If generation continues, this ID becomes the next model input.',inputs:[tensor('x_next','[B]')],outputs:[tensor('x_next','[B]'),tensor('generated sequence','ordered token IDs')],kind:'activation'});
+  n('text-out','Detokenize / display',r,818,cw,106,4,{subtitle:'generated text',description:'Convert the output token sequence to display text. This display branch does not feed text back into the tokenizer.',inputs:[tensor('generated IDs','ordered token IDs')],outputs:[tensor('text','string')],kind:'activation'});
+  n('stop','Check stop condition',l,1008,cw,106,5,{subtitle:'EOS / length / policy',description:'A stop condition ends generation. Otherwise the next model invocation consumes the new token and previous cache.',inputs:[tensor('x_next / sequence','token data'),tensor('stop rules','control')],outputs:[tensor('continue / stop','control')],kind:'control'});
+  n('complete','Generation complete',r,1008,cw,106,5,{subtitle:'return output sequence',description:'Stop according to the selected generation policy and return the generated text.',inputs:[tensor('stop','control'),tensor('output text','string')],outputs:[tensor('output','generated text')],kind:'control'});
+  n('decode','Cached decode call',l,1218,cw,138,6,{subtitle:'new ID + position + cache',description:'Process the new token, use the existing K/V prefix, append this token’s K/V in each layer, and return next logits. Fixed model parameters are reused.',operation:'(Z_next, C_next) = Model(x_next, position P, C_prev)',inputs:[tensor('new token ID','[B, 1]'),tensor('cache','per-layer K/V prefix'),tensor('position','P from valid cache length'),tensor('continue','control')],outputs:[tensor('Z_next','[B, 1, |V|]'),tensor('C_next','updated per-layer K/V')],nextView:'attention'});
+  chain('prompt','prefill','prompt IDs',1,{labelAt:[l+cw/2+17,183],short:'IDs'});chain('prefill','last','Z_prompt',2,{labelAt:[l+cw/2+17,391],short:'Z'});chain('last','policy','z_next',3,{labelAt:[l+cw/2+17,576],short:'z'});chain('policy','token','x_next',4,{labelAt:[l+cw/2+17,780],short:'ID'});chain('token','stop','x_next',5,{labelAt:[l+cw/2+17,973],short:'ID'});
+  e('prefill-cache',['prefill','initial cache','right',.38],['cache','initial write','left',.38],'initial K/V',1,{kind:'kv-state',short:''});
+  e('display',['token','sequence','right'],['text-out','IDs','left'],'generated IDs',4,{kind:'activation',short:''});
+  e('return-output',['text-out','generated text'],['complete','output text'],'generated text',5,{labelAt:[r+cw/2+14,973],short:'text'});
+  e('stop-complete',['stop','stop','right'],['complete','stop','left'],'stop',5,{kind:'control',labelAt:[l+cw+gap/2,1047],anchor:'middle',short:W<480?'':'stop'});
+  e('continue-decode',['stop','continue'],['decode','continue'],'continue',6,{kind:'control',labelAt:[l+cw/2+16,1179],short:W<480?'go':'continue'});
+  e('new-token-decode',['token','new ID','left',.5],['decode','new ID','left',.35],'new token ID',6,{via:[[24,871],[24,1266.3]],labelAt:[30,1170],short:'ID',kind:'activation'});
+  const channel=r-18;
+  e('cache-read',['cache','previous KV','bottom',.45],['decode','cache','right',.53],'read previous cache',6,{via:[[r+cw*.45,394],[channel,394],[channel,1291.14]],labelAt:[channel+8,746],short:'KV',kind:'kv-state'});
+  e('position-read',['cache','valid length','bottom',.73],['decode','position','right',.78],'position from cache length',6,{via:[[r+cw*.73,410],[r-7,410],[r-7,1325.64]],labelAt:[r-2,785],short:'P',kind:'metadata'});
+  e('decode-cache-write',['decode','updated cache','right',.21],['cache','update write','right',.65],'write updated K/V',6,{via:[[W-9,1246.98],[W-9,307.7]],labelAt:[W-18,714],short:'KV′',anchor:'end',kind:'kv-state'});
+  e('decode-logits',['decode','next logits','bottom'],['last','next decode logits','left',.5],'next iteration logits',7,{via:[[l+cw/2,1430],[8,1430],[8,481]],labelAt:[l+cw/2,1460],short:'Repeat with next logits',anchor:'middle'});
+  s('Receive the prompt','The initial token sequence enters the model.',['prompt']);s('Prefill and initialize the cache','Prefill produces prompt logits and per-layer K/V state.',['prefill','cache']);s('Read the next-token scores','Use the final valid query position for next-token prediction.',['last']);s('Choose a token','Sampling and greedy selection are decoding policies.',['policy']);s('Append the token and display text','IDs remain the model feedback representation.',['token','text-out']);s('Evaluate stopping','Only the continue branch invokes the model again.',['stop','complete']);s('Decode with existing state','The new ID, position and previous cache enter separate model ports. The model writes updated K/V.',['decode','cache']);s('Repeat for the next token','The new logits return to next-token selection; the updated cache is already in the state bank.',['last']);
+  g.height=1520;note(M,1490,'Cache state is per layer. Model parameters stay fixed during generation.');
+ }
+
+ if(view==='training'){
+  const gap=W<480?32:74,side=W<480?46:60,cw=(W-2*side-gap)/2,l=side,r=side+cw+gap,batchW=Math.min(310,W-2*side);
+  n('batch','Tokenized batch',(W-batchW)/2,32,batchW,100,0,{subtitle:'s₁ … sT₊₁',description:'Start with T+1 tokens so T input/target pairs can be aligned explicitly.',outputs:[tensor('sequence','[B, T+1]')]});
+  n('inputs','Input IDs',l,214,cw,106,1,{subtitle:'s₁ … sT',description:'The first T tokens form the model input.',operation:'inputs = sequence[:, :-1]',inputs:[tensor('sequence','[B, T+1]')],outputs:[tensor('input IDs','[B, T]')]});
+  n('targets','Shifted target IDs',r,214,cw,106,1,{subtitle:'s₂ … sT₊₁',description:'Each logit at position t is supervised by the token at position t+1.',operation:'targets = sequence[:, 1:]',inputs:[tensor('sequence','[B, T+1]')],outputs:[tensor('targets','[B, T]')]});
+  n('train-model','Complete model',l,396,cw,132,2,{subtitle:'embedding → blocks → head',description:'The complete forward computation uses the current trainable parameters. The tokenizer is outside this parameter bank.',operation:'Z = Modelθ(input IDs)',inputs:[tensor('input IDs','[B, T]'),tensor('parameters θ','all learned weights')],outputs:[tensor('Z',shape.z),tensor('autograd context','forward graph and saved/recomputed tensors')],nextView:'model'});
+  n('parameters','Parameter bank θ',r,396,cw,132,2,{subtitle:'all trainable weights',description:'Contains the embedding, 32 decoder blocks, final RMSNorm and vocabulary head parameters. Backpropagation produces gradients for these weights; the optimizer updates this bank.',inputs:[tensor('updated θ','parameter state')],outputs:[tensor('current θ','parameter state')],kind:'parameter'});
+  n('loss-mask','Valid loss positions',r,590,cw,106,3,{subtitle:'optional loss mask',description:'Exclude padding or other unsupervised positions when the training setup requires it. This loss mask is distinct from the attention causal mask.',inputs:[],outputs:[tensor('m','[B, T] or ignore-index policy')],kind:'metadata'});
+  n('loss','Next-token cross-entropy',l,786,cw,132,3,{subtitle:'logits + shifted labels',description:'Consumes unnormalized logits and shifted labels at independent input ports. The inference softmax is not an upstream operation in this graph.',operation:'L = −Σ_t m_t log softmax(Z_t)[target_t] / Σ_t m_t',inputs:[tensor('logits Z',shape.z),tensor('targets','[B, T]'),tensor('valid positions m','optional [B, T]')],outputs:[tensor('L','scalar')]});
+  n('backward','Backpropagation',l,1000,cw,106,4,{subtitle:'differentiate L w.r.t. θ',description:'Propagates derivatives through the differentiable forward graph to obtain gradients for all trainable parameters.',operation:'Gθ = ∇θ L',inputs:[tensor('L','scalar'),tensor('forward graph','saved/recomputed activations')],outputs:[tensor('Gθ','same parameter structure as θ')],kind:'gradient'});
+  n('grads','Parameter gradients',l,1190,cw,106,5,{subtitle:'Gθ = ∇θ L',description:'The gradient tensor collection is separate from parameters and optimizer state.',inputs:[tensor('Gθ','parameter-shaped gradients')],outputs:[tensor('Gθ','parameter-shaped gradients')],kind:'gradient'});
+  n('opt-state','Optimizer state',r,1190,cw,106,5,{subtitle:'algorithm-dependent state',description:'State required by the selected optimizer. Its exact contents, algorithm and schedule are not specified by the supplied architecture.',inputs:[tensor('state_next','optimizer state')],outputs:[tensor('state_prev','optimizer state')],kind:'parameter'});
+  n('optimizer','Optimizer update',l,1394,cw,132,6,{subtitle:'θ, Gθ, state → updates',description:'Consumes current parameters, their gradients and previous optimizer state. Writes updated parameters and updated optimizer state.',operation:'(θ_next, S_next) = Optimizer(θ, Gθ, S_prev)',inputs:[tensor('θ','parameter state'),tensor('Gθ','gradients'),tensor('S_prev','optimizer state')],outputs:[tensor('θ_next','updated parameters'),tensor('S_next','updated optimizer state'),tensor('step complete','control')],kind:'gradient'});
+  n('next-batch','Advance training batch',r,1584,cw,106,7,{subtitle:'next iteration',description:'Request another token batch after the update. This is iteration control, not a tensor output containing model weights.',inputs:[tensor('step complete','control')],outputs:[tensor('next batch request','control')],kind:'control'});
+  e('batch-input',['batch','sequence'],['inputs','sequence'],'input slice',1,{via:[[W/2,171],[l+cw/2,171]],labelAt:[l+cw/2+15,195],short:'s[:-1]'});
+  e('batch-target',['batch','sequence'],['targets','sequence'],'target slice',1,{via:[[W/2,171],[r+cw/2,171]],labelAt:[r+cw/2+15,195],short:'s[1:]'});g.junctions.push([W/2,171]);
+  chain('inputs','train-model','input IDs',2,{labelAt:[l+cw/2+15,366],short:'IDs'});
+  e('parameter-forward',['parameters','θ','left',.4],['train-model','θ','right',.4],'current parameters θ',2,{kind:'parameter',labelAt:[l+cw+gap/2,435],short:W<480?'':'θ',anchor:'middle'});
+  chain('train-model','loss','logits Z',3,{labelAt:[l+cw/2+15,741],short:'Z'});
+  e('target-loss',['targets','labels','right'],['loss','targets','right',.3],'shifted targets',3,{via:[[W-40,267],[W-40,751],[l+cw+gap*.4,751],[l+cw+gap*.4,825.6]],labelAt:[r+cw/2,741],short:'targets',anchor:'middle'});
+  e('valid-loss',['loss-mask','valid mask'],['loss','valid positions','right',.76],'valid-position mask',3,{kind:'metadata',via:[[r+cw/2,886.32]],labelAt:[r+cw/2+10,838],short:'m'});
+  e('forward-backward',['train-model','autograd context','left',.7],['backward','autograd context','left',.25],'forward graph / activation context',4,{kind:'metadata',via:[[30,488.4],[30,1026.5]],labelAt:[39,965],short:'graph'});
+  chain('loss','backward','loss L',4,{labelAt:[l+cw/2+15,964],short:'L',kind:'gradient'});chain('backward','grads','gradients Gθ',5,{labelAt:[l+cw/2+15,1156],short:'Gθ',kind:'gradient'});chain('grads','optimizer','gradients Gθ',6,{labelAt:[l+cw/2+15,1358],short:'Gθ',kind:'gradient'});
+  e('parameter-opt',['parameters','current θ','bottom',.25],['optimizer','θ','right',.25],'current parameters θ',6,{kind:'parameter',via:[[r+cw*.25,551],[r-19,551],[r-19,1427]],labelAt:[r-25,1114],short:'θ',anchor:'end'});
+  e('state-opt',['opt-state','state_prev'],['optimizer','state_prev','right',.64],'previous optimizer state',6,{kind:'parameter',via:[[r+cw/2,1478.48]],labelAt:[r+cw/2+14,1374],short:'state'});
+  e('opt-parameter-write',['optimizer','θ_next','left',.3],['parameters','update θ','right',.65],'write updated parameters θ',6,{kind:'parameter',via:[[8,1433.6],[8,1750],[W-24,1750],[W-24,481.8]],labelAt:[W/2,1740],short:'θ_next → parameter bank',anchor:'middle'});
+  e('opt-state-write',['optimizer','state_next','right',.84],['opt-state','state_next','right',.6],'write updated optimizer state',6,{kind:'parameter',via:[[W-40,1504.88],[W-40,1253.6]],labelAt:[W-46,1550],short:'state′',anchor:'end'});
+  e('update-next',['optimizer','step complete'],['next-batch','continue','left',.5],'advance iteration',7,{kind:'control',via:[[l+cw/2,1637]],labelAt:[l+cw/2+16,1611],short:'next'});
+  e('next-data',['next-batch','request next batch','right'],['batch','next batch','right',.5],'next batch request',7,{kind:'control',via:[[W-8,1637],[W-8,15],[W/2+batchW/2+10,15],[W/2+batchW/2+10,82]],short:''});
+  s('Read a tokenized batch','T+1 tokens define T aligned next-token prediction pairs.',['batch']);s('Split inputs and targets','Inputs s[:-1] and labels s[1:] are parallel slices of one sequence.',['inputs','targets']);s('Run the complete forward model','Current parameters generate logits for every supervised query position.',['train-model','parameters']);s('Compute next-token cross-entropy','Logits, shifted labels and any valid-position mask enter independent ports.',['loss','loss-mask']);s('Differentiate the loss','Backpropagation operates on the differentiable forward graph.',['backward']);s('Collect gradients and optimizer state','Gradients, parameters and optimizer state are distinct objects.',['grads','opt-state']);s('Update parameter and optimizer state','Updated weights return to the parameter bank; they are not token inputs.',['optimizer','parameters','opt-state']);s('Request the next batch','Iteration control advances the loop after the update.',['next-batch']);
+  g.height=1810;note(M,1790,'Dashed control edges request data; parameter edges update learned state.');
+ }
+
+ for(const step of g.steps){step.edges=[];}for(const edge of g.edges){if(g.steps[edge.stage])g.steps[edge.stage].edges.push(edge.id);}
+ const compact={
+  q:['Query','project + split'],k:['Key','project + split'],v:['Value','project + split'],rq:['RoPE · Q','Q → Q̃'],rk:['RoPE · K','K → K̃'],positions:['Position IDs',mode==='inference'?'p = P + i':'p = i'],
+  'cache-old':['KV history','P past tokens'],'cache-next':['Next KV state','next call'],'mask-src':['Mask','allow j ≤ P+i'],prob:['Softmax','over key axis'],wo:['Linear W_O','o = C W_O'],'attention-out':['Output o','to residual add'],
+  gqa:['GQA attention','projected output o'],ffn:['SwiGLU FFN','projected output f'],'add-f':['Add FFN residual','hℓ = u + f'],
+  execution:mode==='training'?['Training path','loss → update']:['Generate tokens','prefill → decode'],
+  prompt:['Prompt IDs','initial context'],prefill:['Prefill','prompt'],cache:['KV state','K̃, V, length P'],last:['Next logits','last valid query'],policy:['Choose token','sample / argmax'],token:['Token ID','append ID'],'text-out':['Display text','detokenize IDs'],stop:['Stop check','EOS / limit'],complete:['Complete','return output'],decode:['Decode','ID + KV'],
+  inputs:['Input IDs','s₁ … sT'],targets:['Target IDs','s₂ … sT₊₁'],'train-model':['Model','32-block forward'],parameters:['Weights θ','learned weights'],'loss-mask':['Loss mask','valid positions'],loss:['Token loss','cross entropy'],backward:['Derive Gθ','from loss'],grads:['Grads','Gθ = ∇θ L'],'opt-state':['Opt. state','state_prev'],optimizer:['Update θ','optimizer step'],'next-batch':['Next batch','next iteration']
+ };
+ g.nodes.forEach(o=>{const c=compact[o.id]&&(o.rect.w<170||(o.id==='execution'&&W<360));o.displayTitle=c?compact[o.id][0]:o.title;o.displaySubtitle=c?compact[o.id][1]:o.subtitle;});
+ for(const o of g.notes)g.height=Math.max(g.height,o.y+wrap(o.text,W-2*M,12).length*16+12);
+ const prefix='atlas-'+view+'-'+mode+'-'+W;
+ const css=`.ma-text{font-family:Arial,Helvetica,sans-serif;fill:#242424}.ma-node-title{font-size:16px;font-weight:400}.ma-sub{font-family:Arial,Helvetica,sans-serif;font-size:12px;fill:#515151}.ma-stage{font-family:Courier New,monospace;font-size:12px;fill:#555}.ma-edge-label{font-family:Courier New,monospace;font-size:12px;fill:#303030}.ma-box{fill:#fff;stroke:#414141;stroke-width:1.2}.ma-edge-line{fill:none;stroke:#5f5f5f;stroke-width:1.25;stroke-linejoin:round;stroke-linecap:round}.ma-edge-halo{fill:none;stroke:#fff;stroke-width:5;stroke-linejoin:round}.ma-kind-metadata .ma-edge-line{stroke:#747474;stroke-dasharray:3 4}.ma-kind-control .ma-edge-line{stroke:#747474;stroke-dasharray:7 5}.ma-kind-gradient .ma-edge-line,.ma-kind-parameter .ma-edge-line{stroke:#655470}.ma-kind-kv-state .ma-edge-line{stroke:#4b7563}.ma-edge-hit{fill:none;stroke:transparent;stroke-width:16;pointer-events:stroke}.ma-note{font-family:Arial,Helvetica,sans-serif;font-size:12px;fill:#535353}.ma-open{font-family:Arial,Helvetica,sans-serif;font-size:12px;fill:#202020;text-decoration:underline}.ma-node:focus-visible .ma-box{stroke:#181818;stroke-width:2.5}.ma-edge:focus-visible .ma-edge-line{stroke:#181818;stroke-width:2.5}.ma-node,.ma-edge,[data-open-view]{cursor:pointer}.ma-port{fill:#fff;stroke:#686868;stroke-width:1}.ma-group{fill:#fff;stroke:#d1d1d1;stroke-width:1}`;
+ const defs=`<defs><style>${css}</style><pattern id="${prefix}-dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".55" fill="#d0d0d0" fill-opacity=".6"/></pattern><marker id="${prefix}-arrow" viewBox="0 0 8 8" markerWidth="7" markerHeight="7" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1L7 4L1 7" fill="none" stroke="#555" stroke-width="1.1"/></marker></defs>`;
+ let body=`<rect width="${W}" height="${g.height}" fill="#fff"/><rect width="${W}" height="${g.height}" fill="url(#${prefix}-dots)"/>`;
+ for(const f of g.groups)body+=`<rect class="ma-group" x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" rx="3"/>`;
+ for(const o of g.edges){
+  body+=`<g class="ma-edge ma-kind-${esc(o.kind)}" data-edge-id="${esc(o.id)}" tabindex="0" role="button"><title>${esc(o.label+' · '+o.from.node+'.'+o.from.port+' → '+o.to.node+'.'+o.to.port)}</title><path class="ma-edge-halo" d="${o.d}"/><path class="ma-edge-line" d="${o.d}" marker-end="url(#${prefix}-arrow)"/><path class="ma-edge-hit edge-hit" d="${o.d}"/>`;
+  if(o.labelAt&&o.short){const [lx,ly]=o.labelAt,anchor=o.anchor||'start',text=o.short,tw=text.length*7.2+10,left=anchor==='middle'?lx-tw/2:anchor==='end'?lx-tw:lx-5;body+=`<rect x="${left}" y="${ly-13}" width="${tw}" height="18" rx="1" fill="#fff"/><text x="${lx}" y="${ly}" class="ma-edge-label" text-anchor="${anchor}">${esc(text)}</text>`;}body+='</g>';
+ }
+ for(const p of g.junctions)body+=`<circle cx="${p[0]}" cy="${p[1]}" r="2.6" fill="#555"/>`;
+ for(const o of g.nodes){
+  const {x,y,w,h}=o.rect,font=w<138?14:16,titleLines=wrap(o.displayTitle,w-28,font),subLines=wrap(o.displaySubtitle,w-28,12),titleY=y+40,titleH=titleLines.length*(font+4),subY=titleY+titleH+5;
+  const modeColor=o.kind==='kv-state'?'#9ae8c5':o.kind==='parameter'||o.kind==='gradient'?'#bb8ae8':'#70a0ff';
+  const marker=o.kind==='kv-state'?`<circle cx="${x+w-17}" cy="${y+13}" r="3.5" fill="${modeColor}" stroke="#555" stroke-width=".6"/>`:o.kind==='parameter'||o.kind==='gradient'?`<path d="M${x+w-17} ${y+9}l4 4-4 4-4-4Z" fill="${modeColor}" stroke="#555" stroke-width=".6"/>`:`<rect x="${x+w-20}" y="${y+10}" width="6" height="6" fill="${modeColor}" stroke="#555" stroke-width=".6"/>`;
+  body+=`<g class="ma-node ma-kind-${esc(o.kind)}" data-node-id="${esc(o.id)}" tabindex="0" role="button" aria-label="${esc(o.title)}"><title>${esc(o.title)}</title><desc>${esc(o.description)}</desc><rect class="ma-box" x="${x}" y="${y}" width="${w}" height="${h}" rx="3"/><text class="ma-stage" x="${x+14}" y="${y+17}">${String(o.stage+1).padStart(2,'0')}</text>${marker}`;
+  titleLines.forEach((line,i)=>body+=`<text class="ma-text ma-node-title" x="${x+14}" y="${titleY+i*(font+4)}" style="font-size:${font}px">${esc(line)}</text>`);
+  subLines.forEach((line,i)=>body+=`<text class="ma-sub" x="${x+14}" y="${subY+i*15}">${esc(line)}</text>`);
+  if(o.nextView)body+=`<text class="ma-open" x="${x+14}" y="${y+h-13}" data-open-view="${esc(o.nextView)}" role="button" tabindex="0">Expand →</text>`;
+  body+='</g>';o.titleLines=titleLines;o.subtitleLines=subLines;o.textBottom=subY+(subLines.length-1)*15;
+ }
+ for(const o of g.notes){const lines=wrap(o.text,W-2*M,12);lines.forEach((line,i)=>body+=`<text class="ma-note" x="${o.x}" y="${o.y+i*16}">${esc(line)}</text>`);}
+ g.svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${g.height}" viewBox="0 0 ${W} ${g.height}" role="group" aria-label="${esc(g.title)}" data-view="${view}"><title>${esc(g.title)}</title><desc>${esc(g.subtitle+' '+g.scope)}</desc>${defs}${body}</svg>`;
+ return g;
+}
+function render(view='model',mode='inference',width=680){if(!views.some(v=>v.id===view))throw new Error('Unknown architecture view');if(view==='inference'||view==='training')mode=view;return make(view,mode==='training'?'training':'inference',width);}
+return {views,render,version:2,symbols:shape};
+});
+
+</script>
+<script>
+(function(){
+  'use strict';
+  const root=document.getElementById('model-atlas');
+  const el={tabs:document.getElementById('atlas-tabs'),board:document.getElementById('atlas-stage'),viewTitle:document.getElementById('atlas-view-title'),description:document.getElementById('atlas-view-description'),breadcrumb:document.getElementById('atlas-breadcrumb'),mode:document.getElementById('atlas-mode'),modeLabel:document.getElementById('atlas-mode-label'),previous:document.getElementById('atlas-previous'),play:document.getElementById('atlas-play'),next:document.getElementById('atlas-next'),count:document.getElementById('atlas-stage-count'),showAll:document.getElementById('atlas-show-all'),stepDetail:document.getElementById('atlas-step-detail'),inspector:document.getElementById('atlas-inspector'),export:document.getElementById('atlas-export'),scope:document.getElementById('atlas-scope'),viewScope:document.getElementById('atlas-view-scope'),announcement:document.getElementById('atlas-announcement')};
+  const engine=window.ModelAtlas;
+  if(!engine||typeof engine.render!=='function'){
+    el.stepDetail.textContent='The static model overview is available. The interactive diagram engine has not been embedded.';
+    [el.previous,el.play,el.next,el.export,el.mode].forEach(x=>x.disabled=true);
+    return;
+  }
+  const views=Array.isArray(engine.views)?engine.views:[];
+  const state={view:'model',mode:'inference',graph:null,stage:-1,selection:null,playing:false,timer:null,width:0};
+  const esc=value=>String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const fmt=value=>Array.isArray(value)?value.join(' × '):String(value==null?'':value);
+  const label=view=>view?String(view.label||view.title||view.id).replace(/^\d{2}\s+/,''):'';
+  const byView=id=>views.find(v=>v.id===id);
+  const byNode=id=>state.graph&&state.graph.nodes.find(n=>n.id===id);
+  const byEdge=id=>state.graph&&state.graph.edges.find(e=>e.id===id);
+  const portName=port=>typeof port==='object'&&port!==null?(port.name||port.id||fmt(port)):fmt(port);
+  const endpointTitle=endpoint=>{const n=byNode(endpoint.node);return n?n.title:endpoint.node;};
+  const endpointLabel=endpoint=>endpointTitle(endpoint)+' · '+portName(endpoint.port);
+  const modeForView=view=>view==='training'?'training':view==='inference'?'inference':state.mode;
+
+  function announce(text){el.announcement.textContent=text;}
+  function stopPlay(){if(state.timer)clearTimeout(state.timer);state.timer=null;state.playing=false;updateControls();}
+  function updateHash(){try{history.replaceState(null,'','#'+encodeURIComponent(state.view));}catch(_){}}
+  function buildTabs(){
+    el.tabs.innerHTML=views.map((view,i)=>'<button type="button" class="atlas-tab" data-view="'+esc(view.id)+'" aria-controls="atlas-stage"'+(view.id===state.view?' aria-current="page"':'')+'><span class="atlas-tab-number">'+String(i+1).padStart(2,'0')+'</span><span>'+esc(label(view))+'</span></button>').join('');
+  }
+  function updateHeading(){
+    const g=state.graph,v=byView(state.view)||{};
+    el.viewTitle.textContent=g.title||v.title||label(v);
+    el.description.textContent=g.subtitle||v.description||'';
+    const parentId=g.parent||v.parent;
+    const parent=byView(typeof parentId==='object'&&parentId?parentId.id:parentId);
+    el.breadcrumb.innerHTML=(parent?'<button type="button" class="atlas-link-button" data-view="'+esc(parent.id)+'">← '+esc(label(parent))+'</button><span aria-hidden="true">/</span>':'<span>Architecture</span><span aria-hidden="true">/</span>')+'<span>'+esc(label(v))+'</span>';
+    el.modeLabel.hidden=!['model','attention'].includes(state.view);
+    el.mode.value=modeForView(state.view);
+    el.viewScope.textContent=state.view==='inference'?'Inference / generation':state.view==='training'?'Training / parameter update':state.view==='attention'?'Attention / '+modeForView(state.view):'Layer '+String(views.findIndex(vw=>vw.id===state.view)+1).padStart(2,'0')+' of '+String(views.length).padStart(2,'0');
+    if(g.scope)el.scope.textContent=fmt(g.scope);
+    buildTabs();
+  }
+  function decorateSvg(){
+    const svg=el.board.querySelector('svg');
+    if(!svg)return;
+    svg.setAttribute('role','group');
+    svg.setAttribute('aria-label',(state.graph.title||'Model architecture')+'. Select a component or connection to inspect it.');
+    svg.querySelectorAll('[data-node-id]').forEach(item=>{
+      const node=byNode(item.getAttribute('data-node-id'));
+      item.setAttribute('tabindex','0');item.setAttribute('role','button');
+      if(node)item.setAttribute('aria-label',node.title+'. Inspect inputs, outputs, and connections.');
+    });
+    svg.querySelectorAll('[data-edge-id]').forEach(item=>{
+      const edge=byEdge(item.getAttribute('data-edge-id'));
+      item.setAttribute('tabindex','0');item.setAttribute('role','button');
+      if(edge)item.setAttribute('aria-label',endpointLabel(edge.from)+' to '+endpointLabel(edge.to)+'. '+(edge.label||'')+'. Inspect connection.');
+    });
+    svg.querySelectorAll('[data-open-view]').forEach(item=>{
+      item.setAttribute('tabindex','0');item.setAttribute('role','button');
+      item.setAttribute('aria-label','Open '+label(byView(item.getAttribute('data-open-view')))+' detail.');
+    });
+  }
+  function renderBoard(force){
+    const width=Math.max(280,Math.floor(el.board.clientWidth||680));
+    if(!force&&width===state.width)return;
+    let next;
+    try{next=engine.render(state.view,modeForView(state.view),width);}catch(error){
+      el.stepDetail.textContent='This layer could not be rendered: '+error.message;
+      stopPlay();return;
+    }
+    if(!next||typeof next.svg!=='string')return;
+    next.nodes=Array.isArray(next.nodes)?next.nodes:[];next.edges=Array.isArray(next.edges)?next.edges:[];next.steps=Array.isArray(next.steps)?next.steps:[];
+    state.graph=next;state.width=width;
+    if(state.stage>=next.steps.length)state.stage=next.steps.length-1;
+    if(state.selection&&!(state.selection.type==='node'?byNode(state.selection.id):byEdge(state.selection.id)))state.selection=null;
+    el.board.innerHTML=next.svg;
+    updateHeading();decorateSvg();updateControls();updateHighlight();renderInspector();
+  }
+  function openView(id){
+    if(!byView(id))return;
+    stopPlay();state.view=id;state.stage=-1;state.selection=null;
+    if(id==='training'||id==='inference')state.mode=id;
+    renderBoard(true);updateHash();
+    el.tabs.scrollIntoView({block:'start',behavior:'auto'});
+    const activeTab=el.tabs.querySelector('[aria-current="page"]');if(activeTab)activeTab.focus({preventScroll:true});
+    announce((state.graph&&state.graph.title||label(byView(id)))+' opened.');
+  }
+  function updateControls(){
+    const steps=state.graph?state.graph.steps:[],n=steps.length;
+    el.previous.disabled=!n||state.stage<=0;
+    el.next.disabled=!n||state.stage>=n-1;
+    el.play.disabled=!n;
+    el.play.textContent=state.playing?'Ⅱ Pause':state.stage===n-1&&n?'↻ Replay':'▷ Play';
+    el.play.setAttribute('aria-pressed',String(state.playing));
+    el.play.setAttribute('aria-label',state.playing?'Pause computation stages':'Play computation stages');
+    el.count.textContent=state.stage<0?'All '+n+' stages':'Stage '+(state.stage+1)+' of '+n;
+    if(state.stage>=0&&steps[state.stage]){
+      const step=steps[state.stage];el.stepDetail.innerHTML='<strong>'+esc(step.title)+'</strong>'+(step.detail?' · '+esc(step.detail):'');
+    }else if(state.selection){
+      const item=state.selection.type==='node'?byNode(state.selection.id):byEdge(state.selection.id);
+      el.stepDetail.innerHTML='<span>'+esc((state.selection.type==='node'?'Component: ':'Connection: ')+(item?(item.title||item.label||item.id):''))+'</span><button type="button" class="atlas-link-button atlas-details-link" data-action="view-details">View selected details ↓</button>';
+    }else el.stepDetail.textContent='All connections are visible. Select a module or line, or use Next to follow the computation in order.';
+  }
+  function updateHighlight(){
+    if(!state.graph)return;
+    const nodeIds=new Set(),edgeIds=new Set();
+    let active=false;
+    if(state.selection){
+      active=true;
+      if(state.selection.type==='node'){
+        nodeIds.add(state.selection.id);
+        state.graph.edges.forEach(edge=>{if(edge.from.node===state.selection.id||edge.to.node===state.selection.id){edgeIds.add(edge.id);nodeIds.add(edge.from.node);nodeIds.add(edge.to.node);}});
+      }else{
+        const edge=byEdge(state.selection.id);if(edge){edgeIds.add(edge.id);nodeIds.add(edge.from.node);nodeIds.add(edge.to.node);}
+      }
+    }else if(state.stage>=0&&state.graph.steps[state.stage]){
+      active=true;const step=state.graph.steps[state.stage];(step.nodes||[]).forEach(id=>nodeIds.add(id));(step.edges||[]).forEach(id=>edgeIds.add(id));
+      state.graph.edges.forEach(edge=>{if(edgeIds.has(edge.id)){nodeIds.add(edge.from.node);nodeIds.add(edge.to.node);}});
+    }
+    el.board.querySelectorAll('[data-node-id]').forEach(item=>{
+      const id=item.getAttribute('data-node-id'),on=nodeIds.has(id);
+      item.classList.toggle('atlas-active',active&&on);item.classList.toggle('atlas-inactive',active&&!on);item.classList.toggle('atlas-selected',!!state.selection&&state.selection.type==='node'&&state.selection.id===id);
+      item.setAttribute('aria-pressed',String(!!state.selection&&state.selection.type==='node'&&state.selection.id===id));
+    });
+    el.board.querySelectorAll('[data-edge-id]').forEach(item=>{
+      const id=item.getAttribute('data-edge-id'),on=edgeIds.has(id);
+      item.classList.toggle('atlas-active',active&&on);item.classList.toggle('atlas-inactive',active&&!on);item.classList.toggle('atlas-selected',!!state.selection&&state.selection.type==='edge'&&state.selection.id===id);
+      item.setAttribute('aria-pressed',String(!!state.selection&&state.selection.type==='edge'&&state.selection.id===id));
+    });
+  }
+  function tensorTable(items,empty){
+    if(!Array.isArray(items)||!items.length)return '<p class="atlas-inline-empty">'+esc(empty)+'</p>';
+    return '<table class="atlas-tensors"><tbody>'+items.map(item=>'<tr><th scope="row">'+esc(item.name||'Tensor')+'</th><td><span class="atlas-tensor-shape">'+esc(fmt(item.shape))+'</span>'+(item.detail?'<span class="atlas-tensor-detail">'+esc(item.detail)+'</span>':'')+'</td></tr>').join('')+'</tbody></table>';
+  }
+  function connectionList(edges,incoming){
+    if(!edges.length)return '<p class="atlas-inline-empty">'+(incoming?'Entry to this layer.':'Exit from this layer.')+'</p>';
+    return '<ul class="atlas-connections">'+edges.map(edge=>{
+      const neighbor=incoming?edge.from:edge.to;
+      return '<li class="atlas-connection"><button type="button" class="atlas-link-button atlas-neighbor" data-node="'+esc(neighbor.node)+'">'+(incoming?'← ':'→ ')+esc(endpointTitle(neighbor))+'</button><span class="atlas-ports">'+esc(endpointLabel(edge.from))+' → '+esc(endpointLabel(edge.to))+'</span><button type="button" class="atlas-link-button atlas-edge-link" data-edge="'+esc(edge.id)+'">'+esc(edge.label||'Inspect connection')+'</button></li>';
+    }).join('')+'</ul>';
+  }
+  function inspectorHeading(overline,title,action){
+    const returnAction=state.selection?'<button type="button" class="atlas-link-button atlas-return-selection" data-action="return-selection">Return to selected '+(state.selection.type==='edge'?'connection':'component')+' ↑</button>':'';
+    return '<div class="atlas-inspector-heading"><div><div class="atlas-overline">'+esc(overline)+'</div><h2 class="atlas-inspector-title" id="atlas-inspector-title" tabindex="-1">'+esc(title)+'</h2></div>'+((returnAction||action)?'<div class="atlas-inspector-actions">'+returnAction+(action||'')+'</div>':'')+'</div>';
+  }
+  function renderInspector(){
+    if(!state.graph)return;
+    if(state.selection&&state.selection.type==='node'){
+      const n=byNode(state.selection.id);if(!n)return;
+      const incoming=state.graph.edges.filter(e=>e.to.node===n.id),outgoing=state.graph.edges.filter(e=>e.from.node===n.id);
+      const expand=n.nextView&&byView(n.nextView)?'<button type="button" class="atlas-control" data-view="'+esc(n.nextView)+'">Open '+esc(label(byView(n.nextView)))+' ↗</button>':'';
+      el.inspector.innerHTML=inspectorHeading('COMPONENT / '+state.view,n.title,expand)+(n.description?'<p class="atlas-inspector-description">'+esc(n.description)+'</p>':'')+(n.operation?'<code class="atlas-equation">'+esc(fmt(n.operation))+'</code>':'')+'<div class="atlas-inspector-columns"><div><h3 class="atlas-section-title">Inputs</h3>'+tensorTable(n.inputs,'No input tensor is specified for this entry.')+'<h3 class="atlas-section-title">Incoming connections</h3>'+connectionList(incoming,true)+'</div><div><h3 class="atlas-section-title">Outputs</h3>'+tensorTable(n.outputs,'No output tensor is specified for this endpoint.')+'<h3 class="atlas-section-title">Outgoing connections</h3>'+connectionList(outgoing,false)+'</div></div>';
+    }else if(state.selection&&state.selection.type==='edge'){
+      const e=byEdge(state.selection.id);if(!e)return;
+      el.inspector.innerHTML=inspectorHeading('CONNECTION / '+(e.kind||'forward'),e.label||'Tensor connection')+(e.detail?'<p class="atlas-inspector-description">'+esc(e.detail)+'</p>':'')+'<code class="atlas-equation">'+esc(endpointLabel(e.from))+'\n    → '+esc(endpointLabel(e.to))+'</code><div class="atlas-inspector-columns"><div class="atlas-endpoint"><h3 class="atlas-section-title">Origin</h3><button type="button" class="atlas-link-button atlas-neighbor" data-node="'+esc(e.from.node)+'">'+esc(endpointTitle(e.from))+'</button><span class="atlas-endpoint-port">Output port: '+esc(portName(e.from.port))+'</span></div><div class="atlas-endpoint"><h3 class="atlas-section-title">Destination</h3><button type="button" class="atlas-link-button atlas-neighbor" data-node="'+esc(e.to.node)+'">'+esc(endpointTitle(e.to))+'</button><span class="atlas-endpoint-port">Input port: '+esc(portName(e.to.port))+'</span></div></div>';
+    }else if(state.stage>=0&&state.graph.steps[state.stage]){
+      const step=state.graph.steps[state.stage];
+      el.inspector.innerHTML=inspectorHeading('COMPUTATION / STAGE '+(state.stage+1)+' OF '+state.graph.steps.length,step.title)+(step.detail?'<p class="atlas-inspector-description">'+esc(step.detail)+'</p>':'')+'<div class="atlas-step-nodes">'+(step.nodes||[]).map(id=>{const node=byNode(id);return node?'<button type="button" class="atlas-control" data-node="'+esc(id)+'">Inspect '+esc(node.title)+'</button>':'';}).join('')+'</div>';
+    }else{
+      el.inspector.innerHTML=inspectorHeading('INSPECT / TENSORS & CONNECTIONS','Inspect the computation')+'<p class="atlas-inspector-empty">Select a module for its equation, tensor shapes, and connected operations. Select a connection to inspect its source and destination ports.</p>';
+    }
+  }
+  function select(type,id){
+    if(!(type==='node'?byNode(id):byEdge(id)))return;
+    const focusWasInInspector=el.inspector.contains(document.activeElement);
+    stopPlay();state.stage=-1;state.selection={type,id};updateControls();updateHighlight();renderInspector();
+    if(focusWasInInspector){const title=document.getElementById('atlas-inspector-title');if(title)title.focus({preventScroll:true});}
+    const selected=type==='node'?byNode(id):byEdge(id);announce((selected.title||selected.label||'Connection')+' selected. Details are below the diagram.');
+  }
+  function showAll(){stopPlay();state.stage=-1;state.selection=null;updateControls();updateHighlight();renderInspector();}
+  function setStage(index){
+    if(!state.graph||!state.graph.steps.length)return;
+    state.stage=Math.max(0,Math.min(index,state.graph.steps.length-1));state.selection=null;updateControls();updateHighlight();renderInspector();
+  }
+  function advancePlay(){
+    if(!state.playing)return;
+    if(state.stage>=state.graph.steps.length-1){stopPlay();return;}
+    setStage(state.stage+1);state.timer=setTimeout(advancePlay,2600);
+  }
+  function togglePlay(){
+    if(state.playing){stopPlay();return;}
+    if(!state.graph||!state.graph.steps.length)return;
+    state.playing=true;state.selection=null;
+    if(state.stage<0||state.stage>=state.graph.steps.length-1)setStage(0);else updateControls();
+    state.timer=setTimeout(advancePlay,2600);
+  }
+  function downloadSvg(){
+    if(!state.graph)return;
+    const blob=new Blob([state.graph.svg],{type:'image/svg+xml;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='model-architecture-'+state.view+'-'+modeForView(state.view)+'.svg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    announce('SVG exported for '+(state.graph.title||state.view)+'.');
+  }
+  function viewDetails(){
+    if(!state.selection)return;
+    el.inspector.scrollIntoView({block:'start',behavior:'auto'});
+    const title=document.getElementById('atlas-inspector-title');if(title)title.focus({preventScroll:true});
+  }
+  function returnToSelection(){
+    if(!state.selection)return;
+    const attribute=state.selection.type==='node'?'data-node-id':'data-edge-id';
+    const selected=Array.from(el.board.querySelectorAll('['+attribute+']')).find(item=>item.getAttribute(attribute)===state.selection.id);
+    if(!selected)return;
+    selected.scrollIntoView({block:'center',inline:'nearest',behavior:'auto'});
+    if(typeof selected.focus==='function')selected.focus({preventScroll:true});
+    else el.board.focus({preventScroll:true});
+  }
+  root.addEventListener('click',event=>{
+    const target=event.target.closest('button[data-view],button[data-node],button[data-edge],button[data-action]');
+    if(!target||!root.contains(target))return;
+    if(target.dataset.action==='view-details')viewDetails();
+    else if(target.dataset.action==='return-selection')returnToSelection();
+    else if(target.dataset.view)openView(target.dataset.view);
+    else if(target.dataset.node)select('node',target.dataset.node);
+    else if(target.dataset.edge)select('edge',target.dataset.edge);
+  });
+  el.board.addEventListener('click',event=>{
+    const expansion=event.target.closest('[data-open-view]');
+    if(expansion){openView(expansion.getAttribute('data-open-view'));return;}
+    const node=event.target.closest('[data-node-id]'),edge=event.target.closest('[data-edge-id]');
+    if(node)select('node',node.getAttribute('data-node-id'));else if(edge)select('edge',edge.getAttribute('data-edge-id'));
+  });
+  el.board.addEventListener('keydown',event=>{
+    if(event.key==='Enter'||event.key===' '){
+      const expansion=event.target.closest('[data-open-view]');
+      if(expansion){event.preventDefault();openView(expansion.getAttribute('data-open-view'));return;}
+      const node=event.target.closest('[data-node-id]'),edge=event.target.closest('[data-edge-id]');
+      if(node||edge){event.preventDefault();select(node?'node':'edge',(node||edge).getAttribute(node?'data-node-id':'data-edge-id'));}
+    }else if(event.key==='ArrowRight'){event.preventDefault();stopPlay();setStage(state.stage+1);}
+    else if(event.key==='ArrowLeft'){event.preventDefault();stopPlay();if(state.stage>0)setStage(state.stage-1);}
+    else if(event.key==='Escape'){event.preventDefault();showAll();}
+  });
+  el.previous.addEventListener('click',()=>{stopPlay();setStage(state.stage-1);});
+  el.next.addEventListener('click',()=>{stopPlay();setStage(state.stage+1);});
+  el.play.addEventListener('click',togglePlay);el.showAll.addEventListener('click',showAll);el.export.addEventListener('click',downloadSvg);
+  document.getElementById('atlas-back-controls').addEventListener('click',()=>{el.tabs.scrollIntoView({block:'start',behavior:'auto'});const active=el.tabs.querySelector('[aria-current="page"]');if(active)active.focus({preventScroll:true});});
+  el.mode.addEventListener('change',()=>{stopPlay();state.mode=el.mode.value;state.stage=-1;state.selection=null;renderBoard(true);});
+  window.addEventListener('hashchange',()=>{let id;try{id=decodeURIComponent(location.hash.slice(1));}catch(_){return;}if(byView(id)&&id!==state.view)openView(id);});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.playing)stopPlay();});
+  let resizeTimer;
+  const resized=()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>renderBoard(false),120);};
+  if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(resized);observer.observe(el.board);}else window.addEventListener('resize',resized);
+  try{const initial=decodeURIComponent(location.hash.slice(1));if(byView(initial))state.view=initial;}catch(_){}
+  if(state.view==='training'||state.view==='inference')state.mode=state.view;
+  renderBoard(true);
+})();
+</script>
+<script src="./host.js"></script>
+<noscript><style>.atlas-tabs,.atlas-toolbar,.atlas-export{display:none}.atlas-stage>svg{min-width:680px}</style></noscript>
+</body>
+</html>
