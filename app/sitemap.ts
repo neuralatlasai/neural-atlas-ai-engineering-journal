@@ -24,6 +24,7 @@ export const dynamic = "force-static";
 export default function sitemap(): MetadataRoute.Sitemap {
   const entries: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), changeFrequency: "weekly", priority: 1 },
+    { url: absoluteUrl("/explorers/"), changeFrequency: "monthly", priority: 0.8 },
   ];
 
   for (const item of staticNav) {

@@ -328,18 +328,31 @@ article's explanatory simulations; they do not expose production telemetry.
 
 ### Standalone architecture explorers
 
-Curated self-contained HTML tools are registered in `lib/explorers/catalog.ts`;
-they do not enter Markdown discovery. `npm run explorers` preserves each source
-document in `docs/` and generates its hosted copy in `public/explorers/` with a
-shared presentation layer. Prebuild runs this generator automatically. Run it
-after editing an explorer during development. The dedicated `/explorers/[id]/`
+Architecture tools are registered in `lib/explorers/catalog.ts`; they do not
+enter Markdown discovery. The authored decoder HTML remains intact. The other
+tools are generated from the source-cited model graphs in `lib/explorers/*-models.ts`
+using the shared `public/explorers/architecture.js` renderer and controls.
+`npm run explorers` generates the hosted documents in `public/explorers/`;
+prebuild runs it automatically. Run it after changing graph data or templates
+during development. The dedicated `/explorers/[id]/`
 page embeds the tool with scripts and SVG downloads enabled inside an isolated
 sandbox. Protected external reference links can open in new tabs. A source-checked
 message bridge handles theme, bounded document height,
-and view deep links. The static overview remains readable without JavaScript.
-Homepage and owning model folders link to the tool; sitemap entries use shared
-base-path helpers. The supplied architecture's symbolic dimensions and scope
-remain authored facts rather than inferred numerical model specifications.
+and view deep links. Generated explorers include complete native disclosures
+for every view, operation, tensor interface and source when JavaScript is disabled.
+Playback traverses explanatory computation stages; it does not execute a model.
+Evidence distinguishes released code, reported mechanisms, mathematical derivation,
+unresolved details and article proposals. Unknown topology must remain explicit.
+Homepage, owning model folders, article bodies and `/explorers/` link to the tools;
+sitemap entries use shared base-path helpers. The supplied decoder architecture's
+symbolic dimensions remain authored facts rather than inferred model specifications.
+
+The current nine non-empty Models articles are covered by fifteen source-curated
+explorers plus the original decoder tool. Comparison articles have distinct tools
+for their individual subjects. `tests/explorers.test.ts` enforces article coverage,
+unique overview graphs, valid endpoints, bounded layouts, controller/template
+agreement, source references and exact agreement with generated HTML. New Models
+articles require a curated architecture entry to satisfy this coverage gate.
 
 ## 6. Search, navigation, and metadata
 
@@ -394,7 +407,7 @@ Use the pinned npm lockfile. CI uses Node.js 22 and `npm ci`.
 | `npm test` | Runs Node tests in `tests/*.test.ts` through `tsx`. |
 | `npm run content:validate` | Runs content-specific validation only. |
 | `npm run images` | Runs responsive image generation/cache logic. |
-| `npm run explorers` | Generates hosted HTML tools from their registered source documents. |
+| `npm run explorers` | Generates hosted HTML tools from authored HTML and curated architecture graphs. |
 | `npm run build` | Generates explorers and images, runs `next build`, math verification, and HTML audit. |
 | `npm run verify:math` | Audits math in an existing `out/`; it does not rebuild first. |
 | `npm run verify:html` | Audits an existing `out/`; it does not rebuild first. |

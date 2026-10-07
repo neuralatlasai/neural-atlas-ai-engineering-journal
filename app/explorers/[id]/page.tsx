@@ -28,13 +28,13 @@ export default async function ExplorerPage({ params }: { params: Promise<{ id: s
     <header className="explorer-page__header">
       <div>
         <nav className="breadcrumb" aria-label="Breadcrumb">
-          <Link href="/">Home</Link><span aria-hidden="true"> / </span><Link href="/models/">Models</Link>
+          <Link href="/">Home</Link><span aria-hidden="true"> / </span><Link href="/models/">Models</Link><span aria-hidden="true"> / </span><Link href="/explorers/">Architectures</Link>
         </nav>
-        <h1>Model architecture explorer</h1>
+        <h1>{explorer.title}</h1>
       </div>
       <a className="home-action" href={src} target="_blank" rel="noopener">Open full view <span aria-hidden="true">↗</span></a>
     </header>
-    <ExplorerFrame src={src} title={`${explorer.title}: six interactive computation views`} views={explorer.views.map(({ id }) => id)} />
+    <ExplorerFrame src={src} title={`${explorer.title}: ${explorer.views.length} interactive computation views`} views={explorer.views.map(({ id }) => id)} />
     <p className="explorer-page__note">Select a component or connector to inspect its tensors. Use Play or the arrow keys to follow each stage; export any view as SVG.</p>
   </div>;
 }

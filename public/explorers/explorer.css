@@ -22,6 +22,17 @@ body{background:var(--host-canvas)!important;color:var(--host-ink)!important;fon
 .atlas-board-caption{font-size:11px}
 .atlas-sources{line-height:1.8}
 .atlas-sources li{overflow-wrap:anywhere}
+.atlas-evidence,.atlas-cost{font-size:12px;line-height:1.7;margin-bottom:20px;overflow-wrap:anywhere}
+.atlas-evidence p,.atlas-cost p{margin:6px 0}.atlas-evidence ul{padding-left:18px;margin:6px 0}
+.atlas-evidence a,.atlas-static-content a,.atlas-sources a{color:var(--host-ink);text-decoration:underline;text-underline-offset:3px}
+[data-curated-model] #atlas-mode-label{display:none!important}
+[data-curated-model] .atlas-stage>svg{min-width:720px}
+[data-curated-model] .atlas-tabs{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.atlas-static-content{grid-column:1/-1;min-width:0}.atlas-static-view{border-top:1px solid var(--host-line);padding:16px 0;line-height:1.8}
+.atlas-static-view summary{cursor:pointer;font-weight:600}.atlas-static-view li{margin-bottom:24px;overflow-wrap:anywhere}
+.atlas-static-view code{white-space:pre-wrap;overflow-wrap:anywhere}.atlas-static-diagram{overflow:auto;max-width:100%}
+.atlas-static-diagram svg{min-width:720px;max-width:none}
+@media(max-width:520px){[data-curated-model] .atlas-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .atlas-zoom{display:flex;align-items:center;gap:6px;font:11px/1.4 var(--atlas-mono);color:var(--atlas-muted)}
 .atlas-zoom button{min-width:36px}
 .atlas-stage[data-zoomed=true]{overflow:auto;max-height:900px;overscroll-behavior:contain}

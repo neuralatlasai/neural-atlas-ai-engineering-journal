@@ -29,6 +29,8 @@ import { JsonLd } from "@/components/JsonLd";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { ArticleVisualFigure } from "@/components/visuals/ArticleVisualFigure";
 import { getArticleVisual } from "@/lib/visuals/catalog";
+import { explorersForArticle } from "@/lib/explorers/catalog";
+import { ExplorerLinks } from "@/components/ExplorerLinks";
 import articleAtmosphere from "@/app/assets/article-atmosphere.webp";
 
 /**
@@ -307,6 +309,7 @@ async function ArticlePage({ article }: { article: ArticleMeta }) {
           <div className="article-main">
             {/* Graphical abstracts introduce the central mechanism before the
                 technical body. Existing authored figures retain their context. */}
+            <ExplorerLinks items={explorersForArticle(article.sourcePath)} />
             {visual && <ArticleVisualFigure visual={visual} />}
             {/* Outline lives before the body on narrow viewports, where the sticky
               rail cannot fit (plan §18.2). */}
